@@ -23,7 +23,7 @@ type FishSegment = {
   baseX: number;
 };
 
-const SEGMENT_COUNT = 12;
+const SEGMENT_COUNT = 18;
 
 export async function createThreeFish(
   image: string,
@@ -33,9 +33,7 @@ export async function createThreeFish(
     new THREE.TextureLoader();
 
   const texture =
-    await loader.loadAsync(
-      image,
-    );
+    await loader.loadAsync(image);
 
   texture.colorSpace =
     THREE.SRGBColorSpace;
@@ -50,63 +48,62 @@ export async function createThreeFish(
     imageSource.width /
     imageSource.height;
 
-  const width =
-    maxWidth;
+  const width = maxWidth;
 
   const height =
     width / aspect;
 
   /*
-   * Root controls world position,
-   * vertical tilt and direction.
+   * Root controls world position.
    */
   const group =
     new THREE.Group();
 
   /*
-   * Body controls the subtle visual
-   * turn toward/away from the camera.
-   *
-   * Keeping this separate from the
-   * root makes it much easier to
-   * preserve the readable drawing.
+   * Direction is separated from body
+   * deformation so turning does not
+   * interfere with swimming animation.
+   */
+  const directionGroup =
+    new THREE.Group();
+
+  /*
+   * Body contains the actual segmented
+   * drawing.
    */
   const body =
     new THREE.Group();
 
-  group.add(body);
+  group.add(directionGroup);
+  directionGroup.add(body);
 
   const segmentWidth =
-    width /
-    SEGMENT_COUNT;
+    width / SEGMENT_COUNT;
 
-  const segments:
-    FishSegment[] = [];
+  const segments: FishSegment[] = [];
 
   for (
     let index = 0;
     index < SEGMENT_COUNT;
-    index++
+    index += 1
   ) {
     const normalizedX =
       index /
       (SEGMENT_COUNT - 1);
 
     /*
-     * Slight overlap prevents tiny
-     * seams between the slices.
+     * Small overlap prevents visible seams.
      */
     const geometry =
       new THREE.PlaneGeometry(
-        segmentWidth * 1.03,
+        segmentWidth * 1.06,
         height,
       );
 
     const segmentTexture =
       texture.clone();
 
-    segmentTexture.needsUpdate =
-      true;
+    segmentTexture.needsUpdate = true;
 
     segmentTexture.wrapS =
       THREE.ClampToEdgeWrapping;
@@ -132,8 +129,7 @@ export async function createThreeFish(
 
         alphaTest: 0.02,
 
-        side:
-        THREE.DoubleSide,
+        side: THREE.DoubleSide,
 
         depthWrite: false,
       });
@@ -147,15 +143,11 @@ export async function createThreeFish(
     const baseX =
       -width / 2 +
       segmentWidth / 2 +
-      index *
-      segmentWidth;
+      index * segmentWidth;
 
-    mesh.position.x =
-      baseX;
+    mesh.position.x = baseX;
 
-    body.add(
-      mesh,
-    );
+    body.add(mesh);
 
     segments.push({
       mesh,
@@ -163,6 +155,8 @@ export async function createThreeFish(
       baseX,
     });
   }
+
+  let currentDirectionScale = 1;
 
   const update = (
     elapsed: number,
@@ -182,112 +176,131 @@ export async function createThreeFish(
       );
 
     /*
-     * The drawing itself only turns a
-     * little in depth.
+     * Smoothly flip the fish instead of
+     * instantly snapping between 1 and -1.
+     */
+    const targetDirectionScale =
+      direction === 'right'
+        ? 1
+        : -1;
+
+    currentDirectionScale =
+      THREE.MathUtils.lerp(
+        currentDirectionScale,
+        targetDirectionScale,
+        0.12,
+      );
+
+    directionGroup.scale.x =
+      currentDirectionScale;
+
+    /*
+     * Slight perspective turn when the fish
+     * moves through depth.
      *
-     * This communicates Z movement
-     * without ever showing the fish
-     * completely edge-on.
+     * Keep this subtle so a child's drawing
+     * remains clearly readable.
      */
     const depthTurn =
       THREE.MathUtils.clamp(
-        depthVelocity * 0.22,
-        -0.22,
-        0.22,
+        depthVelocity * 0.16,
+        -0.16,
+        0.16,
       );
 
-    body.rotation.y +=
-      (
-        depthTurn -
-        body.rotation.y
-      ) * 0.08;
+    body.rotation.y =
+      THREE.MathUtils.lerp(
+        body.rotation.y,
+        depthTurn,
+        0.08,
+      );
+
+    /*
+     * Very small whole-body floating motion.
+     */
+    body.position.y =
+      Math.sin(
+        elapsed * 0.55,
+      ) * 0.012;
 
     for (
-      const segment of
-      segments
+      const segment of segments
       ) {
       /*
-       * The original drawing faces
-       * right, so the left side is
-       * always considered the tail.
+       * The source drawing faces right.
+       *
+       * X=0 is therefore the tail and
+       * X=1 is the head.
        */
       const tailAmount =
         1 -
         segment.normalizedX;
 
       /*
-       * A travelling wave through the
-       * body. Head moves very little,
-       * tail moves the most.
+       * Non-linear falloff keeps the head
+       * almost stationary while allowing
+       * much more motion near the tail.
+       */
+      const tailInfluence =
+        tailAmount *
+        tailAmount;
+
+      /*
+       * Travelling wave.
        */
       const wave =
         Math.sin(
-          elapsed -
-          tailAmount * 2.5,
+          elapsed * 1.15 -
+          tailAmount * 3.2,
         );
 
       const bendStrength =
-        tailAmount *
+        tailInfluence *
         clampedIntensity;
 
       /*
-       * Bend through actual Z depth.
+       * Move slices slightly through depth.
        */
       segment.mesh.position.z =
         wave *
         bendStrength *
-        0.13;
+        0.105;
 
       /*
-       * Small vertical component keeps
-       * the motion organic without
-       * distorting the drawing heavily.
+       * Very small vertical movement.
        */
       segment.mesh.position.y =
-        wave *
-        bendStrength *
-        0.018;
-
-      /*
-       * Each slice rotates slightly to
-       * create the appearance of a
-       * curved body.
-       */
-      segment.mesh.rotation.y =
-        wave *
-        bendStrength *
-        0.2;
-
-      segment.mesh.rotation.z =
         wave *
         bendStrength *
         0.012;
 
       /*
-       * Keep original X positions.
+       * Rotation creates the visual body
+       * bend without heavily deforming the
+       * original drawing.
+       */
+      segment.mesh.rotation.y =
+        wave *
+        bendStrength *
+        0.14;
+
+      segment.mesh.rotation.z =
+        wave *
+        bendStrength *
+        0.006;
+
+      /*
+       * Preserve the source drawing's
+       * horizontal layout.
        */
       segment.mesh.position.x =
         segment.baseX;
     }
-
-    /*
-     * Direction is handled at the root
-     * so the body/tail relationship
-     * never changes.
-     */
-    const desiredScaleX =
-      direction === 'right'
-        ? 1
-        : -1;
-
-    group.scale.x =
-      desiredScaleX;
   };
 
   const destroy = () => {
     for (
-      const segment of
-      segments
+      const segment of segments
       ) {
       segment.mesh.geometry.dispose();
 
