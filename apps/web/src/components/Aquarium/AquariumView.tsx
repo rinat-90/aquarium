@@ -9,6 +9,8 @@ import {
 
 import { Aquarium } from '@aquarium/aquarium-engine';
 
+import { createAquariumBackground } from './createAquariumBackground';
+
 import type { CreatedFish } from '../../App';
 
 type AquariumViewProps = {
@@ -18,50 +20,70 @@ type AquariumViewProps = {
 export function AquariumView({
                                createdFish,
                              }: AquariumViewProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef =
+    useRef<HTMLDivElement>(null);
 
-  const aquariumRef = useRef<Aquarium | null>(null);
-  const appRef = useRef<Application | null>(null);
+  const aquariumRef =
+    useRef<Aquarium | null>(null);
+
+  const appRef =
+    useRef<Application | null>(null);
 
   const fishSpritesRef = useRef(
     new Map<string, Sprite>(),
+  );
+
+  const foodGraphicsRef = useRef(
+    new Map<string, Graphics>(),
   );
 
   const loadingFishRef = useRef(
     new Set<string>(),
   );
 
-  const createdFishRef = useRef(createdFish);
+  const createdFishRef =
+    useRef(createdFish);
 
+  /**
+   * Load a user-created drawing into Pixi.
+   */
   const addCreatedFish = async (
     created: CreatedFish,
   ) => {
-    const aquarium = aquariumRef.current;
-    const app = appRef.current;
+    const aquarium =
+      aquariumRef.current;
+
+    const app =
+      appRef.current;
 
     if (!aquarium || !app) {
       return;
     }
 
-    // Already rendered.
     if (
-      fishSpritesRef.current.has(created.id)
+      fishSpritesRef.current.has(
+        created.id,
+      )
     ) {
       return;
     }
 
-    // Already being loaded.
     if (
-      loadingFishRef.current.has(created.id)
+      loadingFishRef.current.has(
+        created.id,
+      )
     ) {
       return;
     }
 
-    loadingFishRef.current.add(created.id);
-
-    const fish = aquarium.createFish(
+    loadingFishRef.current.add(
       created.id,
     );
+
+    const fish =
+      aquarium.createFish(
+        created.id,
+      );
 
     try {
       const texture =
@@ -69,21 +91,22 @@ export function AquariumView({
           created.image,
         );
 
-      // The component could have unmounted while
-      // the texture was loading.
       if (
         !appRef.current ||
         !aquariumRef.current
       ) {
-        aquarium.removeFish(created.id);
+        aquarium.removeFish(
+          created.id,
+        );
+
         return;
       }
 
-      const sprite = new Sprite(texture);
+      const sprite =
+        new Sprite(texture);
 
       sprite.anchor.set(0.5);
 
-      // Preserve the drawing aspect ratio.
       const maxWidth = 160;
       const maxHeight = 120;
 
@@ -104,16 +127,13 @@ export function AquariumView({
         sprite,
       );
 
-      app.stage.addChild(sprite);
-
-      console.log(
-        'Added drawn fish:',
-        created.id,
-        texture.width,
-        texture.height,
+      app.stage.addChild(
+        sprite,
       );
     } catch (error) {
-      aquarium.removeFish(created.id);
+      aquarium.removeFish(
+        created.id,
+      );
 
       console.error(
         'Failed to load drawn fish:',
@@ -127,15 +147,67 @@ export function AquariumView({
   };
 
   /**
-   * Keep the latest React state available to
-   * the Pixi initialization effect.
+   * Drop food into the aquarium.
+   */
+  const addFood = (
+    x: number,
+    y: number,
+  ) => {
+    const aquarium =
+      aquariumRef.current;
+
+    const app =
+      appRef.current;
+
+    if (!aquarium || !app) {
+      return;
+    }
+
+    const id =
+      crypto.randomUUID();
+
+    aquarium.addFood({
+      id,
+      position: {
+        x,
+        y,
+      },
+    });
+
+    /**
+     * Simple food pellet.
+     */
+    const pellet =
+      new Graphics()
+        .circle(0, 0, 7)
+        .fill('#7c3f00');
+
+    pellet.position.set(
+      x,
+      y,
+    );
+
+    foodGraphicsRef.current.set(
+      id,
+      pellet,
+    );
+
+    app.stage.addChild(
+      pellet,
+    );
+  };
+
+  /**
+   * Keep latest React fish available
+   * during Pixi initialization.
    */
   useEffect(() => {
-    createdFishRef.current = createdFish;
+    createdFishRef.current =
+      createdFish;
   }, [createdFish]);
 
   /**
-   * Initialize Pixi and the aquarium engine.
+   * Initialize Pixi.
    */
   useEffect(() => {
     const container =
@@ -145,7 +217,8 @@ export function AquariumView({
       return;
     }
 
-    const app = new Application();
+    const app =
+      new Application();
 
     let cancelled = false;
     let initialized = false;
@@ -168,61 +241,62 @@ export function AquariumView({
         app.canvas,
       );
 
-      const aquarium = new Aquarium({
-        width: app.screen.width,
-        height: app.screen.height,
-      });
-
-      aquariumRef.current = aquarium;
-      appRef.current = app;
-
-      const fishGraphics =
-        new Map<string, Graphics>();
-
       /**
-       * Temporary placeholder fish.
-       *
-       * We'll remove these once user-created
-       * fish are working reliably.
+       * Background.
        */
-      for (let i = 0; i < 10; i++) {
-        const fish =
-          aquarium.createFish(
-            `placeholder-fish-${i}`,
-          );
-
-        const color = Math.floor(
-          Math.random() * 0xffffff,
+      const background =
+        createAquariumBackground(
+          app.screen.width,
+          app.screen.height,
         );
 
-        const graphic = new Graphics()
-          .ellipse(0, 0, 35, 20)
-          .fill(color)
-          .poly([
-            -30, 0,
-            -55, -20,
-            -55, 20,
-          ])
-          .fill(color);
-
-        graphic.position.set(
-          fish.position.x,
-          fish.position.y,
-        );
-
-        fishGraphics.set(
-          fish.id,
-          graphic,
-        );
-
-        app.stage.addChild(
-          graphic,
-        );
-      }
+      app.stage.addChild(
+        background.container,
+      );
 
       /**
-       * A fish could have been created while
-       * Pixi was still initializing.
+       * Engine.
+       */
+      const aquarium =
+        new Aquarium({
+          width: app.screen.width,
+          height: app.screen.height,
+        });
+
+      aquariumRef.current =
+        aquarium;
+
+      appRef.current =
+        app;
+
+      /**
+       * Make the stage interactive.
+       */
+      app.stage.eventMode =
+        'static';
+
+      app.stage.hitArea =
+        app.screen;
+
+      /**
+       * Clicking/tapping the water
+       * drops food.
+       */
+      app.stage.on(
+        'pointerdown',
+        (event) => {
+          const position =
+            event.global;
+
+          addFood(
+            position.x,
+            position.y,
+          );
+        },
+      );
+
+      /**
+       * Add any fish that already exist.
        */
       for (
         const created of
@@ -233,53 +307,30 @@ export function AquariumView({
         );
       }
 
+      /**
+       * Simulation loop.
+       */
       app.ticker.add(
         (ticker) => {
           const deltaTime =
-            ticker.deltaMS / 1000;
+            ticker.deltaMS /
+            1000;
 
           aquarium.update(
             deltaTime,
           );
 
+          background.update(
+            deltaTime,
+          );
+
+          /**
+           * Update fish.
+           */
           for (
             const fish of
             aquarium.getFish()
             ) {
-            /**
-             * Placeholder fish.
-             */
-            const graphic =
-              fishGraphics.get(
-                fish.id,
-              );
-
-            if (graphic) {
-              graphic.position.set(
-                fish.position.x,
-                fish.position.y,
-              );
-
-              graphic.scale.x =
-                fish.direction ===
-                'right'
-                  ? 1
-                  : -1;
-
-              graphic.rotation =
-                Math.max(
-                  -0.2,
-                  Math.min(
-                    0.2,
-                    fish.velocity.y /
-                    500,
-                  ),
-                );
-            }
-
-            /**
-             * User-created fish.
-             */
             const sprite =
               fishSpritesRef.current.get(
                 fish.id,
@@ -315,6 +366,66 @@ export function AquariumView({
                 ),
               );
           }
+
+          /**
+           * Remove eaten food from Pixi.
+           *
+           * The engine is the source of truth.
+           */
+
+          /**
+           * Render sinking food positions.
+           */
+          for (
+            const food of
+            aquarium.getFood()
+            ) {
+            const graphic =
+              foodGraphicsRef.current.get(
+                food.id,
+              );
+
+            if (!graphic) {
+              continue;
+            }
+
+            graphic.position.set(
+              food.position.x,
+              food.position.y,
+            );
+          }
+
+          const existingFood =
+            new Set(
+              aquarium
+                .getFood()
+                .map(
+                  (food) =>
+                    food.id,
+                ),
+            );
+
+          for (
+            const [
+              id,
+              graphic,
+            ] of
+            foodGraphicsRef.current
+            ) {
+            if (
+              existingFood.has(
+                id,
+              )
+            ) {
+              continue;
+            }
+
+            graphic.destroy();
+
+            foodGraphicsRef.current.delete(
+              id,
+            );
+          }
         },
       );
     };
@@ -324,10 +435,14 @@ export function AquariumView({
     return () => {
       cancelled = true;
 
-      aquariumRef.current = null;
-      appRef.current = null;
+      aquariumRef.current =
+        null;
+
+      appRef.current =
+        null;
 
       fishSpritesRef.current.clear();
+      foodGraphicsRef.current.clear();
       loadingFishRef.current.clear();
 
       if (initialized) {
@@ -337,17 +452,15 @@ export function AquariumView({
   }, []);
 
   /**
-   * React fish state changed.
-   *
-   * Add anything Pixi doesn't already know
-   * about.
+   * Add new React fish to Pixi.
    */
   useEffect(() => {
     createdFishRef.current =
       createdFish;
 
     for (
-      const created of createdFish
+      const created of
+      createdFish
       ) {
       void addCreatedFish(
         created,

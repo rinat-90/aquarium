@@ -5,6 +5,8 @@ import {
   type PointerEvent,
 } from 'react';
 
+import { cropDrawing } from '@aquarium/drawing';
+
 type FishDrawingCanvasProps = {
   onDone: (image: string) => void;
   onCancel: () => void;
@@ -140,7 +142,13 @@ export function FishDrawingCanvas({
       return;
     }
 
-    const image = canvas.toDataURL('image/png');
+    const image = cropDrawing(canvas, {
+      padding: 16,
+    });
+
+    if (!image) {
+      return;
+    }
 
     onDone(image);
   };
