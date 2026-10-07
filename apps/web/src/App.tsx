@@ -1,7 +1,11 @@
 import { useState } from 'react';
 
-import { AquariumView } from './components/Aquarium/AquariumView';
+// import { AquariumView } from './components/Aquarium/AquariumView';
 import { FishDrawingCanvas } from './components/FishDrawing/FishDrawingCanvas';
+
+import {
+  ThreeAquariumView,
+} from './components/Aquarium3D/ThreeAquariumView';
 
 export type CreatedFish = {
   id: string;
@@ -26,7 +30,7 @@ function App() {
 
   return (
     <>
-      <AquariumView createdFish={fish} />
+      <ThreeAquariumView createdFish={fish} />
 
       <button
         onClick={() => setDrawing(true)}
