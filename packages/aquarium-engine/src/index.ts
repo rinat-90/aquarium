@@ -284,6 +284,111 @@ export class Aquarium {
     }
   }
 
+  private applyBoundaryAvoidance(
+    fish: Fish,
+    desiredDirection: Vector3,
+  ): Vector3 {
+    const halfWidth =
+      this.options.width / 2;
+
+    const halfHeight =
+      this.options.height / 2;
+
+    const halfDepth =
+      this.options.depth / 2;
+
+    const marginX = 1.4;
+    const marginY = 1.2;
+    const marginZ = 0.9;
+
+    let x = desiredDirection.x;
+    let y = desiredDirection.y;
+    let z = desiredDirection.z;
+
+    /*
+     * Start gently steering inward before
+     * actually reaching the glass.
+     */
+    const rightDistance =
+      halfWidth - fish.position.x;
+
+    const leftDistance =
+      fish.position.x + halfWidth;
+
+    if (rightDistance < marginX) {
+      x -=
+        (1 -
+          rightDistance /
+          marginX) *
+        1.8;
+    }
+
+    if (leftDistance < marginX) {
+      x +=
+        (1 -
+          leftDistance /
+          marginX) *
+        1.8;
+    }
+
+    const topDistance =
+      halfHeight - fish.position.y;
+
+    const bottomDistance =
+      fish.position.y + halfHeight;
+
+    if (topDistance < marginY) {
+      y -=
+        (1 -
+          topDistance /
+          marginY) *
+        1.4;
+    }
+
+    if (bottomDistance < marginY) {
+      y +=
+        (1 -
+          bottomDistance /
+          marginY) *
+        1.4;
+    }
+
+    const frontDistance =
+      halfDepth - fish.position.z;
+
+    const backDistance =
+      fish.position.z + halfDepth;
+
+    if (frontDistance < marginZ) {
+      z -=
+        (1 -
+          frontDistance /
+          marginZ) *
+        1.3;
+    }
+
+    if (backDistance < marginZ) {
+      z +=
+        (1 -
+          backDistance /
+          marginZ) *
+        1.3;
+    }
+
+    const length =
+      Math.sqrt(
+        x * x +
+        y * y +
+        z * z,
+      ) || 1;
+
+    return {
+      x: x / length,
+      y: y / length,
+      z: z / length,
+    };
+  }
+
   private updateFish(
     fish: Fish,
     deltaTime: number,
@@ -336,10 +441,12 @@ export class Aquarium {
     if (
       fish.behavior ===
       'wandering' &&
-      distanceToTarget < 0.55
+      distanceToTarget < 0.75
     ) {
       fish.target =
-        this.createRandomTarget();
+        this.createRandomTarget(
+          fish.position,
+        );
 
       distanceToTarget =
         this.distance(
@@ -348,17 +455,43 @@ export class Aquarium {
         );
     }
 
-    const desiredDirection =
+    const targetDirection =
       this.directionTo(
         fish.position,
         fish.target,
       );
 
+    const desiredDirection =
+      fish.behavior ===
+      'wandering'
+        ? this.applyBoundaryAvoidance(
+          fish,
+          targetDirection,
+        )
+        : targetDirection;
+
+    /*
+  * Slight cruising variation prevents
+  * wandering fish from moving at one
+  * perfectly constant speed.
+  *
+  * This stays subtle so the movement
+  * feels calm rather than erratic.
+  */
+    const cruisingVariation =
+      0.68 +
+      Math.sin(
+        fish.position.x * 0.7 +
+        fish.position.y * 0.4,
+      ) *
+      0.08;
+
     let targetSpeed =
       fish.behavior ===
       'seeking-food'
         ? fish.speed * 1.35
-        : fish.speed * 0.72;
+        : fish.speed *
+        cruisingVariation;
 
     /*
      * Slow down when approaching food.
@@ -592,8 +725,16 @@ export class Aquarium {
     fish.targetFoodId =
       undefined;
 
+    /*
+     * Continue naturally from the fish's
+     * current location instead of choosing
+     * an unrelated point anywhere in the
+     * aquarium.
+     */
     fish.target =
-      this.createRandomTarget();
+      this.createRandomTarget(
+        fish.position,
+      );
   }
 
   private createRandomPosition(): Vector3 {
@@ -630,49 +771,103 @@ export class Aquarium {
     };
   }
 
-  private createRandomTarget(): Vector3 {
-    const horizontalPadding =
-      0.8;
+  private createRandomTarget(
+    from?: Vector3,
+  ): Vector3 {
+    const horizontalPadding = 1;
+    const verticalPadding = 0.9;
+    const depthPadding = 0.6;
 
-    const verticalPadding =
-      0.8;
+    const minX =
+      -this.options.width / 2 +
+      horizontalPadding;
 
-    const depthPadding =
-      0.5;
+    const maxX =
+      this.options.width / 2 -
+      horizontalPadding;
+
+    const minY =
+      -this.options.height / 2 +
+      verticalPadding;
+
+    const maxY =
+      this.options.height / 2 -
+      verticalPadding;
+
+    const minZ =
+      -this.options.depth / 2 +
+      depthPadding;
+
+    const maxZ =
+      this.options.depth / 2 -
+      depthPadding;
+
+    if (!from) {
+      return {
+        x:
+          minX +
+          Math.random() *
+          (maxX - minX),
+
+        y:
+          minY +
+          Math.random() *
+          (maxY - minY),
+
+        z:
+          minZ +
+          Math.random() *
+          (maxZ - minZ),
+      };
+    }
+
+    /*
+     * Fish usually travel noticeably
+     * horizontally instead of choosing a
+     * completely unrelated 3D point.
+     */
+    const horizontalDistance =
+      2.5 + Math.random() * 3.5;
+
+    const horizontalDirection =
+      Math.random() < 0.5
+        ? -1
+        : 1;
 
     return {
-      x:
-        -this.options.width /
-        2 +
-        horizontalPadding +
-        Math.random() *
-        (
-          this.options.width -
-          horizontalPadding *
-          2
+      x: Math.max(
+        minX,
+        Math.min(
+          maxX,
+          from.x +
+          horizontalDistance *
+          horizontalDirection,
         ),
+      ),
 
-      y:
-        -this.options.height /
-        2 +
-        verticalPadding +
-        Math.random() *
-        (
-          this.options.height -
-          verticalPadding *
-          2
+      /*
+       * Smaller Y/Z changes produce
+       * natural cruising paths.
+       */
+      y: Math.max(
+        minY,
+        Math.min(
+          maxY,
+          from.y +
+          (Math.random() - 0.5) *
+          2.2,
         ),
+      ),
 
-      z:
-        -this.options.depth /
-        2 +
-        depthPadding +
-        Math.random() *
-        (
-          this.options.depth -
-          depthPadding *
-          2
+      z: Math.max(
+        minZ,
+        Math.min(
+          maxZ,
+          from.z +
+          (Math.random() - 0.5) *
+          1.8,
         ),
+      ),
     };
   }
 
