@@ -12,24 +12,70 @@ type FishDrawingCanvasProps = {
   onCancel: () => void;
 };
 
+type Tool = 'brush' | 'eraser';
+
+const COLORS = [
+  '#ff6b35',
+  '#ffcc00',
+  '#ef4444',
+  '#ec4899',
+  '#8b5cf6',
+  '#3b82f6',
+  '#06b6d4',
+  '#22c55e',
+  '#111827',
+];
+
+const BRUSH_SIZES = [
+  {
+    label: 'Small',
+    size: 7,
+  },
+  {
+    label: 'Medium',
+    size: 14,
+  },
+  {
+    label: 'Large',
+    size: 26,
+  },
+];
+
 export function FishDrawingCanvas({
                                     onDone,
                                     onCancel,
                                   }: FishDrawingCanvasProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef =
+    useRef<HTMLCanvasElement>(null);
 
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [color, setColor] = useState('#ff6b35');
-  const [brushSize, setBrushSize] = useState(12);
+  const historyRef =
+    useRef<ImageData[]>([]);
+
+  const [isDrawing, setIsDrawing] =
+    useState(false);
+
+  const [color, setColor] =
+    useState('#ff6b35');
+
+  const [brushSize, setBrushSize] =
+    useState(14);
+
+  const [tool, setTool] =
+    useState<Tool>('brush');
+
+  const [canUndo, setCanUndo] =
+    useState(false);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
+    const canvas =
+      canvasRef.current;
 
     if (!canvas) {
       return;
     }
 
-    const context = canvas.getContext('2d');
+    const context =
+      canvas.getContext('2d');
 
     if (!context) {
       return;
@@ -42,42 +88,143 @@ export function FishDrawingCanvas({
   const getPosition = (
     event: PointerEvent<HTMLCanvasElement>,
   ) => {
-    const canvas = canvasRef.current!;
+    const canvas =
+      canvasRef.current!;
 
-    const rect = canvas.getBoundingClientRect();
+    const rect =
+      canvas.getBoundingClientRect();
 
     return {
       x:
-        (event.clientX - rect.left) *
-        (canvas.width / rect.width),
+        (event.clientX -
+          rect.left) *
+        (canvas.width /
+          rect.width),
 
       y:
-        (event.clientY - rect.top) *
-        (canvas.height / rect.height),
+        (event.clientY -
+          rect.top) *
+        (canvas.height /
+          rect.height),
     };
   };
 
-  const startDrawing = (
-    event: PointerEvent<HTMLCanvasElement>,
-  ) => {
-    const canvas = canvasRef.current;
+  /**
+   * Save the canvas before a stroke.
+   * Undo restores this snapshot.
+   */
+  const saveHistory = () => {
+    const canvas =
+      canvasRef.current;
 
     if (!canvas) {
       return;
     }
 
-    const context = canvas.getContext('2d');
+    const context =
+      canvas.getContext('2d');
 
     if (!context) {
       return;
     }
 
-    const position = getPosition(event);
+    const snapshot =
+      context.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      );
 
-    canvas.setPointerCapture(event.pointerId);
+    historyRef.current.push(
+      snapshot,
+    );
+
+    /**
+     * Prevent unlimited memory growth.
+     */
+    if (
+      historyRef.current.length >
+      30
+    ) {
+      historyRef.current.shift();
+    }
+
+    setCanUndo(true);
+  };
+
+  const startDrawing = (
+    event: PointerEvent<HTMLCanvasElement>,
+  ) => {
+    const canvas =
+      canvasRef.current;
+
+    if (!canvas) {
+      return;
+    }
+
+    const context =
+      canvas.getContext('2d');
+
+    if (!context) {
+      return;
+    }
+
+    saveHistory();
+
+    const position =
+      getPosition(event);
+
+    canvas.setPointerCapture(
+      event.pointerId,
+    );
 
     context.beginPath();
-    context.moveTo(position.x, position.y);
+
+    context.moveTo(
+      position.x,
+      position.y,
+    );
+
+    /**
+     * Draw a small dot immediately.
+     *
+     * This means a simple tap creates
+     * something instead of requiring
+     * pointer movement.
+     */
+    context.globalCompositeOperation =
+      tool === 'eraser'
+        ? 'destination-out'
+        : 'source-over';
+
+    context.strokeStyle =
+      color;
+
+    context.fillStyle =
+      color;
+
+    context.lineWidth =
+      brushSize;
+
+    context.beginPath();
+
+    context.arc(
+      position.x,
+      position.y,
+      brushSize / 2,
+      0,
+      Math.PI * 2,
+    );
+
+    context.fill();
+
+    context.beginPath();
+
+    context.moveTo(
+      position.x,
+      position.y,
+    );
 
     setIsDrawing(true);
   };
@@ -89,43 +236,127 @@ export function FishDrawingCanvas({
       return;
     }
 
-    const canvas = canvasRef.current;
+    const canvas =
+      canvasRef.current;
 
     if (!canvas) {
       return;
     }
 
-    const context = canvas.getContext('2d');
+    const context =
+      canvas.getContext('2d');
 
     if (!context) {
       return;
     }
 
-    const position = getPosition(event);
+    const position =
+      getPosition(event);
 
-    context.strokeStyle = color;
-    context.lineWidth = brushSize;
+    context.globalCompositeOperation =
+      tool === 'eraser'
+        ? 'destination-out'
+        : 'source-over';
 
-    context.lineTo(position.x, position.y);
+    context.strokeStyle =
+      color;
+
+    context.lineWidth =
+      brushSize;
+
+    context.lineTo(
+      position.x,
+      position.y,
+    );
+
     context.stroke();
   };
 
-  const stopDrawing = () => {
+  const stopDrawing = (
+    event?: PointerEvent<HTMLCanvasElement>,
+  ) => {
+    const canvas =
+      canvasRef.current;
+
+    if (
+      canvas &&
+      event &&
+      canvas.hasPointerCapture(
+        event.pointerId,
+      )
+    ) {
+      canvas.releasePointerCapture(
+        event.pointerId,
+      );
+    }
+
     setIsDrawing(false);
   };
 
-  const clear = () => {
-    const canvas = canvasRef.current;
+  const selectColor = (
+    nextColor: string,
+  ) => {
+    setColor(nextColor);
+
+    /**
+     * Choosing a color automatically
+     * switches back to the brush.
+     */
+    setTool('brush');
+  };
+
+  const undo = () => {
+    const canvas =
+      canvasRef.current;
 
     if (!canvas) {
       return;
     }
 
-    const context = canvas.getContext('2d');
+    const context =
+      canvas.getContext('2d');
 
     if (!context) {
       return;
     }
+
+    const previous =
+      historyRef.current.pop();
+
+    if (!previous) {
+      return;
+    }
+
+    context.putImageData(
+      previous,
+      0,
+      0,
+    );
+
+    setCanUndo(
+      historyRef.current.length > 0,
+    );
+  };
+
+  const clear = () => {
+    const canvas =
+      canvasRef.current;
+
+    if (!canvas) {
+      return;
+    }
+
+    const context =
+      canvas.getContext('2d');
+
+    if (!context) {
+      return;
+    }
+
+    /**
+     * Clear is undoable too.
+     */
+    saveHistory();
 
     context.clearRect(
       0,
@@ -136,15 +367,31 @@ export function FishDrawingCanvas({
   };
 
   const finish = () => {
-    const canvas = canvasRef.current;
+    const canvas =
+      canvasRef.current;
 
     if (!canvas) {
       return;
     }
 
-    const image = cropDrawing(canvas, {
-      padding: 16,
-    });
+    /**
+     * Reset compositing before export.
+     */
+    const context =
+      canvas.getContext('2d');
+
+    if (context) {
+      context.globalCompositeOperation =
+        'source-over';
+    }
+
+    const image =
+      cropDrawing(
+        canvas,
+        {
+          padding: 16,
+        },
+      );
 
     if (!image) {
       return;
@@ -156,48 +403,345 @@ export function FishDrawingCanvas({
   return (
     <div style={styles.overlay}>
       <div style={styles.panel}>
-        <h2>Draw your fish 🐟</h2>
+        <div style={styles.header}>
+          <div>
+            <h2 style={styles.title}>
+              Draw your fish 🐟
+            </h2>
 
-        <canvas
-          ref={canvasRef}
-          width={600}
-          height={400}
-          onPointerDown={startDrawing}
-          onPointerMove={draw}
-          onPointerUp={stopDrawing}
-          onPointerCancel={stopDrawing}
-          style={styles.canvas}
-        />
+            <div
+              style={
+                styles.subtitle
+              }
+            >
+              Draw anything you want!
+            </div>
+          </div>
 
-        <div style={styles.controls}>
-          <input
-            type="color"
-            value={color}
-            onChange={(event) =>
-              setColor(event.target.value)
-            }
-          />
-
-          <input
-            type="range"
-            min={2}
-            max={40}
-            value={brushSize}
-            onChange={(event) =>
-              setBrushSize(Number(event.target.value))
-            }
-          />
-
-          <button onClick={clear}>
-            Clear
+          <button
+            onClick={onCancel}
+            style={styles.closeButton}
+            aria-label="Close"
+          >
+            ✕
           </button>
+        </div>
 
-          <button onClick={onCancel}>
+        <div
+          style={
+            styles.canvasContainer
+          }
+        >
+          {/*
+            This guide is behind the
+            transparent canvas.
+
+            Because it is HTML/CSS and
+            NOT drawn onto the canvas,
+            it won't be exported.
+          */}
+          <div
+            style={
+              styles.fishGuide
+            }
+          >
+            <div
+              style={
+                styles.fishGuideTail
+              }
+            />
+
+            <div
+              style={
+                styles.fishGuideBody
+              }
+            >
+              <div
+                style={
+                  styles.fishGuideEye
+                }
+              />
+            </div>
+          </div>
+
+          <canvas
+            ref={canvasRef}
+            width={600}
+            height={400}
+            onPointerDown={
+              startDrawing
+            }
+            onPointerMove={draw}
+            onPointerUp={
+              stopDrawing
+            }
+            onPointerCancel={
+              stopDrawing
+            }
+            style={{
+              ...styles.canvas,
+
+              cursor:
+                tool === 'eraser'
+                  ? 'cell'
+                  : 'crosshair',
+            }}
+          />
+        </div>
+
+        <div style={styles.toolbar}>
+          <div
+            style={
+              styles.toolSection
+            }
+          >
+            <span
+              style={
+                styles.toolLabel
+              }
+            >
+              Colors
+            </span>
+
+            <div
+              style={
+                styles.colorRow
+              }
+            >
+              {COLORS.map(
+                (
+                  paletteColor,
+                ) => (
+                  <button
+                    key={
+                      paletteColor
+                    }
+                    onClick={() =>
+                      selectColor(
+                        paletteColor,
+                      )
+                    }
+                    aria-label={`Select ${paletteColor}`}
+                    style={{
+                      ...styles.colorButton,
+
+                      background:
+                      paletteColor,
+
+                      transform:
+                        color ===
+                        paletteColor &&
+                        tool ===
+                        'brush'
+                          ? 'scale(1.18)'
+                          : 'scale(1)',
+
+                      outline:
+                        color ===
+                        paletteColor &&
+                        tool ===
+                        'brush'
+                          ? '3px solid #111827'
+                          : '2px solid #ffffff',
+                    }}
+                  />
+                ),
+              )}
+
+              <input
+                type="color"
+                value={color}
+                onChange={(
+                  event,
+                ) =>
+                  selectColor(
+                    event.target
+                      .value,
+                  )
+                }
+                title="Custom color"
+                style={
+                  styles.colorPicker
+                }
+              />
+            </div>
+          </div>
+
+          <div
+            style={
+              styles.toolSection
+            }
+          >
+            <span
+              style={
+                styles.toolLabel
+              }
+            >
+              Brush
+            </span>
+
+            <div
+              style={
+                styles.brushRow
+              }
+            >
+              {BRUSH_SIZES.map(
+                (brush) => (
+                  <button
+                    key={
+                      brush.size
+                    }
+                    onClick={() => {
+                      setBrushSize(
+                        brush.size,
+                      );
+
+                      setTool(
+                        'brush',
+                      );
+                    }}
+                    title={
+                      brush.label
+                    }
+                    style={{
+                      ...styles.brushButton,
+
+                      background:
+                        brushSize ===
+                        brush.size &&
+                        tool ===
+                        'brush'
+                          ? '#dbeafe'
+                          : '#ffffff',
+
+                      borderColor:
+                        brushSize ===
+                        brush.size &&
+                        tool ===
+                        'brush'
+                          ? '#2563eb'
+                          : '#d1d5db',
+                    }}
+                  >
+                    <span
+                      style={{
+                        width:
+                          Math.max(
+                            6,
+                            brush.size *
+                            0.75,
+                          ),
+
+                        height:
+                          Math.max(
+                            6,
+                            brush.size *
+                            0.75,
+                          ),
+
+                        borderRadius:
+                          '50%',
+
+                        background:
+                        color,
+
+                        display:
+                          'block',
+                      }}
+                    />
+                  </button>
+                ),
+              )}
+            </div>
+          </div>
+
+          <div
+            style={
+              styles.toolSection
+            }
+          >
+            <span
+              style={
+                styles.toolLabel
+              }
+            >
+              Tools
+            </span>
+
+            <div
+              style={
+                styles.actionRow
+              }
+            >
+              <button
+                onClick={() =>
+                  setTool(
+                    'eraser',
+                  )
+                }
+                style={{
+                  ...styles.toolButton,
+
+                  background:
+                    tool ===
+                    'eraser'
+                      ? '#dbeafe'
+                      : '#ffffff',
+
+                  borderColor:
+                    tool ===
+                    'eraser'
+                      ? '#2563eb'
+                      : '#d1d5db',
+                }}
+              >
+                🧽 Eraser
+              </button>
+
+              <button
+                onClick={undo}
+                disabled={!canUndo}
+                style={{
+                  ...styles.toolButton,
+
+                  opacity:
+                    canUndo
+                      ? 1
+                      : 0.4,
+                }}
+              >
+                ↩ Undo
+              </button>
+
+              <button
+                onClick={clear}
+                style={
+                  styles.toolButton
+                }
+              >
+                🗑 Clear
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div style={styles.footer}>
+          <button
+            onClick={onCancel}
+            style={
+              styles.cancelButton
+            }
+          >
             Cancel
           </button>
 
-          <button onClick={finish}>
-            Add to Aquarium
+          <button
+            onClick={finish}
+            style={
+              styles.addButton
+            }
+          >
+            Add to Aquarium 🐠
           </button>
         </div>
       </div>
@@ -210,36 +754,339 @@ const styles = {
     position: 'fixed',
     inset: 0,
     zIndex: 100,
+
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'rgba(0, 0, 0, 0.55)',
+
+    padding: 20,
+
+    background:
+      'rgba(0, 0, 0, 0.6)',
   },
 
   panel: {
+    width: 720,
+    maxWidth: '100%',
+    maxHeight: '95vh',
+
+    overflowY: 'auto',
+
     background: '#ffffff',
-    borderRadius: 20,
+
+    borderRadius: 24,
+
     padding: 24,
-    maxWidth: '90vw',
+
+    boxShadow:
+      '0 25px 60px rgba(0, 0, 0, 0.3)',
+  },
+
+  header: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent:
+      'space-between',
+
+    gap: 16,
+
+    marginBottom: 18,
+  },
+
+  title: {
+    margin: 0,
+
+    fontSize: 28,
+
+    color: '#111827',
+  },
+
+  subtitle: {
+    marginTop: 4,
+
+    color: '#6b7280',
+
+    fontSize: 15,
+  },
+
+  closeButton: {
+    width: 40,
+    height: 40,
+
+    border: 0,
+    borderRadius: '50%',
+
+    background: '#f3f4f6',
+
+    fontSize: 18,
+
+    cursor: 'pointer',
+  },
+
+  canvasContainer: {
+    position: 'relative',
+
+    width: '100%',
+
+    aspectRatio: '3 / 2',
+
+    overflow: 'hidden',
+
+    border:
+      '2px solid #dbeafe',
+
+    borderRadius: 18,
+
+    background: '#ffffff',
   },
 
   canvas: {
-    width: 600,
-    maxWidth: '100%',
-    aspectRatio: '3 / 2',
-    border: '2px solid #ddd',
-    borderRadius: 12,
-    cursor: 'crosshair',
+    position: 'absolute',
+    inset: 0,
+
+    zIndex: 2,
+
+    width: '100%',
+    height: '100%',
+
     touchAction: 'none',
 
-    background: '#ffffff',
+    background:
+      'transparent',
   },
 
-  controls: {
+  /**
+   * Fish guide.
+   */
+  fishGuide: {
+    position: 'absolute',
+
+    zIndex: 1,
+
+    left: '50%',
+    top: '50%',
+
+    width: '65%',
+    height: '55%',
+
+    transform:
+      'translate(-50%, -50%)',
+
+    opacity: 0.16,
+
+    pointerEvents: 'none',
+  },
+
+  fishGuideBody: {
+    position: 'absolute',
+
+    left: '20%',
+    top: '15%',
+
+    width: '65%',
+    height: '70%',
+
+    border:
+      '5px dashed #64748b',
+
+    borderRadius: '50%',
+
+    boxSizing:
+      'border-box',
+  },
+
+  fishGuideTail: {
+    position: 'absolute',
+
+    left: '2%',
+    top: '24%',
+
+    width: 0,
+    height: 0,
+
+    borderTop:
+      '55px solid transparent',
+
+    borderBottom:
+      '55px solid transparent',
+
+    borderRight:
+      '100px solid #64748b',
+  },
+
+  fishGuideEye: {
+    position: 'absolute',
+
+    right: '15%',
+    top: '30%',
+
+    width: 16,
+    height: 16,
+
+    borderRadius: '50%',
+
+    background: '#64748b',
+  },
+
+  toolbar: {
     display: 'flex',
-    gap: 12,
+
+    flexDirection:
+      'column',
+
+    gap: 16,
+
+    marginTop: 20,
+  },
+
+  toolSection: {
+    display: 'flex',
+
+    flexDirection:
+      'column',
+
+    gap: 8,
+  },
+
+  toolLabel: {
+    fontWeight: 700,
+
+    color: '#374151',
+
+    fontSize: 14,
+  },
+
+  colorRow: {
+    display: 'flex',
+
     alignItems: 'center',
-    marginTop: 16,
+
     flexWrap: 'wrap',
+
+    gap: 10,
+  },
+
+  colorButton: {
+    width: 34,
+    height: 34,
+
+    padding: 0,
+
+    borderRadius: '50%',
+
+    border: 0,
+
+    cursor: 'pointer',
+
+    transition:
+      'transform 120ms ease',
+  },
+
+  colorPicker: {
+    width: 38,
+    height: 38,
+
+    padding: 0,
+
+    border:
+      '1px solid #d1d5db',
+
+    borderRadius: 8,
+
+    cursor: 'pointer',
+  },
+
+  brushRow: {
+    display: 'flex',
+
+    gap: 8,
+  },
+
+  brushButton: {
+    width: 48,
+    height: 44,
+
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    border:
+      '2px solid #d1d5db',
+
+    borderRadius: 10,
+
+    cursor: 'pointer',
+  },
+
+  actionRow: {
+    display: 'flex',
+
+    flexWrap: 'wrap',
+
+    gap: 8,
+  },
+
+  toolButton: {
+    minHeight: 42,
+
+    padding:
+      '8px 14px',
+
+    border:
+      '2px solid #d1d5db',
+
+    borderRadius: 10,
+
+    background: '#ffffff',
+
+    fontWeight: 600,
+
+    cursor: 'pointer',
+  },
+
+  footer: {
+    display: 'flex',
+
+    justifyContent:
+      'flex-end',
+
+    gap: 12,
+
+    marginTop: 24,
+  },
+
+  cancelButton: {
+    padding:
+      '12px 20px',
+
+    border:
+      '1px solid #d1d5db',
+
+    borderRadius: 12,
+
+    background: '#ffffff',
+
+    fontSize: 16,
+
+    cursor: 'pointer',
+  },
+
+  addButton: {
+    padding:
+      '12px 22px',
+
+    border: 0,
+
+    borderRadius: 12,
+
+    background: '#2563eb',
+
+    color: '#ffffff',
+
+    fontWeight: 700,
+
+    fontSize: 16,
+
+    cursor: 'pointer',
   },
 } as const;
