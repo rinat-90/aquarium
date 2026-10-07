@@ -14,11 +14,14 @@ type Caustic = {
   phase: number;
   baseX: number;
   baseZ: number;
+  baseScaleX: number;
+  baseScaleY: number;
   speed: number;
 };
 
 type LightRay = {
   mesh: THREE.Mesh;
+  material: THREE.ShaderMaterial;
   baseX: number;
   baseRotation: number;
   phase: number;
@@ -31,8 +34,11 @@ export function createWaterEffects(
   tankDepth: number,
 ): WaterEffects {
   /*
-   * Water surface
+   * --------------------------------
+   * WATER SURFACE
+   * --------------------------------
    */
+
   const surfaceGeometry =
     new THREE.PlaneGeometry(
       tankWidth,
@@ -53,12 +59,16 @@ export function createWaterEffects(
 
   const surfaceMaterial =
     new THREE.MeshPhysicalMaterial({
-      color: 0x8de8f5,
+      color: 0x78cbd4,
+
       transparent: true,
-      opacity: 0.18,
-      roughness: 0.15,
+      opacity: 0.1,
+
+      roughness: 0.22,
       metalness: 0,
-      transmission: 0.35,
+
+      transmission: 0.25,
+
       side: THREE.DoubleSide,
       depthWrite: false,
     });
@@ -76,11 +86,19 @@ export function createWaterEffects(
   scene.add(surface);
 
   /*
-   * Soft caustic patches on the sand.
+   * --------------------------------
+   * CAUSTICS
+   * --------------------------------
+   *
+   * These are intentionally subtle.
+   * They should be something you
+   * notice after looking at the tank,
+   * not the first thing you see.
    */
+
   const causticGeometry =
     new THREE.CircleGeometry(
-      0.9,
+      1,
       32,
     );
 
@@ -90,21 +108,25 @@ export function createWaterEffects(
 
   const causticMaterial =
     new THREE.MeshBasicMaterial({
-      color: 0xffffff,
+      color: 0xd9f4ef,
+
       transparent: true,
-      opacity: 0.055,
+      opacity: 0.025,
+
       blending:
       THREE.AdditiveBlending,
+
       depthWrite: false,
+
       side: THREE.DoubleSide,
     });
 
-  const caustics: Caustic[] =
-    [];
+  const caustics:
+    Caustic[] = [];
 
   for (
     let index = 0;
-    index < 14;
+    index < 9;
     index++
   ) {
     const mesh =
@@ -120,7 +142,7 @@ export function createWaterEffects(
       ) *
       (
         tankWidth -
-        1
+        1.5
       );
 
     const baseZ =
@@ -130,29 +152,31 @@ export function createWaterEffects(
       ) *
       (
         tankDepth -
-        0.6
+        0.8
       );
+
+    const baseScaleX =
+      0.75 +
+      Math.random() *
+      0.85;
+
+    const baseScaleY =
+      0.3 +
+      Math.random() *
+      0.35;
 
     mesh.position.set(
       baseX,
+
       -tankHeight / 2 +
-      0.32,
+      0.29,
+
       baseZ,
     );
 
-    const scale =
-      0.65 +
-      Math.random() *
-      0.65;
-
     mesh.scale.set(
-      scale,
-      scale *
-      (
-        0.55 +
-        Math.random() *
-        0.25
-      ),
+      baseScaleX,
+      baseScaleY,
       1,
     );
 
@@ -165,184 +189,246 @@ export function createWaterEffects(
     caustics.push({
       mesh,
 
+      baseX,
+      baseZ,
+
+      baseScaleX,
+      baseScaleY,
+
       phase:
         Math.random() *
         Math.PI *
         2,
 
-      baseX,
-      baseZ,
-
       speed:
-        0.25 +
+        0.16 +
         Math.random() *
-        0.35,
+        0.18,
     });
   }
 
   /*
-   * Soft tapered underwater light rays.
+   * --------------------------------
+   * SOFT LIGHT RAYS
+   * --------------------------------
    *
-   * A trapezoid looks much more like a
-   * light beam than the previous
-   * rectangular planes.
+   * Unlike the previous trapezoids,
+   * these use a shader.
+   *
+   * Alpha fades:
+   * - at both horizontal edges
+   * - near the bottom
+   * - slightly near the top
+   *
+   * This removes the visible polygon
+   * edges from the old version.
    */
-  const rayWidthTop =
-    0.35;
-
-  const rayWidthBottom =
-    1.15;
-
-  const rayHeight =
-    tankHeight * 1.15;
 
   const rayGeometry =
-    new THREE.BufferGeometry();
-
-  const rayVertices =
-    new Float32Array([
-      -rayWidthTop / 2,
-      rayHeight / 2,
-      0,
-
-      rayWidthTop / 2,
-      rayHeight / 2,
-      0,
-
-      -rayWidthBottom / 2,
-      -rayHeight / 2,
-      0,
-
-      rayWidthBottom / 2,
-      -rayHeight / 2,
-      0,
-    ]);
-
-  const rayIndices = [
-    0,
-    2,
-    1,
-
-    2,
-    3,
-    1,
-  ];
-
-  rayGeometry.setAttribute(
-    'position',
-    new THREE.BufferAttribute(
-      rayVertices,
-      3,
-    ),
-  );
-
-  rayGeometry.setIndex(
-    rayIndices,
-  );
-
-  /*
-   * Vertex colors make the lower part
-   * of each beam darker.
-   */
-  const rayColors =
-    new Float32Array([
+    new THREE.PlaneGeometry(
+      2.8,
+      tankHeight * 1.15,
       1,
       1,
-      1,
+    );
 
-      1,
-      1,
-      1,
+  const createRayMaterial =
+    (
+      opacity: number,
+    ) =>
+      new THREE.ShaderMaterial({
+        transparent: true,
 
-      0.15,
-      0.15,
-      0.15,
+        depthWrite: false,
 
-      0.15,
-      0.15,
-      0.15,
-    ]);
+        blending:
+        THREE.AdditiveBlending,
 
-  rayGeometry.setAttribute(
-    'color',
-    new THREE.BufferAttribute(
-      rayColors,
-      3,
-    ),
-  );
+        side:
+        THREE.DoubleSide,
 
-  const rayMaterial =
-    new THREE.MeshBasicMaterial({
-      color: 0xdffaff,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.045,
+        uniforms: {
+          uOpacity: {
+            value: opacity,
+          },
 
-      blending:
-      THREE.AdditiveBlending,
+          uTime: {
+            value: 0,
+          },
+        },
 
-      depthWrite: false,
-      side: THREE.DoubleSide,
-    });
+        vertexShader: `
+          varying vec2 vUv;
 
-  const rays: LightRay[] =
-    [];
+          void main() {
+            vUv = uv;
 
-  for (
-    let index = 0;
-    index < 5;
-    index++
-  ) {
-    const baseX =
-      -3.5 +
-      index * 1.75;
+            gl_Position =
+              projectionMatrix *
+              modelViewMatrix *
+              vec4(position, 1.0);
+          }
+        `,
 
-    const baseRotation =
-      -0.09 +
-      index * 0.025;
+        fragmentShader: `
+          varying vec2 vUv;
+
+          uniform float uOpacity;
+          uniform float uTime;
+
+          void main() {
+            /*
+             * Soft horizontal center.
+             */
+            float distanceFromCenter =
+              abs(vUv.x - 0.5) * 2.0;
+
+            float horizontalFade =
+              1.0 -
+              smoothstep(
+                0.15,
+                1.0,
+                distanceFromCenter
+              );
+
+            /*
+             * Fade the bottom heavily.
+             */
+            float bottomFade =
+              smoothstep(
+                0.02,
+                0.42,
+                vUv.y
+              );
+
+            /*
+             * Slight fade near the top.
+             */
+            float topFade =
+              1.0 -
+              smoothstep(
+                0.82,
+                1.0,
+                vUv.y
+              ) * 0.35;
+
+            /*
+             * Very subtle underwater
+             * movement inside the ray.
+             */
+            float shimmer =
+              0.92 +
+              sin(
+                vUv.y * 8.0 +
+                uTime * 0.7
+              ) * 0.08;
+
+            float alpha =
+              horizontalFade *
+              bottomFade *
+              topFade *
+              shimmer *
+              uOpacity;
+
+            gl_FragColor =
+              vec4(
+                0.78,
+                0.96,
+                1.0,
+                alpha
+              );
+          }
+        `,
+      });
+
+  const rays:
+    LightRay[] = [];
+
+  const addRay = (
+    x: number,
+    rotation: number,
+    widthScale: number,
+    opacity: number,
+    phase: number,
+  ) => {
+    const material =
+      createRayMaterial(
+        opacity,
+      );
 
     const ray =
       new THREE.Mesh(
         rayGeometry,
-        rayMaterial,
+        material,
       );
 
     ray.position.set(
-      baseX,
-      0.25,
+      x,
+      0.35,
+
       -tankDepth / 2 +
-      0.06,
+      0.04,
     );
 
     ray.rotation.z =
-      baseRotation;
+      rotation;
 
     ray.scale.x =
-      0.75 +
-      Math.random() *
-      0.4;
+      widthScale;
 
     scene.add(ray);
 
     rays.push({
       mesh: ray,
-      baseX,
-      baseRotation,
+      material,
 
-      phase:
-        Math.random() *
-        Math.PI *
-        2,
+      baseX: x,
+
+      baseRotation:
+      rotation,
+
+      phase,
     });
-  }
+  };
+
+  /*
+   * Only two broad rays.
+   *
+   * They should feel like sunlight
+   * entering the water rather than
+   * stage spotlights.
+   */
+
+  addRay(
+    -2.1,
+    -0.12,
+    1.25,
+    0.065,
+    0,
+  );
+
+  addRay(
+    2.2,
+    0.1,
+    1.45,
+    0.045,
+    Math.PI,
+  );
+
+  /*
+   * --------------------------------
+   * UPDATE
+   * --------------------------------
+   */
 
   const update = (
     _deltaTime: number,
     elapsed: number,
   ) => {
     /*
-     * Animate water surface vertices.
+     * Water surface.
      */
+
     const position =
       surfaceGeometry.attributes
         .position as
@@ -350,7 +436,8 @@ export function createWaterEffects(
 
     for (
       let index = 0;
-      index < position.count;
+      index <
+      position.count;
       index++
     ) {
       const offset =
@@ -371,26 +458,33 @@ export function createWaterEffects(
         offset + 2
           ];
 
+      /*
+       * Slower and smaller waves than
+       * before.
+       */
+
       const wave =
         Math.sin(
           originalX *
-          1.5 +
+          1.15 +
           elapsed *
-          1.3,
+          0.75,
         ) *
-        0.035 +
+        0.022 +
         Math.cos(
           originalZ *
-          2.1 +
+          1.7 +
           elapsed *
-          1.7,
+          0.9,
         ) *
-        0.025;
+        0.016;
 
       position.setXYZ(
         index,
+
         originalX,
-        originalY + wave,
+        originalY +
+        wave,
         originalZ,
       );
     }
@@ -402,8 +496,9 @@ export function createWaterEffects(
       .computeVertexNormals();
 
     /*
-     * Slowly drifting caustics.
+     * Caustics.
      */
+
     for (
       const caustic of
       caustics
@@ -413,83 +508,86 @@ export function createWaterEffects(
         caustic.speed +
         caustic.phase;
 
-      caustic.mesh.position.x =
+      caustic.mesh
+        .position.x =
         caustic.baseX +
         Math.sin(wave) *
-        0.18;
+        0.12;
 
-      caustic.mesh.position.z =
+      caustic.mesh
+        .position.z =
         caustic.baseZ +
         Math.cos(
-          wave * 0.8,
-        ) *
-        0.14;
-
-      caustic.mesh.rotation.z =
-        Math.sin(
-          wave * 0.55,
-        ) *
-        0.25 +
-        caustic.phase;
-
-      const pulse =
-        0.82 +
-        Math.sin(
-          wave * 1.4,
+          wave * 0.7,
         ) *
         0.1;
 
-      caustic.mesh.scale.x =
-        pulse;
+      caustic.mesh
+        .rotation.z +=
+        0.0008;
 
-      caustic.mesh.scale.y =
-        0.55 +
-        Math.cos(
-          wave * 1.15,
+      const pulse =
+        1 +
+        Math.sin(
+          wave * 1.2,
         ) *
         0.08;
+
+      caustic.mesh
+        .scale.x =
+        caustic.baseScaleX *
+        pulse;
+
+      caustic.mesh
+        .scale.y =
+        caustic.baseScaleY *
+        (
+          1 +
+          Math.cos(
+            wave * 0.9,
+          ) *
+          0.07
+        );
     }
 
     /*
-     * Slow movement of the light rays.
+     * Light rays.
      */
+
     for (
       const ray of
       rays
       ) {
+      ray.material.uniforms
+        .uTime.value =
+        elapsed +
+        ray.phase;
+
       ray.mesh.position.x =
         ray.baseX +
         Math.sin(
           elapsed *
-          0.25 +
+          0.11 +
           ray.phase,
         ) *
-        0.16;
+        0.12;
 
       ray.mesh.rotation.z =
         ray.baseRotation +
         Math.sin(
           elapsed *
-          0.18 +
+          0.08 +
           ray.phase,
         ) *
-        0.025;
-
-      /*
-       * Tiny breathing effect so the
-       * rays don't look completely
-       * static.
-       */
-      ray.mesh.scale.x =
-        0.9 +
-        Math.sin(
-          elapsed *
-          0.35 +
-          ray.phase,
-        ) *
-        0.08;
+        0.018;
     }
   };
+
+  /*
+   * --------------------------------
+   * CLEANUP
+   * --------------------------------
+   */
 
   const destroy = () => {
     scene.remove(surface);
@@ -510,6 +608,8 @@ export function createWaterEffects(
       scene.remove(
         ray.mesh,
       );
+
+      ray.material.dispose();
     }
 
     surfaceGeometry.dispose();
@@ -519,7 +619,6 @@ export function createWaterEffects(
     causticMaterial.dispose();
 
     rayGeometry.dispose();
-    rayMaterial.dispose();
   };
 
   return {

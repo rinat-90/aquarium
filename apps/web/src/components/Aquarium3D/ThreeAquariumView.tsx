@@ -26,6 +26,10 @@ import {
   createWaterEffects,
 } from './createWaterEffects';
 
+import {
+  createAquariumEnvironment,
+} from './createAquariumEnvironment';
+
 type ThreeAquariumViewProps = {
   createdFish: CreatedFish[];
 
@@ -310,13 +314,21 @@ export function ThreeAquariumView({
 
     scene.background =
       new THREE.Color(
-        0x58c8e8,
+        0x1f7587,
       );
 
+    /*
+     * Gentle underwater depth.
+     *
+     * Keep fog subtle so the child's
+     * drawing stays crisp while objects
+     * toward the back lose a little
+     * contrast.
+     */
     scene.fog =
       new THREE.FogExp2(
-        0x58c8e8,
-        0.025,
+        0x2f8999,
+        0.032,
       );
 
     /*
@@ -388,6 +400,15 @@ export function ThreeAquariumView({
       container.clientHeight,
     );
 
+    renderer.outputColorSpace =
+      THREE.SRGBColorSpace;
+
+    renderer.toneMapping =
+      THREE.ACESFilmicToneMapping;
+
+    renderer.toneMappingExposure =
+      1.05;
+
     container.appendChild(
       renderer.domElement,
     );
@@ -395,30 +416,61 @@ export function ThreeAquariumView({
     /*
      * Lighting
      */
-    const ambientLight =
-      new THREE.AmbientLight(
-        0xffffff,
-        1.6,
+    /*
+     * A hemisphere light gives the tank
+     * a brighter surface and a cooler,
+     * darker lower half without putting
+     * a visible spotlight in the scene.
+     */
+    const waterLight =
+      new THREE.HemisphereLight(
+        0xc9f7ff,
+        0x174957,
+        1.35,
       );
 
     scene.add(
-      ambientLight,
+      waterLight,
     );
 
+    /*
+     * Soft daylight from above/front.
+     */
     const sunlight =
       new THREE.DirectionalLight(
-        0xffffff,
-        2.5,
+        0xe8fbff,
+        1.65,
       );
 
     sunlight.position.set(
-      -4,
-      8,
-      6,
+      -3.5,
+      7.5,
+      5,
     );
 
     scene.add(
       sunlight,
+    );
+
+    /*
+     * Very small fill so the front of
+     * rocks and plants does not become
+     * completely flat or black.
+     */
+    const frontFill =
+      new THREE.DirectionalLight(
+        0x8edce8,
+        0.32,
+      );
+
+    frontFill.position.set(
+      3,
+      1,
+      8,
+    );
+
+    scene.add(
+      frontFill,
     );
 
     /*
@@ -438,228 +490,92 @@ export function ThreeAquariumView({
       });
 
     /*
-     * Sand
-     */
-    const sandGeometry =
-      new THREE.BoxGeometry(
+    * Natural aquarium environment.
+    */
+    const environment =
+      createAquariumEnvironment(
+        scene,
         tankWidth,
-        0.3,
+        tankHeight,
         tankDepth,
       );
 
-    const sandMaterial =
-      new THREE.MeshStandardMaterial({
-        color: 0xe8c982,
-        roughness: 0.9,
-      });
-
-    const sand =
-      new THREE.Mesh(
-        sandGeometry,
-        sandMaterial,
-      );
-
-    sand.position.y =
-      -tankHeight / 2 +
-      0.15;
-
-    scene.add(
-      sand,
-    );
-
     /*
-     * Back wall
+     * Subtle glass depth cues.
+     *
+     * The old full BoxGeometry outline
+     * made the aquarium look like a 3D
+     * editor/debug box. Keep only the
+     * rear rectangle and four faint
+     * corner depth lines.
      */
-    const backGeometry =
-      new THREE.PlaneGeometry(
-        tankWidth,
-        tankHeight,
-      );
+    const halfWidth =
+      tankWidth / 2;
 
-    const backMaterial =
-      new THREE.MeshStandardMaterial({
-        color: 0x3fa9c9,
-        roughness: 1,
-      });
+    const halfHeight =
+      tankHeight / 2;
 
-    const backWall =
-      new THREE.Mesh(
-        backGeometry,
-        backMaterial,
-      );
+    const frontZ =
+      tankDepth / 2;
 
-    backWall.position.z =
+    const backZ =
       -tankDepth / 2;
 
-    scene.add(
-      backWall,
+    const glassPoints = [
+      // Rear rectangle.
+      -halfWidth, -halfHeight, backZ,
+      halfWidth, -halfHeight, backZ,
+
+      halfWidth, -halfHeight, backZ,
+      halfWidth, halfHeight, backZ,
+
+      halfWidth, halfHeight, backZ,
+      -halfWidth, halfHeight, backZ,
+
+      -halfWidth, halfHeight, backZ,
+      -halfWidth, -halfHeight, backZ,
+
+      // Corner depth hints.
+      -halfWidth, -halfHeight, backZ,
+      -halfWidth, -halfHeight, frontZ,
+
+      halfWidth, -halfHeight, backZ,
+      halfWidth, -halfHeight, frontZ,
+
+      -halfWidth, halfHeight, backZ,
+      -halfWidth, halfHeight, frontZ,
+
+      halfWidth, halfHeight, backZ,
+      halfWidth, halfHeight, frontZ,
+    ];
+
+    const glassGeometry =
+      new THREE.BufferGeometry();
+
+    glassGeometry.setAttribute(
+      'position',
+      new THREE.Float32BufferAttribute(
+        glassPoints,
+        3,
+      ),
     );
 
-    /*
-     * Rocks
-     */
-    const rockMaterial =
-      new THREE.MeshStandardMaterial({
-        color: 0x64748b,
-        roughness: 0.95,
-      });
-
-    const rock1Geometry =
-      new THREE.DodecahedronGeometry(
-        0.65,
-        0,
-      );
-
-    const rock1 =
-      new THREE.Mesh(
-        rock1Geometry,
-        rockMaterial,
-      );
-
-    rock1.position.set(
-      -3.4,
-      -2.55,
-      -0.6,
-    );
-
-    rock1.scale.set(
-      1.4,
-      0.7,
-      1,
-    );
-
-    scene.add(
-      rock1,
-    );
-
-    const rock2Geometry =
-      new THREE.DodecahedronGeometry(
-        0.45,
-        0,
-      );
-
-    const rock2 =
-      new THREE.Mesh(
-        rock2Geometry,
-        rockMaterial,
-      );
-
-    rock2.position.set(
-      -2.5,
-      -2.65,
-      0.2,
-    );
-
-    rock2.scale.set(
-      1.2,
-      0.7,
-      1,
-    );
-
-    scene.add(
-      rock2,
-    );
-
-    /*
-     * Plants
-     */
-    const plantMaterial =
-      new THREE.MeshStandardMaterial({
-        color: 0x15803d,
-        roughness: 0.8,
-      });
-
-    const plants:
-      THREE.Mesh[] = [];
-
-    const plantGeometries:
-      THREE.BufferGeometry[] =
-      [];
-
-    for (
-      let index = 0;
-      index < 7;
-      index++
-    ) {
-      const height =
-        1.1 +
-        Math.random() * 1.5;
-
-      const geometry =
-        new THREE.CapsuleGeometry(
-          0.08,
-          height,
-          4,
-          8,
-        );
-
-      plantGeometries.push(
-        geometry,
-      );
-
-      const plant =
-        new THREE.Mesh(
-          geometry,
-          plantMaterial,
-        );
-
-      plant.position.set(
-        2.5 +
-        index * 0.35,
-
-        -tankHeight / 2 +
-        height / 2 +
-        0.25,
-
-        -0.8 +
-        Math.random() * 1.2,
-      );
-
-      plant.rotation.z =
-        (
-          Math.random() -
-          0.5
-        ) * 0.15;
-
-      scene.add(
-        plant,
-      );
-
-      plants.push(
-        plant,
-      );
-    }
-
-    /*
-     * Tank outline
-     */
-    const tankGeometry =
-      new THREE.BoxGeometry(
-        tankWidth,
-        tankHeight,
-        tankDepth,
-      );
-
-    const edges =
-      new THREE.EdgesGeometry(
-        tankGeometry,
-      );
-
-    const outlineMaterial =
+    const glassMaterial =
       new THREE.LineBasicMaterial({
-        color: 0xffffff,
+        color: 0xc9f7ff,
         transparent: true,
-        opacity: 0.3,
+        opacity: 0.045,
+        depthWrite: false,
       });
 
-    const outline =
+    const glassLines =
       new THREE.LineSegments(
-        edges,
-        outlineMaterial,
+        glassGeometry,
+        glassMaterial,
       );
 
     scene.add(
-      outline,
+      glassLines,
     );
 
     /*
@@ -1007,20 +923,8 @@ export function ThreeAquariumView({
         );
       }
 
-      /*
-       * Plants
-       */
-      plants.forEach(
-        (
-          plant,
-          index,
-        ) => {
-          plant.rotation.z =
-            Math.sin(
-              elapsed * 0.8 +
-              index,
-            ) * 0.05;
-        },
+      environment.update(
+        elapsed,
       );
 
       /*
@@ -1205,28 +1109,14 @@ export function ThreeAquariumView({
       foodGeometry.dispose();
       foodMaterial.dispose();
 
-      sandGeometry.dispose();
-      sandMaterial.dispose();
+      environment.destroy();
 
-      backGeometry.dispose();
-      backMaterial.dispose();
+      scene.remove(
+        glassLines,
+      );
 
-      rock1Geometry.dispose();
-      rock2Geometry.dispose();
-      rockMaterial.dispose();
-
-      for (
-        const geometry of
-        plantGeometries
-        ) {
-        geometry.dispose();
-      }
-
-      plantMaterial.dispose();
-
-      tankGeometry.dispose();
-      edges.dispose();
-      outlineMaterial.dispose();
+      glassGeometry.dispose();
+      glassMaterial.dispose();
 
       renderer.dispose();
 
