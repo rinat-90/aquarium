@@ -1,5 +1,10 @@
 import { useState } from 'react';
 
+import {
+  loadFish,
+  saveFish,
+} from './storage/fishStorage';
+
 // import { AquariumView } from './components/Aquarium/AquariumView';
 import { FishDrawingCanvas } from './components/FishDrawing/FishDrawingCanvas';
 
@@ -14,16 +19,30 @@ export type CreatedFish = {
 
 function App() {
   const [drawing, setDrawing] = useState(false);
-  const [fish, setFish] = useState<CreatedFish[]>([]);
+  const [fish, setFish] =
+    useState<CreatedFish[]>(
+      () => loadFish(),
+    );
 
-  const handleFishCreated = (image: string) => {
-    setFish((current) => [
-      ...current,
-      {
-        id: crypto.randomUUID(),
-        image,
+  const handleFishCreated = (
+    image: string,
+  ) => {
+    setFish(
+      (current) => {
+        const next = [
+          ...current,
+          {
+            id:
+              crypto.randomUUID(),
+            image,
+          },
+        ];
+
+        saveFish(next);
+
+        return next;
       },
-    ]);
+    );
 
     setDrawing(false);
   };

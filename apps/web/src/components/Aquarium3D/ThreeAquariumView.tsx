@@ -77,6 +77,10 @@ export function ThreeAquariumView({
   const addCreatedFish = async (
     created: CreatedFish,
   ) => {
+    /*
+     * Capture the exact scene + aquarium
+     * this load belongs to.
+     */
     const scene =
       sceneRef.current;
 
@@ -110,12 +114,22 @@ export function ThreeAquariumView({
       created.id,
     );
 
+    /*
+     * Add the fish to this exact
+     * simulation instance.
+     */
     const fish =
       aquarium.createFish(
         created.id,
       );
 
     try {
+      /*
+       * Texture loading is async.
+       *
+       * React may destroy/recreate the
+       * aquarium while this is waiting.
+       */
       const view =
         await createThreeFish(
           created.image,
@@ -127,9 +141,36 @@ export function ThreeAquariumView({
       const currentAquarium =
         aquariumRef.current;
 
+      /*
+       * If React recreated the aquarium
+       * while the texture was loading,
+       * this fish belongs to the old
+       * simulation.
+       *
+       * Destroy this render object and
+       * let the active aquarium create
+       * its own version.
+       */
       if (
         !currentScene ||
         !currentAquarium ||
+        currentScene !== scene ||
+        currentAquarium !== aquarium
+      ) {
+        view.destroy();
+
+        aquarium.removeFish(
+          created.id,
+        );
+
+        return;
+      }
+
+      /*
+       * Another async load may already
+       * have finished for this fish.
+       */
+      if (
         threeFishRef.current.has(
           created.id,
         )
@@ -149,7 +190,7 @@ export function ThreeAquariumView({
         fish.position.z,
       );
 
-      currentScene.add(
+      scene.add(
         view.group,
       );
 
@@ -169,9 +210,21 @@ export function ThreeAquariumView({
         error,
       );
     } finally {
-      loadingFishRef.current.delete(
-        created.id,
-      );
+      /*
+       * Only clear loading state if this
+       * aquarium is still active.
+       *
+       * Otherwise a newer aquarium may
+       * already be loading the same fish.
+       */
+      if (
+        aquariumRef.current ===
+        aquarium
+      ) {
+        loadingFishRef.current.delete(
+          created.id,
+        );
+      }
     }
   };
 
@@ -747,8 +800,14 @@ export function ThreeAquariumView({
       );
 
     /*
-     * Existing fish
+     * Existing persisted fish.
+     *
+     * Clear stale loading state left by
+     * a previous React lifecycle before
+     * starting the active aquarium.
      */
+    loadingFishRef.current.clear();
+
     for (
       const created of
       createdFishRef.current
