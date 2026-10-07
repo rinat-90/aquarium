@@ -10,12 +10,26 @@ export type AquariumOptions = {
   depth: number;
 };
 
+type FishPersonality = {
+  cruiseSpeed: number;
+  turnResponsiveness: number;
+  verticalRange: number;
+  depthRange: number;
+  foodExcitement: number;
+};
+
 export class Aquarium {
   private fish =
     new Map<string, Fish>();
 
   private food =
     new Map<string, Food>();
+
+  private personalities =
+    new Map<
+      string,
+      FishPersonality
+    >();
 
   constructor(
     private options: AquariumOptions,
@@ -86,6 +100,10 @@ export class Aquarium {
 
   removeFish(id: string) {
     this.fish.delete(id);
+
+    this.personalities.delete(
+      id,
+    );
   }
 
   getFish(): Fish[] {
@@ -393,6 +411,11 @@ export class Aquarium {
     fish: Fish,
     deltaTime: number,
   ) {
+    const personality =
+      this.getPersonality(
+        fish,
+      );
+
     if (
       fish.behavior ===
       'seeking-food' &&
@@ -435,8 +458,8 @@ export class Aquarium {
       );
 
     /*
-     * Pick a new wandering target
-     * before completely stopping.
+     * Pick a new wandering target before
+     * completely stopping.
      */
     if (
       fish.behavior ===
@@ -446,6 +469,7 @@ export class Aquarium {
       fish.target =
         this.createRandomTarget(
           fish.position,
+          personality,
         );
 
       distanceToTarget =
@@ -471,13 +495,9 @@ export class Aquarium {
         : targetDirection;
 
     /*
-  * Slight cruising variation prevents
-  * wandering fish from moving at one
-  * perfectly constant speed.
-  *
-  * This stays subtle so the movement
-  * feels calm rather than erratic.
-  */
+     * Small continuous speed variation keeps
+     * cruising from looking mechanical.
+     */
     const cruisingVariation =
       0.68 +
       Math.sin(
@@ -486,12 +506,19 @@ export class Aquarium {
       ) *
       0.08;
 
+    /*
+     * Personality affects both normal
+     * cruising speed and how strongly the
+     * fish reacts to food.
+     */
     let targetSpeed =
       fish.behavior ===
       'seeking-food'
-        ? fish.speed * 1.35
+        ? fish.speed *
+        personality.foodExcitement
         : fish.speed *
-        cruisingVariation;
+        cruisingVariation *
+        personality.cruiseSpeed;
 
     /*
      * Slow down when approaching food.
@@ -526,11 +553,18 @@ export class Aquarium {
         targetSpeed,
     };
 
+    /*
+     * Responsive fish make tighter turns.
+     * Calm fish make broader, slower turns.
+     */
     const steering =
-      fish.behavior ===
-      'seeking-food'
-        ? 2.8
-        : 1.45;
+      (
+        fish.behavior ===
+        'seeking-food'
+          ? 2.8
+          : 1.45
+      ) *
+      personality.turnResponsiveness;
 
     const steeringAmount =
       1 -
@@ -725,15 +759,15 @@ export class Aquarium {
     fish.targetFoodId =
       undefined;
 
-    /*
-     * Continue naturally from the fish's
-     * current location instead of choosing
-     * an unrelated point anywhere in the
-     * aquarium.
-     */
+    const personality =
+      this.getPersonality(
+        fish,
+      );
+
     fish.target =
       this.createRandomTarget(
         fish.position,
+        personality,
       );
   }
 
@@ -773,6 +807,7 @@ export class Aquarium {
 
   private createRandomTarget(
     from?: Vector3,
+    personality?: FishPersonality,
   ): Vector3 {
     const horizontalPadding = 1;
     const verticalPadding = 0.9;
@@ -822,17 +857,26 @@ export class Aquarium {
     }
 
     /*
-     * Fish usually travel noticeably
-     * horizontally instead of choosing a
-     * completely unrelated 3D point.
+     * Fish mainly cruise horizontally.
      */
     const horizontalDistance =
-      2.5 + Math.random() * 3.5;
+      2.5 +
+      Math.random() * 3.5;
 
     const horizontalDirection =
       Math.random() < 0.5
         ? -1
         : 1;
+
+    const verticalRange =
+      personality
+        ?.verticalRange ??
+      1;
+
+    const depthRange =
+      personality
+        ?.depthRange ??
+      1;
 
     return {
       x: Math.max(
@@ -845,17 +889,17 @@ export class Aquarium {
         ),
       ),
 
-      /*
-       * Smaller Y/Z changes produce
-       * natural cruising paths.
-       */
       y: Math.max(
         minY,
         Math.min(
           maxY,
           from.y +
-          (Math.random() - 0.5) *
-          2.2,
+          (
+            Math.random() -
+            0.5
+          ) *
+          2.2 *
+          verticalRange,
         ),
       ),
 
@@ -864,11 +908,166 @@ export class Aquarium {
         Math.min(
           maxZ,
           from.z +
-          (Math.random() - 0.5) *
-          1.8,
+          (
+            Math.random() -
+            0.5
+          ) *
+          1.8 *
+          depthRange,
         ),
       ),
     };
+  }
+
+  private getPersonality(
+    fish: Fish,
+  ): FishPersonality {
+    const existing =
+      this.personalities.get(
+        fish.id,
+      );
+
+    if (existing) {
+      return existing;
+    }
+
+    /*
+     * Generate deterministic pseudo-random
+     * traits from the fish ID.
+     *
+     * The same fish therefore keeps the same
+     * personality after a page refresh.
+     */
+    const seed =
+      this.hashString(
+        fish.id,
+      );
+
+    const random = (
+      offset: number,
+    ) =>
+      this.seededRandom(
+        seed + offset,
+      );
+
+    const personality: FishPersonality = {
+      /*
+       * Relaxed cruiser -> energetic cruiser.
+       */
+      cruiseSpeed:
+        0.82 +
+        random(11) * 0.3,
+
+      /*
+       * Wide lazy turns -> responsive turns.
+       */
+      turnResponsiveness:
+        0.85 +
+        random(23) * 0.4,
+
+      /*
+       * How much the fish explores vertically.
+       */
+      verticalRange:
+        0.65 +
+        random(37) * 0.6,
+
+      /*
+       * How much the fish explores tank depth.
+       */
+      depthRange:
+        0.65 +
+        random(51) * 0.6,
+
+      /*
+       * How strongly it speeds up for food.
+       */
+      foodExcitement:
+        1.15 +
+        random(67) * 0.35,
+    };
+
+    this.personalities.set(
+      fish.id,
+      personality,
+    );
+
+    return personality;
+  }
+
+  private hashString(
+    value: string,
+  ): number {
+    let hash = 2166136261;
+
+    for (
+      let index = 0;
+      index < value.length;
+      index += 1
+    ) {
+      hash ^=
+        value.charCodeAt(
+          index,
+        );
+
+      hash =
+        Math.imul(
+          hash,
+          16777619,
+        );
+    }
+
+    return hash >>> 0;
+  }
+
+  private seededRandom(
+    seed: number,
+  ): number {
+    let value =
+      seed + 0x6d2b79f5;
+
+    value =
+      Math.imul(
+        value ^
+        (value >>> 15),
+        value | 1,
+      );
+
+    value ^=
+      value +
+      Math.imul(
+        value ^
+        (value >>> 7),
+        value | 61,
+      );
+
+    return (
+      (
+        value ^
+        (value >>> 14)
+      ) >>>
+      0
+    ) / 4294967296;
+  }
+
+  private distance(
+    a: Vector3,
+    b: Vector3,
+  ) {
+    const dx =
+      a.x - b.x;
+
+    const dy =
+      a.y - b.y;
+
+    const dz =
+      a.z - b.z;
+
+    return Math.sqrt(
+      dx * dx +
+      dy * dy +
+      dz * dz,
+    );
   }
 
   private directionTo(
@@ -892,34 +1091,9 @@ export class Aquarium {
       ) || 1;
 
     return {
-      x:
-        dx / length,
-
-      y:
-        dy / length,
-
-      z:
-        dz / length,
+      x: dx / length,
+      y: dy / length,
+      z: dz / length,
     };
-  }
-
-  private distance(
-    a: Vector3,
-    b: Vector3,
-  ) {
-    const dx =
-      a.x - b.x;
-
-    const dy =
-      a.y - b.y;
-
-    const dz =
-      a.z - b.z;
-
-    return Math.sqrt(
-      dx * dx +
-      dy * dy +
-      dz * dz,
-    );
   }
 }
