@@ -5,6 +5,10 @@ import {
 
 import * as THREE from 'three';
 
+import {
+  Aquarium,
+} from '@aquarium/aquarium-engine';
+
 import type {
   CreatedFish,
 } from '../../App';
@@ -18,6 +22,10 @@ type ThreeAquariumViewProps = {
   createdFish: CreatedFish[];
 };
 
+type RenderedFish = {
+  view: ThreeFish;
+};
+
 export function ThreeAquariumView({
                                     createdFish,
                                   }: ThreeAquariumViewProps) {
@@ -29,11 +37,16 @@ export function ThreeAquariumView({
       null,
     );
 
+  const aquariumRef =
+    useRef<Aquarium | null>(
+      null,
+    );
+
   const threeFishRef =
     useRef(
       new Map<
         string,
-        ThreeFish
+        RenderedFish
       >(),
     );
 
@@ -45,26 +58,13 @@ export function ThreeAquariumView({
   const createdFishRef =
     useRef(createdFish);
 
-  useEffect(() => {
-    createdFishRef.current =
-      createdFish;
-
-    const scene =
-      sceneRef.current;
-
-    if (!scene) {
-      return;
-    }
-
-    for (
-      const created of
-      createdFish
-      ) {
-      void addCreatedFish(
-        created,
-      );
-    }
-  }, [createdFish]);
+  const foodMeshesRef =
+    useRef(
+      new Map<
+        string,
+        THREE.Mesh
+      >(),
+    );
 
   const addCreatedFish = async (
     created: CreatedFish,
@@ -72,7 +72,13 @@ export function ThreeAquariumView({
     const scene =
       sceneRef.current;
 
-    if (!scene) {
+    const aquarium =
+      aquariumRef.current;
+
+    if (
+      !scene ||
+      !aquarium
+    ) {
       return;
     }
 
@@ -96,8 +102,13 @@ export function ThreeAquariumView({
       created.id,
     );
 
+    const fish =
+      aquarium.createFish(
+        created.id,
+      );
+
     try {
-      const threeFish =
+      const view =
         await createThreeFish(
           created.image,
         );
@@ -105,42 +116,46 @@ export function ThreeAquariumView({
       const currentScene =
         sceneRef.current;
 
+      const currentAquarium =
+        aquariumRef.current;
+
       if (
         !currentScene ||
+        !currentAquarium ||
         threeFishRef.current.has(
           created.id,
         )
       ) {
-        threeFish.destroy();
+        view.destroy();
+
+        aquarium.removeFish(
+          created.id,
+        );
+
         return;
       }
 
-      threeFish.group.position.set(
-        (
-          Math.random() -
-          0.5
-        ) * 6,
-
-        (
-          Math.random() -
-          0.5
-        ) * 3,
-
-        (
-          Math.random() -
-          0.5
-        ) * 1.5,
+      view.group.position.set(
+        fish.position.x,
+        fish.position.y,
+        fish.position.z,
       );
 
       currentScene.add(
-        threeFish.group,
+        view.group,
       );
 
       threeFishRef.current.set(
         created.id,
-        threeFish,
+        {
+          view,
+        },
       );
     } catch (error) {
+      aquarium.removeFish(
+        created.id,
+      );
+
       console.error(
         'Failed to create 3D fish:',
         error,
@@ -153,6 +168,27 @@ export function ThreeAquariumView({
   };
 
   useEffect(() => {
+    createdFishRef.current =
+      createdFish;
+
+    if (
+      !sceneRef.current ||
+      !aquariumRef.current
+    ) {
+      return;
+    }
+
+    for (
+      const created of
+      createdFish
+      ) {
+      void addCreatedFish(
+        created,
+      );
+    }
+  }, [createdFish]);
+
+  useEffect(() => {
     const container =
       containerRef.current;
 
@@ -161,6 +197,26 @@ export function ThreeAquariumView({
     }
 
     let cancelled = false;
+
+    /*
+     * Aquarium dimensions
+     */
+    const tankWidth = 10;
+    const tankHeight = 6;
+    const tankDepth = 4;
+
+    /*
+     * Simulation
+     */
+    const aquarium =
+      new Aquarium({
+        width: tankWidth,
+        height: tankHeight,
+        depth: tankDepth,
+      });
+
+    aquariumRef.current =
+      aquarium;
 
     /*
      * Scene
@@ -263,11 +319,20 @@ export function ThreeAquariumView({
     );
 
     /*
-     * Aquarium dimensions
+     * Shared food rendering resources.
      */
-    const tankWidth = 10;
-    const tankHeight = 6;
-    const tankDepth = 4;
+    const foodGeometry =
+      new THREE.SphereGeometry(
+        0.09,
+        10,
+        10,
+      );
+
+    const foodMaterial =
+      new THREE.MeshStandardMaterial({
+        color: 0x7c3f00,
+        roughness: 0.9,
+      });
 
     /*
      * Sand
@@ -495,9 +560,164 @@ export function ThreeAquariumView({
     );
 
     /*
-     * Load any fish that already
-     * existed before the Three.js
-     * scene initialized.
+     * Feeding
+     *
+     * Convert pointer coordinates into
+     * a ray going through the aquarium.
+     */
+    const raycaster =
+      new THREE.Raycaster();
+
+    const pointer =
+      new THREE.Vector2();
+
+    /*
+     * Intersect the pointer ray with
+     * the middle of the tank.
+     *
+     * We then give the food a random Z
+     * position so the fish must move
+     * through real depth to reach it.
+     */
+    const feedingPlane =
+      new THREE.Plane(
+        new THREE.Vector3(
+          0,
+          0,
+          1,
+        ),
+        0,
+      );
+
+    const intersection =
+      new THREE.Vector3();
+
+    const handlePointerDown = (
+      event: PointerEvent,
+    ) => {
+      const rect =
+        renderer.domElement
+          .getBoundingClientRect();
+
+      if (
+        rect.width === 0 ||
+        rect.height === 0
+      ) {
+        return;
+      }
+
+      pointer.x =
+        (
+          (
+            event.clientX -
+            rect.left
+          ) /
+          rect.width
+        ) *
+        2 -
+        1;
+
+      pointer.y =
+        -(
+          (
+            event.clientY -
+            rect.top
+          ) /
+          rect.height
+        ) *
+        2 +
+        1;
+
+      raycaster.setFromCamera(
+        pointer,
+        camera,
+      );
+
+      const hit =
+        raycaster.ray.intersectPlane(
+          feedingPlane,
+          intersection,
+        );
+
+      if (!hit) {
+        return;
+      }
+
+      const x =
+        THREE.MathUtils.clamp(
+          intersection.x,
+          -tankWidth / 2 +
+          0.5,
+          tankWidth / 2 -
+          0.5,
+        );
+
+      const y =
+        THREE.MathUtils.clamp(
+          intersection.y,
+          -tankHeight / 2 +
+          0.5,
+          tankHeight / 2 -
+          0.5,
+        );
+
+      /*
+       * Random depth gives each pellet
+       * a genuine 3D position.
+       */
+      const z =
+        (
+          Math.random() -
+          0.5
+        ) *
+        (
+          tankDepth -
+          1
+        );
+
+      const id =
+        crypto.randomUUID();
+
+      aquarium.addFood({
+        id,
+
+        position: {
+          x,
+          y,
+          z,
+        },
+      });
+
+      const pellet =
+        new THREE.Mesh(
+          foodGeometry,
+          foodMaterial,
+        );
+
+      pellet.position.set(
+        x,
+        y,
+        z,
+      );
+
+      scene.add(
+        pellet,
+      );
+
+      foodMeshesRef.current.set(
+        id,
+        pellet,
+      );
+    };
+
+    renderer.domElement
+      .addEventListener(
+        'pointerdown',
+        handlePointerDown,
+      );
+
+    /*
+     * Existing fish
      */
     for (
       const created of
@@ -526,11 +746,89 @@ export function ThreeAquariumView({
           animate,
         );
 
+      const deltaTime =
+        Math.min(
+          clock.getDelta(),
+          0.05,
+        );
+
       const elapsed =
-        clock.getElapsedTime();
+        clock.elapsedTime;
 
       /*
-       * Gentle plant movement.
+       * Update the real 3D simulation.
+       */
+      aquarium.update(
+        deltaTime,
+      );
+
+      /*
+       * Synchronize food.
+       */
+      const existingFoodIds =
+        new Set<string>();
+
+      for (
+        const food of
+        aquarium.getFood()
+        ) {
+        existingFoodIds.add(
+          food.id,
+        );
+
+        const pellet =
+          foodMeshesRef.current.get(
+            food.id,
+          );
+
+        if (!pellet) {
+          continue;
+        }
+
+        pellet.position.set(
+          food.position.x,
+          food.position.y,
+          food.position.z,
+        );
+
+        pellet.rotation.x +=
+          deltaTime * 0.8;
+
+        pellet.rotation.y +=
+          deltaTime * 1.1;
+      }
+
+      /*
+       * Food disappears from the
+       * simulation after it is eaten.
+       * Remove its Three.js object too.
+       */
+      for (
+        const [
+          id,
+          pellet,
+        ] of
+        foodMeshesRef.current
+        ) {
+        if (
+          existingFoodIds.has(
+            id,
+          )
+        ) {
+          continue;
+        }
+
+        scene.remove(
+          pellet,
+        );
+
+        foodMeshesRef.current.delete(
+          id,
+        );
+      }
+
+      /*
+       * Plants
        */
       plants.forEach(
         (
@@ -546,20 +844,83 @@ export function ThreeAquariumView({
       );
 
       /*
-       * Animate the actual body of
-       * every drawn fish.
-       *
-       * Movement through the aquarium
-       * comes in the next step.
+       * Synchronize rendered fish with
+       * the real 3D simulation.
        */
       for (
         const fish of
-        threeFishRef.current.values()
+        aquarium.getFish()
         ) {
-        fish.update(
-          elapsed * 5,
-          1,
-          'right',
+        const rendered =
+          threeFishRef.current.get(
+            fish.id,
+          );
+
+        if (!rendered) {
+          continue;
+        }
+
+        const {
+          view,
+        } = rendered;
+
+        view.group.position.set(
+          fish.position.x,
+          fish.position.y,
+          fish.position.z,
+        );
+
+        const velocityMagnitude =
+          Math.sqrt(
+            fish.velocity.x *
+            fish.velocity.x +
+            fish.velocity.y *
+            fish.velocity.y +
+            fish.velocity.z *
+            fish.velocity.z,
+          );
+
+        const speedRatio =
+          fish.speed > 0
+            ? velocityMagnitude /
+            fish.speed
+            : 1;
+
+        /*
+         * Vertical movement tilts the
+         * complete fish slightly.
+         */
+        const verticalTilt =
+          Math.max(
+            -0.25,
+            Math.min(
+              0.25,
+              fish.velocity.y *
+              0.18,
+            ),
+          );
+
+        view.group.rotation.z =
+          verticalTilt;
+
+        /*
+         * ThreeFish handles Z movement
+         * visually while keeping the
+         * original drawing readable.
+         */
+        view.update(
+          elapsed *
+          (
+            3.5 +
+            speedRatio * 2
+          ),
+
+          0.55 +
+          speedRatio * 0.45,
+
+          fish.direction,
+
+          fish.velocity.z,
         );
       }
 
@@ -619,19 +980,47 @@ export function ThreeAquariumView({
         handleResize,
       );
 
+      renderer.domElement
+        .removeEventListener(
+          'pointerdown',
+          handlePointerDown,
+        );
+
       sceneRef.current =
         null;
 
+      aquariumRef.current =
+        null;
+
       for (
-        const fish of
+        const rendered of
         threeFishRef.current.values()
         ) {
-        fish.destroy();
+        rendered.view.destroy();
       }
 
       threeFishRef.current.clear();
 
       loadingFishRef.current.clear();
+
+      /*
+       * Food meshes share geometry and
+       * material, so remove meshes first
+       * and dispose shared resources once.
+       */
+      for (
+        const pellet of
+        foodMeshesRef.current.values()
+        ) {
+        scene.remove(
+          pellet,
+        );
+      }
+
+      foodMeshesRef.current.clear();
+
+      foodGeometry.dispose();
+      foodMaterial.dispose();
 
       sandGeometry.dispose();
       sandMaterial.dispose();

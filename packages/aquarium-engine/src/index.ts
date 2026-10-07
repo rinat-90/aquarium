@@ -1,12 +1,13 @@
 import type {
   Fish,
   Food,
-  Vector2,
+  Vector3,
 } from '@aquarium/types';
 
 export type AquariumOptions = {
   width: number;
   height: number;
+  depth: number;
 };
 
 export class Aquarium {
@@ -29,26 +30,11 @@ export class Aquarium {
 
   createFish(id: string): Fish {
     const speed =
-      50 +
-      Math.random() * 70;
+      0.7 +
+      Math.random() * 0.7;
 
-    const position: Vector2 = {
-      x:
-        80 +
-        Math.random() *
-        Math.max(
-          0,
-          this.options.width - 160,
-        ),
-
-      y:
-        80 +
-        Math.random() *
-        Math.max(
-          0,
-          this.options.height - 160,
-        ),
-    };
+    const position =
+      this.createRandomPosition();
 
     const target =
       this.createRandomTarget();
@@ -75,6 +61,10 @@ export class Aquarium {
 
         y:
           direction.y *
+          initialSpeed,
+
+        z:
+          direction.z *
           initialSpeed,
       },
 
@@ -119,7 +109,7 @@ export class Aquarium {
 
         sinkSpeed:
           food.sinkSpeed ??
-          18,
+          0.35,
       },
     );
   }
@@ -131,10 +121,6 @@ export class Aquarium {
   }
 
   update(deltaTime: number) {
-    /**
-     * Avoid giant movement jumps if
-     * the browser tab stalls briefly.
-     */
     const safeDeltaTime =
       Math.min(
         deltaTime,
@@ -161,20 +147,20 @@ export class Aquarium {
   private updateFood(
     deltaTime: number,
   ) {
-    const bottomPadding = 70;
-
     const bottom =
-      this.options.height -
-      bottomPadding;
+      -this.options.height /
+      2 +
+      0.8;
 
     for (
       const food of
       this.food.values()
       ) {
       food.position.y =
-        Math.min(
+        Math.max(
           bottom,
-          food.position.y +
+
+          food.position.y -
           food.sinkSpeed *
           deltaTime,
         );
@@ -185,9 +171,8 @@ export class Aquarium {
     const claimedFood =
       new Set<string>();
 
-    /**
-     * Preserve valid existing food
-     * assignments first.
+    /*
+     * Preserve existing assignments.
      */
     for (
       const fish of
@@ -229,9 +214,8 @@ export class Aquarium {
       };
     }
 
-    /**
-     * Give unassigned fish the nearest
-     * currently unclaimed pellet.
+    /*
+     * Assign nearest available food.
      */
     for (
       const fish of
@@ -304,10 +288,6 @@ export class Aquarium {
     fish: Fish,
     deltaTime: number,
   ) {
-    /**
-     * Keep a food target synced with
-     * the sinking pellet.
-     */
     if (
       fish.behavior ===
       'seeking-food' &&
@@ -327,14 +307,11 @@ export class Aquarium {
           ...food.position,
         };
 
-        const distanceToFood =
+        if (
           this.distance(
             fish.position,
             food.position,
-          );
-
-        if (
-          distanceToFood < 20
+          ) < 0.4
         ) {
           this.eatFood(
             fish,
@@ -352,16 +329,14 @@ export class Aquarium {
         fish.target,
       );
 
-    /**
-     * Wandering fish choose a new
-     * destination before reaching the
-     * exact target. This prevents them
-     * from stopping sharply.
+    /*
+     * Pick a new wandering target
+     * before completely stopping.
      */
     if (
       fish.behavior ===
       'wandering' &&
-      distanceToTarget < 45
+      distanceToTarget < 0.55
     ) {
       fish.target =
         this.createRandomTarget();
@@ -379,40 +354,32 @@ export class Aquarium {
         fish.target,
       );
 
-    /**
-     * Fish cruise while wandering and
-     * accelerate when food appears.
-     */
     let targetSpeed =
       fish.behavior ===
       'seeking-food'
-        ? fish.speed * 1.3
+        ? fish.speed * 1.35
         : fish.speed * 0.72;
 
-    /**
-     * Slow down as we approach food.
-     *
-     * This makes eating look more like
-     * an approach instead of the fish
-     * shooting through the pellet.
+    /*
+     * Slow down when approaching food.
      */
     if (
       fish.behavior ===
       'seeking-food' &&
-      distanceToTarget < 100
+      distanceToTarget < 1.2
     ) {
       const approachFactor =
         Math.max(
-          0.35,
+          0.55,
           distanceToTarget /
-          100,
+          1.2,
         );
 
       targetSpeed *=
         approachFactor;
     }
 
-    const desiredVelocity: Vector2 = {
+    const desiredVelocity: Vector3 = {
       x:
         desiredDirection.x *
         targetSpeed,
@@ -420,24 +387,18 @@ export class Aquarium {
       y:
         desiredDirection.y *
         targetSpeed,
+
+      z:
+        desiredDirection.z *
+        targetSpeed,
     };
 
-    /**
-     * Seeking food gets slightly more
-     * responsive steering.
-     */
     const steering =
       fish.behavior ===
       'seeking-food'
         ? 2.8
         : 1.45;
 
-    /**
-     * Exponential interpolation makes
-     * steering independent of frame
-     * rate and smoother than a direct
-     * linear multiplier.
-     */
     const steeringAmount =
       1 -
       Math.exp(
@@ -459,6 +420,13 @@ export class Aquarium {
       ) *
       steeringAmount;
 
+    fish.velocity.z +=
+      (
+        desiredVelocity.z -
+        fish.velocity.z
+      ) *
+      steeringAmount;
+
     fish.position.x +=
       fish.velocity.x *
       deltaTime;
@@ -467,18 +435,18 @@ export class Aquarium {
       fish.velocity.y *
       deltaTime;
 
+    fish.position.z +=
+      fish.velocity.z *
+      deltaTime;
+
     this.keepFishInsideAquarium(
       fish,
     );
 
-    /**
-     * Don't flip direction because of
-     * tiny horizontal velocity changes.
-     */
     if (
       Math.abs(
         fish.velocity.x,
-      ) > 8
+      ) > 0.08
     ) {
       fish.direction =
         fish.velocity.x >= 0
@@ -490,29 +458,44 @@ export class Aquarium {
   private keepFishInsideAquarium(
     fish: Fish,
   ) {
-    const horizontalPadding = 45;
-    const topPadding = 45;
-    const bottomPadding = 105;
+    const horizontalPadding =
+      0.7;
+
+    const verticalPadding =
+      0.7;
+
+    const depthPadding =
+      0.45;
 
     const minX =
+      -this.options.width /
+      2 +
       horizontalPadding;
 
     const maxX =
-      Math.max(
-        minX,
-        this.options.width -
-        horizontalPadding,
-      );
+      this.options.width /
+      2 -
+      horizontalPadding;
 
     const minY =
-      topPadding;
+      -this.options.height /
+      2 +
+      verticalPadding;
 
     const maxY =
-      Math.max(
-        minY,
-        this.options.height -
-        bottomPadding,
-      );
+      this.options.height /
+      2 -
+      verticalPadding;
+
+    const minZ =
+      -this.options.depth /
+      2 +
+      depthPadding;
+
+    const maxZ =
+      this.options.depth /
+      2 -
+      depthPadding;
 
     if (
       fish.position.x < minX
@@ -561,6 +544,30 @@ export class Aquarium {
           fish.velocity.y,
         );
     }
+
+    if (
+      fish.position.z < minZ
+    ) {
+      fish.position.z =
+        minZ;
+
+      fish.velocity.z =
+        Math.abs(
+          fish.velocity.z,
+        );
+    }
+
+    if (
+      fish.position.z > maxZ
+    ) {
+      fish.position.z =
+        maxZ;
+
+      fish.velocity.z =
+        -Math.abs(
+          fish.velocity.z,
+        );
+    }
   }
 
   private eatFood(
@@ -589,53 +596,104 @@ export class Aquarium {
       this.createRandomTarget();
   }
 
-  private createRandomTarget(): Vector2 {
-    const horizontalPadding =
-      80;
-
-    const topPadding =
-      80;
-
-    const bottomPadding =
-      120;
-
+  private createRandomPosition(): Vector3 {
     return {
       x:
-        horizontalPadding +
-        Math.random() *
-        Math.max(
-          0,
+        (
+          Math.random() -
+          0.5
+        ) *
+        (
           this.options.width -
-          horizontalPadding *
-          2,
+          2
         ),
 
       y:
-        topPadding +
-        Math.random() *
-        Math.max(
-          0,
+        (
+          Math.random() -
+          0.5
+        ) *
+        (
           this.options.height -
-          topPadding -
-          bottomPadding,
+          2
+        ),
+
+      z:
+        (
+          Math.random() -
+          0.5
+        ) *
+        (
+          this.options.depth -
+          1
+        ),
+    };
+  }
+
+  private createRandomTarget(): Vector3 {
+    const horizontalPadding =
+      0.8;
+
+    const verticalPadding =
+      0.8;
+
+    const depthPadding =
+      0.5;
+
+    return {
+      x:
+        -this.options.width /
+        2 +
+        horizontalPadding +
+        Math.random() *
+        (
+          this.options.width -
+          horizontalPadding *
+          2
+        ),
+
+      y:
+        -this.options.height /
+        2 +
+        verticalPadding +
+        Math.random() *
+        (
+          this.options.height -
+          verticalPadding *
+          2
+        ),
+
+      z:
+        -this.options.depth /
+        2 +
+        depthPadding +
+        Math.random() *
+        (
+          this.options.depth -
+          depthPadding *
+          2
         ),
     };
   }
 
   private directionTo(
-    from: Vector2,
-    to: Vector2,
-  ): Vector2 {
+    from: Vector3,
+    to: Vector3,
+  ): Vector3 {
     const dx =
       to.x - from.x;
 
     const dy =
       to.y - from.y;
 
+    const dz =
+      to.z - from.z;
+
     const length =
       Math.sqrt(
         dx * dx +
-        dy * dy,
+        dy * dy +
+        dz * dz,
       ) || 1;
 
     return {
@@ -644,12 +702,15 @@ export class Aquarium {
 
       y:
         dy / length,
+
+      z:
+        dz / length,
     };
   }
 
   private distance(
-    a: Vector2,
-    b: Vector2,
+    a: Vector3,
+    b: Vector3,
   ) {
     const dx =
       a.x - b.x;
@@ -657,9 +718,13 @@ export class Aquarium {
     const dy =
       a.y - b.y;
 
+    const dz =
+      a.z - b.z;
+
     return Math.sqrt(
       dx * dx +
-      dy * dy,
+      dy * dy +
+      dz * dz,
     );
   }
 }

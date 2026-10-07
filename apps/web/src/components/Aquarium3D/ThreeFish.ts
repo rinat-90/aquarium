@@ -2,13 +2,28 @@ import * as THREE from 'three';
 
 export type ThreeFish = {
   group: THREE.Group;
+
   update: (
     elapsed: number,
     intensity: number,
     direction: 'left' | 'right',
+    depthVelocity?: number,
   ) => void;
+
   destroy: () => void;
 };
+
+type FishSegment = {
+  mesh: THREE.Mesh<
+    THREE.PlaneGeometry,
+    THREE.MeshBasicMaterial
+  >;
+
+  normalizedX: number;
+  baseX: number;
+};
+
+const SEGMENT_COUNT = 12;
 
 export async function createThreeFish(
   image: string,
@@ -41,40 +56,49 @@ export async function createThreeFish(
   const height =
     width / aspect;
 
+  /*
+   * Root controls world position,
+   * vertical tilt and direction.
+   */
   const group =
     new THREE.Group();
 
-  /**
-   * We split the drawing into vertical
-   * pieces just like the Pixi version.
+  /*
+   * Body controls the subtle visual
+   * turn toward/away from the camera.
    *
-   * Later we can replace this with a
-   * shader/mesh deformation without
-   * changing the aquarium engine.
+   * Keeping this separate from the
+   * root makes it much easier to
+   * preserve the readable drawing.
    */
-  const segmentCount = 12;
+  const body =
+    new THREE.Group();
+
+  group.add(body);
 
   const segmentWidth =
     width /
-    segmentCount;
+    SEGMENT_COUNT;
 
-  const segments: {
-    mesh: THREE.Mesh;
-    normalizedX: number;
-  }[] = [];
+  const segments:
+    FishSegment[] = [];
 
   for (
     let index = 0;
-    index < segmentCount;
+    index < SEGMENT_COUNT;
     index++
   ) {
     const normalizedX =
       index /
-      (segmentCount - 1);
+      (SEGMENT_COUNT - 1);
 
+    /*
+     * Slight overlap prevents tiny
+     * seams between the slices.
+     */
     const geometry =
       new THREE.PlaneGeometry(
-        segmentWidth * 1.02,
+        segmentWidth * 1.03,
         height,
       );
 
@@ -84,23 +108,33 @@ export async function createThreeFish(
     segmentTexture.needsUpdate =
       true;
 
+    segmentTexture.wrapS =
+      THREE.ClampToEdgeWrapping;
+
+    segmentTexture.wrapT =
+      THREE.ClampToEdgeWrapping;
+
     segmentTexture.repeat.set(
-      1 / segmentCount,
+      1 / SEGMENT_COUNT,
       1,
     );
 
     segmentTexture.offset.set(
-      index / segmentCount,
+      index / SEGMENT_COUNT,
       0,
     );
 
     const material =
       new THREE.MeshBasicMaterial({
         map: segmentTexture,
+
         transparent: true,
+
         alphaTest: 0.02,
+
         side:
         THREE.DoubleSide,
+
         depthWrite: false,
       });
 
@@ -110,17 +144,23 @@ export async function createThreeFish(
         material,
       );
 
-    mesh.position.x =
+    const baseX =
       -width / 2 +
       segmentWidth / 2 +
       index *
       segmentWidth;
 
-    group.add(mesh);
+    mesh.position.x =
+      baseX;
+
+    body.add(
+      mesh,
+    );
 
     segments.push({
       mesh,
       normalizedX,
+      baseX,
     });
   }
 
@@ -130,6 +170,7 @@ export async function createThreeFish(
     direction:
       | 'left'
       | 'right',
+    depthVelocity = 0,
   ) => {
     const clampedIntensity =
       Math.max(
@@ -140,47 +181,107 @@ export async function createThreeFish(
         ),
       );
 
+    /*
+     * The drawing itself only turns a
+     * little in depth.
+     *
+     * This communicates Z movement
+     * without ever showing the fish
+     * completely edge-on.
+     */
+    const depthTurn =
+      THREE.MathUtils.clamp(
+        depthVelocity * 0.22,
+        -0.22,
+        0.22,
+      );
+
+    body.rotation.y +=
+      (
+        depthTurn -
+        body.rotation.y
+      ) * 0.08;
+
     for (
       const segment of
       segments
       ) {
-      /**
-       * Drawing faces right:
-       *
-       * tail ---------> head
-       *  0               1
+      /*
+       * The original drawing faces
+       * right, so the left side is
+       * always considered the tail.
        */
       const tailAmount =
         1 -
         segment.normalizedX;
 
+      /*
+       * A travelling wave through the
+       * body. Head moves very little,
+       * tail moves the most.
+       */
       const wave =
         Math.sin(
           elapsed -
-          tailAmount * 2.4,
+          tailAmount * 2.5,
         );
 
-      /**
-       * This time the body deformation
-       * can happen in actual depth.
+      const bendStrength =
+        tailAmount *
+        clampedIntensity;
+
+      /*
+       * Bend through actual Z depth.
        */
       segment.mesh.position.z =
         wave *
-        tailAmount *
-        0.12 *
-        clampedIntensity;
+        bendStrength *
+        0.13;
 
+      /*
+       * Small vertical component keeps
+       * the motion organic without
+       * distorting the drawing heavily.
+       */
+      segment.mesh.position.y =
+        wave *
+        bendStrength *
+        0.018;
+
+      /*
+       * Each slice rotates slightly to
+       * create the appearance of a
+       * curved body.
+       */
       segment.mesh.rotation.y =
         wave *
-        tailAmount *
-        0.18 *
-        clampedIntensity;
+        bendStrength *
+        0.2;
+
+      segment.mesh.rotation.z =
+        wave *
+        bendStrength *
+        0.012;
+
+      /*
+       * Keep original X positions.
+       */
+      segment.mesh.position.x =
+        segment.baseX;
     }
 
-    group.scale.x =
+    /*
+     * Direction is handled at the root
+     * so the body/tail relationship
+     * never changes.
+     */
+    const desiredScaleX =
       direction === 'right'
         ? 1
         : -1;
+
+    group.scale.x =
+      desiredScaleX;
   };
 
   const destroy = () => {
@@ -190,16 +291,11 @@ export async function createThreeFish(
       ) {
       segment.mesh.geometry.dispose();
 
-      const material =
-        segment.mesh.material;
+      segment.mesh.material
+        .map
+        ?.dispose();
 
-      if (
-        material instanceof
-        THREE.MeshBasicMaterial
-      ) {
-        material.map?.dispose();
-        material.dispose();
-      }
+      segment.mesh.material.dispose();
     }
 
     texture.dispose();
