@@ -29,7 +29,8 @@ export class Aquarium {
 
   createFish(id: string): Fish {
     const speed =
-      50 + Math.random() * 70;
+      50 +
+      Math.random() * 70;
 
     const position: Vector2 = {
       x:
@@ -52,17 +53,14 @@ export class Aquarium {
     const target =
       this.createRandomTarget();
 
-    const dx =
-      target.x - position.x;
+    const direction =
+      this.directionTo(
+        position,
+        target,
+      );
 
-    const dy =
-      target.y - position.y;
-
-    const length =
-      Math.sqrt(
-        dx * dx +
-        dy * dy,
-      ) || 1;
+    const initialSpeed =
+      speed * 0.65;
 
     const fish: Fish = {
       id,
@@ -72,18 +70,18 @@ export class Aquarium {
 
       velocity: {
         x:
-          (dx / length) *
-          speed,
+          direction.x *
+          initialSpeed,
 
         y:
-          (dy / length) *
-          speed,
+          direction.y *
+          initialSpeed,
       },
 
       speed,
 
       direction:
-        dx >= 0
+        direction.x >= 0
           ? 'right'
           : 'left',
 
@@ -133,8 +131,18 @@ export class Aquarium {
   }
 
   update(deltaTime: number) {
+    /**
+     * Avoid giant movement jumps if
+     * the browser tab stalls briefly.
+     */
+    const safeDeltaTime =
+      Math.min(
+        deltaTime,
+        0.05,
+      );
+
     this.updateFood(
-      deltaTime,
+      safeDeltaTime,
     );
 
     this.assignFoodTargets();
@@ -145,15 +153,11 @@ export class Aquarium {
       ) {
       this.updateFish(
         fish,
-        deltaTime,
+        safeDeltaTime,
       );
     }
   }
 
-  /**
-   * Food slowly falls through
-   * the aquarium.
-   */
   private updateFood(
     deltaTime: number,
   ) {
@@ -177,19 +181,12 @@ export class Aquarium {
     }
   }
 
-  /**
-   * Every fish selects its closest
-   * available pellet.
-   *
-   * A pellet can only be targeted by
-   * one fish at a time.
-   */
   private assignFoodTargets() {
     const claimedFood =
       new Set<string>();
 
     /**
-     * Preserve valid existing
+     * Preserve valid existing food
      * assignments first.
      */
     for (
@@ -207,15 +204,8 @@ export class Aquarium {
           fish.targetFoodId,
         );
 
-      if (!food) {
-        this.returnToWandering(
-          fish,
-        );
-
-        continue;
-      }
-
       if (
+        !food ||
         claimedFood.has(
           food.id,
         )
@@ -240,8 +230,8 @@ export class Aquarium {
     }
 
     /**
-     * Fish without food targets find
-     * the nearest unclaimed pellet.
+     * Give unassigned fish the nearest
+     * currently unclaimed pellet.
      */
     for (
       const fish of
@@ -314,6 +304,10 @@ export class Aquarium {
     fish: Fish,
     deltaTime: number,
   ) {
+    /**
+     * Keep a food target synced with
+     * the sinking pellet.
+     */
     if (
       fish.behavior ===
       'seeking-food' &&
@@ -346,78 +340,124 @@ export class Aquarium {
             fish,
             food,
           );
+
+          return;
         }
       }
     }
 
-    const distanceToTarget =
+    let distanceToTarget =
       this.distance(
         fish.position,
         fish.target,
       );
 
+    /**
+     * Wandering fish choose a new
+     * destination before reaching the
+     * exact target. This prevents them
+     * from stopping sharply.
+     */
     if (
       fish.behavior ===
       'wandering' &&
-      distanceToTarget < 30
+      distanceToTarget < 45
     ) {
       fish.target =
         this.createRandomTarget();
+
+      distanceToTarget =
+        this.distance(
+          fish.position,
+          fish.target,
+        );
     }
 
-    const dx =
-      fish.target.x -
-      fish.position.x;
-
-    const dy =
-      fish.target.y -
-      fish.position.y;
-
-    const length =
-      Math.sqrt(
-        dx * dx +
-        dy * dy,
+    const desiredDirection =
+      this.directionTo(
+        fish.position,
+        fish.target,
       );
 
-    if (length === 0) {
-      return;
+    /**
+     * Fish cruise while wandering and
+     * accelerate when food appears.
+     */
+    let targetSpeed =
+      fish.behavior ===
+      'seeking-food'
+        ? fish.speed * 1.3
+        : fish.speed * 0.72;
+
+    /**
+     * Slow down as we approach food.
+     *
+     * This makes eating look more like
+     * an approach instead of the fish
+     * shooting through the pellet.
+     */
+    if (
+      fish.behavior ===
+      'seeking-food' &&
+      distanceToTarget < 100
+    ) {
+      const approachFactor =
+        Math.max(
+          0.35,
+          distanceToTarget /
+          100,
+        );
+
+      targetSpeed *=
+        approachFactor;
     }
 
     const desiredVelocity: Vector2 = {
       x:
-        (dx / length) *
-        fish.speed,
+        desiredDirection.x *
+        targetSpeed,
 
       y:
-        (dy / length) *
-        fish.speed,
+        desiredDirection.y *
+        targetSpeed,
     };
 
     /**
-     * Fish react a little faster
-     * when food appears.
+     * Seeking food gets slightly more
+     * responsive steering.
      */
     const steering =
       fish.behavior ===
       'seeking-food'
-        ? 3
-        : 2;
+        ? 2.8
+        : 1.45;
+
+    /**
+     * Exponential interpolation makes
+     * steering independent of frame
+     * rate and smoother than a direct
+     * linear multiplier.
+     */
+    const steeringAmount =
+      1 -
+      Math.exp(
+        -steering *
+        deltaTime,
+      );
 
     fish.velocity.x +=
       (
         desiredVelocity.x -
         fish.velocity.x
       ) *
-      steering *
-      deltaTime;
+      steeringAmount;
 
     fish.velocity.y +=
       (
         desiredVelocity.y -
         fish.velocity.y
       ) *
-      steering *
-      deltaTime;
+      steeringAmount;
 
     fish.position.x +=
       fish.velocity.x *
@@ -427,15 +467,99 @@ export class Aquarium {
       fish.velocity.y *
       deltaTime;
 
+    this.keepFishInsideAquarium(
+      fish,
+    );
+
+    /**
+     * Don't flip direction because of
+     * tiny horizontal velocity changes.
+     */
     if (
       Math.abs(
         fish.velocity.x,
-      ) > 1
+      ) > 8
     ) {
       fish.direction =
         fish.velocity.x >= 0
           ? 'right'
           : 'left';
+    }
+  }
+
+  private keepFishInsideAquarium(
+    fish: Fish,
+  ) {
+    const horizontalPadding = 45;
+    const topPadding = 45;
+    const bottomPadding = 105;
+
+    const minX =
+      horizontalPadding;
+
+    const maxX =
+      Math.max(
+        minX,
+        this.options.width -
+        horizontalPadding,
+      );
+
+    const minY =
+      topPadding;
+
+    const maxY =
+      Math.max(
+        minY,
+        this.options.height -
+        bottomPadding,
+      );
+
+    if (
+      fish.position.x < minX
+    ) {
+      fish.position.x =
+        minX;
+
+      fish.velocity.x =
+        Math.abs(
+          fish.velocity.x,
+        );
+    }
+
+    if (
+      fish.position.x > maxX
+    ) {
+      fish.position.x =
+        maxX;
+
+      fish.velocity.x =
+        -Math.abs(
+          fish.velocity.x,
+        );
+    }
+
+    if (
+      fish.position.y < minY
+    ) {
+      fish.position.y =
+        minY;
+
+      fish.velocity.y =
+        Math.abs(
+          fish.velocity.y,
+        );
+    }
+
+    if (
+      fish.position.y > maxY
+    ) {
+      fish.position.y =
+        maxY;
+
+      fish.velocity.y =
+        -Math.abs(
+          fish.velocity.y,
+        );
     }
   }
 
@@ -472,9 +596,6 @@ export class Aquarium {
     const topPadding =
       80;
 
-    /**
-     * Keep fish mostly above the sand.
-     */
     const bottomPadding =
       120;
 
@@ -498,6 +619,31 @@ export class Aquarium {
           topPadding -
           bottomPadding,
         ),
+    };
+  }
+
+  private directionTo(
+    from: Vector2,
+    to: Vector2,
+  ): Vector2 {
+    const dx =
+      to.x - from.x;
+
+    const dy =
+      to.y - from.y;
+
+    const length =
+      Math.sqrt(
+        dx * dx +
+        dy * dy,
+      ) || 1;
+
+    return {
+      x:
+        dx / length,
+
+      y:
+        dy / length,
     };
   }
 
