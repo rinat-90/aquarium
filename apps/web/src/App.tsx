@@ -126,6 +126,26 @@ function App() {
     setSelectedFishId(null);
   };
 
+  const handleReleaseAllFish = () => {
+    if (fish.length === 0) {
+      return;
+    }
+
+    const confirmed =
+      window.confirm(
+        `Release all ${fish.length} fish from the aquarium? This can't be undone.`,
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setFish([]);
+    saveFish([]);
+
+    setSelectedFishId(null);
+  };
+
   return (
     <>
       <ThreeAquariumView
@@ -183,6 +203,49 @@ function App() {
             )
           }
         />
+      )}
+
+      {fish.length > 0 && (
+        <button
+          type="button"
+          onClick={
+            handleReleaseAllFish
+          }
+          style={{
+            position: 'fixed',
+
+            bottom: 30,
+            right: 30,
+
+            zIndex: 10,
+
+            padding:
+              '12px 18px',
+
+            border:
+              '2px solid rgba(255, 255, 255, 0.8)',
+
+            borderRadius: 30,
+
+            background:
+              'rgba(255, 255, 255, 0.9)',
+
+            color: '#c44747',
+
+            fontSize: 15,
+            fontWeight: 800,
+
+            cursor: 'pointer',
+
+            boxShadow:
+              '0 6px 20px rgba(0, 0, 0, 0.15)',
+
+            backdropFilter:
+              'blur(10px)',
+          }}
+        >
+          🌊 Release All
+        </button>
       )}
 
       {drawing && (
