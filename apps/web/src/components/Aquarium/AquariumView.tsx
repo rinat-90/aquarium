@@ -1,17 +1,37 @@
-import { useEffect, useRef } from 'react';
+import {
+  useEffect,
+  useRef,
+} from 'react';
+
 import {
   Application,
   Assets,
   Graphics,
-  Sprite,
   type Texture,
 } from 'pixi.js';
 
-import { Aquarium } from '@aquarium/aquarium-engine';
+import {
+  Aquarium,
+} from '@aquarium/aquarium-engine';
 
-import { createAquariumBackground } from './createAquariumBackground';
+import type {
+  CreatedFish,
+} from '../../App';
 
-import type { CreatedFish } from '../../App';
+import {
+  createAquariumBackground,
+} from './createAquariumBackground';
+
+import {
+  createAnimatedFish,
+  type AnimatedFish,
+} from './fish/AnimatedFish';
+
+import {
+  createFishAnimationState,
+  updateFishAnimation,
+  type FishAnimationState,
+} from './fish/FishAnimation';
 
 type AquariumViewProps = {
   createdFish: CreatedFish[];
@@ -29,8 +49,15 @@ export function AquariumView({
   const appRef =
     useRef<Application | null>(null);
 
-  const fishSpritesRef = useRef(
-    new Map<string, Sprite>(),
+  const animatedFishRef = useRef(
+    new Map<string, AnimatedFish>(),
+  );
+
+  const fishAnimationRef = useRef(
+    new Map<
+      string,
+      FishAnimationState
+    >(),
   );
 
   const foodGraphicsRef = useRef(
@@ -44,9 +71,6 @@ export function AquariumView({
   const createdFishRef =
     useRef(createdFish);
 
-  /**
-   * Load a user-created drawing into Pixi.
-   */
   const addCreatedFish = async (
     created: CreatedFish,
   ) => {
@@ -61,7 +85,7 @@ export function AquariumView({
     }
 
     if (
-      fishSpritesRef.current.has(
+      animatedFishRef.current.has(
         created.id,
       )
     ) {
@@ -102,36 +126,41 @@ export function AquariumView({
         return;
       }
 
-      const sprite =
-        new Sprite(texture);
+      const animatedFish =
+        createAnimatedFish(
+          texture,
+          160,
+          120,
+        );
 
-      sprite.anchor.set(0.5);
-
-      const maxWidth = 160;
-      const maxHeight = 120;
-
-      const scale = Math.min(
-        maxWidth / texture.width,
-        maxHeight / texture.height,
-      );
-
-      sprite.scale.set(scale);
-
-      sprite.position.set(
+      animatedFish.container.position.set(
         fish.position.x,
         fish.position.y,
       );
 
-      fishSpritesRef.current.set(
+      animatedFishRef.current.set(
         created.id,
-        sprite,
+        animatedFish,
+      );
+
+      fishAnimationRef.current.set(
+        created.id,
+        createFishAnimationState(),
       );
 
       app.stage.addChild(
-        sprite,
+        animatedFish.container,
       );
     } catch (error) {
       aquarium.removeFish(
+        created.id,
+      );
+
+      animatedFishRef.current.delete(
+        created.id,
+      );
+
+      fishAnimationRef.current.delete(
         created.id,
       );
 
@@ -146,9 +175,6 @@ export function AquariumView({
     }
   };
 
-  /**
-   * Drop food into the aquarium.
-   */
   const addFood = (
     x: number,
     y: number,
@@ -168,19 +194,23 @@ export function AquariumView({
 
     aquarium.addFood({
       id,
+
       position: {
         x,
         y,
       },
     });
 
-    /**
-     * Simple food pellet.
-     */
     const pellet =
       new Graphics()
-        .circle(0, 0, 7)
-        .fill('#7c3f00');
+        .circle(
+          0,
+          0,
+          7,
+        )
+        .fill(
+          '#7c3f00',
+        );
 
     pellet.position.set(
       x,
@@ -197,18 +227,11 @@ export function AquariumView({
     );
   };
 
-  /**
-   * Keep latest React fish available
-   * during Pixi initialization.
-   */
   useEffect(() => {
     createdFishRef.current =
       createdFish;
   }, [createdFish]);
 
-  /**
-   * Initialize Pixi.
-   */
   useEffect(() => {
     const container =
       containerRef.current;
@@ -241,9 +264,6 @@ export function AquariumView({
         app.canvas,
       );
 
-      /**
-       * Background.
-       */
       const background =
         createAquariumBackground(
           app.screen.width,
@@ -254,13 +274,13 @@ export function AquariumView({
         background.container,
       );
 
-      /**
-       * Engine.
-       */
       const aquarium =
         new Aquarium({
-          width: app.screen.width,
-          height: app.screen.height,
+          width:
+          app.screen.width,
+
+          height:
+          app.screen.height,
         });
 
       aquariumRef.current =
@@ -269,19 +289,12 @@ export function AquariumView({
       appRef.current =
         app;
 
-      /**
-       * Make the stage interactive.
-       */
       app.stage.eventMode =
         'static';
 
       app.stage.hitArea =
         app.screen;
 
-      /**
-       * Clicking/tapping the water
-       * drops food.
-       */
       app.stage.on(
         'pointerdown',
         (event) => {
@@ -295,9 +308,6 @@ export function AquariumView({
         },
       );
 
-      /**
-       * Add any fish that already exist.
-       */
       for (
         const created of
         createdFishRef.current
@@ -307,9 +317,6 @@ export function AquariumView({
         );
       }
 
-      /**
-       * Simulation loop.
-       */
       app.ticker.add(
         (ticker) => {
           const deltaTime =
@@ -325,38 +332,75 @@ export function AquariumView({
           );
 
           /**
-           * Update fish.
+           * Update and animate fish.
            */
           for (
             const fish of
             aquarium.getFish()
             ) {
-            const sprite =
-              fishSpritesRef.current.get(
+            const animatedFish =
+              animatedFishRef.current.get(
                 fish.id,
               );
 
-            if (!sprite) {
+            const animationState =
+              fishAnimationRef.current.get(
+                fish.id,
+              );
+
+            if (
+              !animatedFish ||
+              !animationState
+            ) {
               continue;
             }
 
-            sprite.position.set(
-              fish.position.x,
-              fish.position.y,
-            );
-
-            const absoluteScaleX =
-              Math.abs(
-                sprite.scale.x,
+            /**
+             * Calculate actual movement
+             * speed relative to the fish's
+             * normal speed.
+             */
+            const velocityMagnitude =
+              Math.sqrt(
+                fish.velocity.x *
+                fish.velocity.x +
+                fish.velocity.y *
+                fish.velocity.y,
               );
 
-            sprite.scale.x =
-              fish.direction ===
-              'right'
-                ? absoluteScaleX
-                : -absoluteScaleX;
+            const speedRatio =
+              fish.speed > 0
+                ? velocityMagnitude /
+                fish.speed
+                : 1;
 
-            sprite.rotation =
+            /**
+             * Update the overall swimming
+             * rhythm.
+             */
+            const animation =
+              updateFishAnimation(
+                animationState,
+                deltaTime,
+                speedRatio,
+              );
+
+            /**
+             * Follow the simulation
+             * position while adding a
+             * small natural drift.
+             */
+            animatedFish.container.position.set(
+              fish.position.x,
+              fish.position.y +
+              animation.yOffset,
+            );
+
+            /**
+             * Tilt the whole fish based
+             * on vertical movement.
+             */
+            const movementRotation =
               Math.max(
                 -0.2,
                 Math.min(
@@ -365,16 +409,28 @@ export function AquariumView({
                   500,
                 ),
               );
+
+            animatedFish.container.rotation =
+              movementRotation +
+              animation.rotation;
+
+            /**
+             * Deform the actual fish body.
+             *
+             * AnimatedFish controls the
+             * individual segments while
+             * FishAnimation controls the
+             * swimming rhythm/intensity.
+             */
+            animatedFish.update(
+              animationState.elapsed,
+              animation.swimIntensity,
+              fish.direction,
+            );
           }
 
           /**
-           * Remove eaten food from Pixi.
-           *
-           * The engine is the source of truth.
-           */
-
-          /**
-           * Render sinking food positions.
+           * Update sinking food positions.
            */
           for (
             const food of
@@ -395,6 +451,10 @@ export function AquariumView({
             );
           }
 
+          /**
+           * Remove food that has
+           * been eaten.
+           */
           const existingFood =
             new Set(
               aquarium
@@ -441,8 +501,19 @@ export function AquariumView({
       appRef.current =
         null;
 
-      fishSpritesRef.current.clear();
+      for (
+        const animatedFish of
+        animatedFishRef.current.values()
+        ) {
+        animatedFish.destroy();
+      }
+
+      animatedFishRef.current.clear();
+
+      fishAnimationRef.current.clear();
+
       foodGraphicsRef.current.clear();
+
       loadingFishRef.current.clear();
 
       if (initialized) {
@@ -451,9 +522,6 @@ export function AquariumView({
     };
   }, []);
 
-  /**
-   * Add new React fish to Pixi.
-   */
   useEffect(() => {
     createdFishRef.current =
       createdFish;
