@@ -144,6 +144,22 @@ export function ThreeAquariumView({
           created.image,
         );
 
+      const stillExists =
+        createdFishRef.current.some(
+          (fish) =>
+            fish.id === created.id,
+        );
+
+      if (!stillExists) {
+        view.destroy();
+
+        aquarium.removeFish(
+          created.id,
+        );
+
+        return;
+      }
+
       const currentScene =
         sceneRef.current;
 
@@ -256,13 +272,54 @@ export function ThreeAquariumView({
     createdFishRef.current =
       createdFish;
 
-    if (
-      !sceneRef.current ||
-      !aquariumRef.current
-    ) {
-      return;
+    const currentFishIds =
+      new Set(
+        createdFish.map(
+          (fish) => fish.id,
+        ),
+      );
+
+    /*
+     * REMOVE deleted fish
+     */
+    for (
+      const [
+        fishId,
+        renderedFish,
+      ] of
+      threeFishRef.current
+      ) {
+      if (
+        currentFishIds.has(
+          fishId,
+        )
+      ) {
+        continue;
+      }
+
+      sceneRef.current?.remove(
+        renderedFish.view.group,
+      );
+
+      renderedFish.view.destroy();
+
+      aquariumRef.current
+        ?.removeFish(
+          fishId,
+        );
+
+      threeFishRef.current.delete(
+        fishId,
+      );
+
+      loadingFishRef.current.delete(
+        fishId,
+      );
     }
 
+    /*
+     * ADD new fish
+     */
     for (
       const created of
       createdFish

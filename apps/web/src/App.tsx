@@ -105,6 +105,27 @@ function App() {
     });
   };
 
+  const handleReleaseFish = () => {
+    if (!selectedFishId) {
+      return;
+    }
+
+    setFish((current) => {
+      const next =
+        current.filter(
+          (item) =>
+            item.id !==
+            selectedFishId,
+        );
+
+      saveFish(next);
+
+      return next;
+    });
+
+    setSelectedFishId(null);
+  };
+
   return (
     <>
       <ThreeAquariumView
@@ -152,6 +173,9 @@ function App() {
           fish={selectedFish}
           onRename={
             handleRenameFish
+          }
+          onRelease={
+            handleReleaseFish
           }
           onClose={() =>
             setSelectedFishId(

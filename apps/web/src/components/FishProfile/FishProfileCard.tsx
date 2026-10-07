@@ -14,19 +14,28 @@ type FishProfileCardProps = {
     name: string,
   ) => void;
 
+  onRelease: () => void;
+
   onClose: () => void;
 };
 
 export function FishProfileCard({
                                   fish,
                                   onRename,
+                                  onRelease,
                                   onClose,
                                 }: FishProfileCardProps) {
   const [name, setName] =
     useState(fish.name);
 
+  const [
+    confirmingRelease,
+    setConfirmingRelease,
+  ] = useState(false);
+
   useEffect(() => {
     setName(fish.name);
+    setConfirmingRelease(false);
   }, [
     fish.id,
     fish.name,
@@ -266,10 +275,158 @@ export function FishProfileCard({
           fontWeight: 800,
 
           cursor: 'pointer',
+
+          opacity:
+            !name.trim() ||
+            name.trim() ===
+            fish.name
+              ? 0.5
+              : 1,
         }}
       >
         Save Name
       </button>
+
+      <div
+        style={{
+          height: 1,
+
+          margin:
+            '18px 0',
+
+          background:
+            '#e1edf1',
+        }}
+      />
+
+      {!confirmingRelease ? (
+        <button
+          type="button"
+          onClick={() =>
+            setConfirmingRelease(
+              true,
+            )
+          }
+          style={{
+            width: '100%',
+
+            padding:
+              '11px 16px',
+
+            border:
+              '2px solid #f0a0a0',
+
+            borderRadius: 12,
+
+            background:
+              'transparent',
+
+            color: '#c44747',
+
+            fontSize: 15,
+            fontWeight: 800,
+
+            cursor: 'pointer',
+          }}
+        >
+          🌊 Release Fish
+        </button>
+      ) : (
+        <div
+          style={{
+            padding: 12,
+
+            borderRadius: 14,
+
+            background:
+              '#fff1f1',
+          }}
+        >
+          <div
+            style={{
+              marginBottom: 10,
+
+              fontSize: 14,
+              fontWeight: 700,
+
+              lineHeight: 1.4,
+
+              textAlign:
+                'center',
+            }}
+          >
+            Release{' '}
+            {fish.name} from
+            your aquarium?
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              gap: 8,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() =>
+                setConfirmingRelease(
+                  false,
+                )
+              }
+              style={{
+                flex: 1,
+
+                padding:
+                  '10px 12px',
+
+                border: 0,
+
+                borderRadius: 10,
+
+                background:
+                  '#dcecef',
+
+                color:
+                  '#17324d',
+
+                fontWeight: 700,
+
+                cursor:
+                  'pointer',
+              }}
+            >
+              Keep
+            </button>
+
+            <button
+              type="button"
+              onClick={onRelease}
+              style={{
+                flex: 1,
+
+                padding:
+                  '10px 12px',
+
+                border: 0,
+
+                borderRadius: 10,
+
+                background:
+                  '#dc5b5b',
+
+                color: 'white',
+
+                fontWeight: 800,
+
+                cursor:
+                  'pointer',
+              }}
+            >
+              Release
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
