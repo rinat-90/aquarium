@@ -17,28 +17,49 @@ export function loadFish():
       return [];
     }
 
-    const parsed =
+    const parsed: unknown =
       JSON.parse(stored);
 
     if (!Array.isArray(parsed)) {
       return [];
     }
 
-    return parsed.filter(
-      (
-        fish,
-      ): fish is CreatedFish => {
-        return (
-          typeof fish ===
-          'object' &&
-          fish !== null &&
-          typeof fish.id ===
-          'string' &&
-          typeof fish.image ===
-          'string'
-        );
-      },
-    );
+    return parsed
+      .filter(
+        (
+          fish,
+        ): fish is {
+          id: string;
+          image: string;
+          name?: string;
+          createdAt?: string;
+        } => {
+          return (
+            typeof fish ===
+            'object' &&
+            fish !== null &&
+            typeof fish.id ===
+            'string' &&
+            typeof fish.image ===
+            'string'
+          );
+        },
+      )
+      .map(
+        (fish, index) => ({
+          id: fish.id,
+          image: fish.image,
+
+          name:
+            fish.name ??
+            `Fish ${index + 1}`,
+
+          createdAt:
+            fish.createdAt ??
+            new Date()
+              .toISOString(),
+        }),
+      );
   } catch (error) {
     console.error(
       'Failed to load fish:',

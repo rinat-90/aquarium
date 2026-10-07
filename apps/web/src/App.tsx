@@ -1,12 +1,19 @@
-import { useState } from 'react';
+import {
+  useState,
+} from 'react';
 
 import {
   loadFish,
   saveFish,
 } from './storage/fishStorage';
 
-// import { AquariumView } from './components/Aquarium/AquariumView';
-import { FishDrawingCanvas } from './components/FishDrawing/FishDrawingCanvas';
+import {
+  FishDrawingCanvas,
+} from './components/FishDrawing/FishDrawingCanvas';
+
+import {
+  FishProfileCard,
+} from './components/FishProfile/FishProfileCard';
 
 import {
   ThreeAquariumView,
@@ -15,64 +22,153 @@ import {
 export type CreatedFish = {
   id: string;
   image: string;
+  name: string;
+  createdAt: string;
 };
 
 function App() {
-  const [drawing, setDrawing] = useState(false);
+  const [drawing, setDrawing] =
+    useState(false);
+
   const [fish, setFish] =
     useState<CreatedFish[]>(
       () => loadFish(),
     );
 
+  const [
+    selectedFishId,
+    setSelectedFishId,
+  ] = useState<string | null>(
+    null,
+  );
+
+  const selectedFish =
+    fish.find(
+      (item) =>
+        item.id ===
+        selectedFishId,
+    ) ?? null;
+
   const handleFishCreated = (
     image: string,
   ) => {
-    setFish(
-      (current) => {
-        const next = [
-          ...current,
-          {
-            id:
-              crypto.randomUUID(),
-            image,
-          },
-        ];
+    setFish((current) => {
+      const next = [
+        ...current,
+        {
+          id:
+            crypto.randomUUID(),
 
-        saveFish(next);
+          image,
 
-        return next;
-      },
-    );
+          name:
+            `Fish ${
+              current.length + 1
+            }`,
+
+          createdAt:
+            new Date()
+              .toISOString(),
+        },
+      ];
+
+      saveFish(next);
+
+      return next;
+    });
 
     setDrawing(false);
   };
 
+  const handleRenameFish = (
+    name: string,
+  ) => {
+    if (!selectedFishId) {
+      return;
+    }
+
+    setFish((current) => {
+      const next =
+        current.map((item) =>
+          item.id ===
+          selectedFishId
+            ? {
+              ...item,
+              name,
+            }
+            : item,
+        );
+
+      saveFish(next);
+
+      return next;
+    });
+  };
+
   return (
     <>
-      <ThreeAquariumView createdFish={fish} />
+      <ThreeAquariumView
+        createdFish={fish}
+        onFishSelect={(
+          selectedFish,
+        ) => {
+          setSelectedFishId(
+            selectedFish.id,
+          );
+        }}
+      />
 
       <button
-        onClick={() => setDrawing(true)}
+        onClick={() =>
+          setDrawing(true)
+        }
         style={{
           position: 'fixed',
+
           bottom: 30,
           left: '50%',
-          transform: 'translateX(-50%)',
+
+          transform:
+            'translateX(-50%)',
+
           zIndex: 10,
-          padding: '14px 24px',
+
+          padding:
+            '14px 24px',
+
           borderRadius: 30,
           border: 0,
+
           fontSize: 18,
+
           cursor: 'pointer',
         }}
       >
         ✏️ Draw Fish
       </button>
 
+      {selectedFish && (
+        <FishProfileCard
+          fish={selectedFish}
+          onRename={
+            handleRenameFish
+          }
+          onClose={() =>
+            setSelectedFishId(
+              null,
+            )
+          }
+        />
+      )}
+
       {drawing && (
         <FishDrawingCanvas
-          onDone={handleFishCreated}
-          onCancel={() => setDrawing(false)}
+          onDone={
+            handleFishCreated
+          }
+          onCancel={() =>
+            setDrawing(false)
+          }
         />
       )}
     </>

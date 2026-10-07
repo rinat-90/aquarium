@@ -28,6 +28,10 @@ import {
 
 type ThreeAquariumViewProps = {
   createdFish: CreatedFish[];
+
+  onFishSelect?: (
+    fish: CreatedFish,
+  ) => void;
 };
 
 type RenderedFish = {
@@ -36,6 +40,7 @@ type RenderedFish = {
 
 export function ThreeAquariumView({
                                     createdFish,
+                                    onFishSelect,
                                   }: ThreeAquariumViewProps) {
   const containerRef =
     useRef<HTMLDivElement>(null);
@@ -188,6 +193,21 @@ export function ThreeAquariumView({
         fish.position.x,
         fish.position.y,
         fish.position.z,
+      );
+
+      /*
+       * Store the app fish ID on the
+       * Three.js group so raycasting can
+       * identify which fish was clicked.
+       */
+      view.group.userData.fishId =
+        created.id;
+
+      view.group.traverse(
+        (object) => {
+          object.userData.fishId =
+            created.id;
+        },
       );
 
       scene.add(
@@ -716,6 +736,64 @@ export function ThreeAquariumView({
         camera,
       );
 
+      /*
+       * First check whether the user
+       * clicked one of the fish.
+       *
+       * Feeding only happens when no fish
+       * was selected.
+       */
+      const fishObjects =
+        Array.from(
+          threeFishRef.current.values(),
+        ).map(
+          ({ view }) =>
+            view.group,
+        );
+
+      const fishHits =
+        raycaster.intersectObjects(
+          fishObjects,
+          true,
+        );
+
+      if (fishHits.length > 0) {
+        const clickedObject =
+          fishHits[0].object;
+
+        const fishId =
+          clickedObject.userData
+            .fishId as
+            | string
+            | undefined;
+
+        if (fishId) {
+          const created =
+            createdFishRef.current.find(
+              (fish) =>
+                fish.id === fishId,
+            );
+
+          if (created) {
+            onFishSelect?.(
+              created,
+            );
+
+            /*
+             * Important:
+             *
+             * Clicking a fish should NOT
+             * also drop food.
+             */
+            return;
+          }
+        }
+      }
+
+      /*
+       * No fish was clicked.
+       * Treat the click as feeding.
+       */
       const hit =
         raycaster.ray.intersectPlane(
           feedingPlane,
