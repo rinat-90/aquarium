@@ -440,28 +440,90 @@ export function FishDrawingCanvas({
             NOT drawn onto the canvas,
             it won't be exported.
           */}
-          <div
-            style={
-              styles.fishGuide
-            }
-          >
-            <div
-              style={
-                styles.fishGuideTail
-              }
-            />
-
-            <div
-              style={
-                styles.fishGuideBody
-              }
+          <div style={styles.fishGuide}>
+            <svg
+              viewBox="0 0 600 320"
+              width="100%"
+              height="100%"
+              aria-hidden="true"
             >
-              <div
-                style={
-                  styles.fishGuideEye
-                }
+              {/* Tail */}
+              <path
+                d="
+        M 155 160
+        C 110 130, 72 96, 38 72
+        C 48 116, 50 140, 50 160
+        C 50 180, 48 204, 38 248
+        C 72 224, 110 190, 155 160
+        Z
+      "
+                fill="#64748b"
+                fillOpacity="0.18"
+                stroke="#64748b"
+                strokeWidth="5"
+                strokeLinejoin="round"
               />
-            </div>
+
+              {/* Body */}
+              <path
+                d="
+        M 145 160
+        C 190 78, 300 60, 405 86
+        C 485 106, 540 132, 555 160
+        C 540 188, 485 214, 405 234
+        C 300 260, 190 242, 145 160
+        Z
+      "
+                fill="none"
+                stroke="#64748b"
+                strokeWidth="5"
+                strokeDasharray="11 9"
+                strokeLinecap="round"
+              />
+
+              {/* Top fin */}
+              <path
+                d="
+        M 280 82
+        C 305 42, 345 35, 375 76
+      "
+                fill="none"
+                stroke="#64748b"
+                strokeWidth="5"
+                strokeDasharray="9 8"
+                strokeLinecap="round"
+              />
+
+              {/* Bottom fin */}
+              <path
+                d="
+        M 295 239
+        C 320 276, 355 278, 380 230
+      "
+                fill="none"
+                stroke="#64748b"
+                strokeWidth="5"
+                strokeDasharray="9 8"
+                strokeLinecap="round"
+              />
+
+              {/* Eye */}
+              <circle
+                cx="475"
+                cy="137"
+                r="10"
+                fill="#64748b"
+              />
+
+              {/* Small smile */}
+              <path
+                d="M 510 170 Q 525 180 538 168"
+                fill="none"
+                stroke="#64748b"
+                strokeWidth="4"
+                strokeLinecap="round"
+              />
+            </svg>
           </div>
 
           <canvas
@@ -866,13 +928,13 @@ const styles = {
     left: '50%',
     top: '50%',
 
-    width: '65%',
-    height: '55%',
+    width: '72%',
+    height: '62%',
 
     transform:
       'translate(-50%, -50%)',
 
-    opacity: 0.16,
+    opacity: 0.2,
 
     pointerEvents: 'none',
   },
