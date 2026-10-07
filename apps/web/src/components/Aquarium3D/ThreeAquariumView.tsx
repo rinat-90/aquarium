@@ -18,6 +18,10 @@ import {
   type ThreeFish,
 } from './ThreeFish';
 
+import {
+  createUnderwaterEffects,
+} from './createUnderwaterEffects';
+
 type ThreeAquariumViewProps = {
   createdFish: CreatedFish[];
 };
@@ -236,6 +240,17 @@ export function ThreeAquariumView({
       new THREE.FogExp2(
         0x58c8e8,
         0.025,
+      );
+
+    /*
+ * Underwater environment
+ */
+    const underwaterEffects =
+      createUnderwaterEffects(
+        scene,
+        tankWidth,
+        tankHeight,
+        tankDepth,
       );
 
     /*
@@ -763,6 +778,14 @@ export function ThreeAquariumView({
       );
 
       /*
+ * Bubbles + suspended particles
+ */
+      underwaterEffects.update(
+        deltaTime,
+        elapsed,
+      );
+
+      /*
        * Synchronize food.
        */
       const existingFoodIds =
@@ -1002,6 +1025,8 @@ export function ThreeAquariumView({
       threeFishRef.current.clear();
 
       loadingFishRef.current.clear();
+
+      underwaterEffects.destroy();
 
       /*
        * Food meshes share geometry and
