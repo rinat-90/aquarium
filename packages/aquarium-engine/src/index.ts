@@ -18,6 +18,11 @@ type FishPersonality = {
   foodExcitement: number;
 };
 
+type FishActivity = {
+  idleUntil: number;
+  nextIdleAt: number;
+};
+
 export class Aquarium {
   private fish =
     new Map<string, Fish>();
@@ -30,6 +35,14 @@ export class Aquarium {
       string,
       FishPersonality
     >();
+
+  private activities =
+    new Map<
+      string,
+      FishActivity
+    >();
+
+  private elapsedTime = 0;
 
   constructor(
     private options: AquariumOptions,
@@ -104,6 +117,10 @@ export class Aquarium {
     this.personalities.delete(
       id,
     );
+
+    this.activities.delete(
+      id,
+    );
   }
 
   getFish(): Fish[] {
@@ -144,6 +161,9 @@ export class Aquarium {
         deltaTime,
         0.05,
       );
+
+    this.elapsedTime +=
+      safeDeltaTime;
 
     this.updateFood(
       safeDeltaTime,
@@ -416,6 +436,11 @@ export class Aquarium {
         fish,
       );
 
+    const isIdling =
+      this.updateActivity(
+        fish,
+      );
+
     if (
       fish.behavior ===
       'seeking-food' &&
@@ -519,6 +544,19 @@ export class Aquarium {
         : fish.speed *
         cruisingVariation *
         personality.cruiseSpeed;
+
+    /*
+     * Wandering fish occasionally enter a
+     * short idle/glide period. Food seeking
+     * always keeps its normal speed.
+     */
+    if (
+      fish.behavior ===
+      'wandering' &&
+      isIdling
+    ) {
+      targetSpeed *= 0.18;
+    }
 
     /*
      * Slow down when approaching food.
@@ -917,6 +955,70 @@ export class Aquarium {
         ),
       ),
     };
+  }
+
+  private updateActivity(
+    fish: Fish,
+  ): boolean {
+    let activity =
+      this.activities.get(
+        fish.id,
+      );
+
+    if (!activity) {
+      activity = {
+        idleUntil: 0,
+
+        nextIdleAt:
+          this.elapsedTime +
+          8 +
+          Math.random() * 12,
+      };
+
+      this.activities.set(
+        fish.id,
+        activity,
+      );
+    }
+
+    /*
+     * Food always wins over idling.
+     */
+    if (
+      fish.behavior ===
+      'seeking-food'
+    ) {
+      return false;
+    }
+
+    if (
+      this.elapsedTime <
+      activity.idleUntil
+    ) {
+      return true;
+    }
+
+    if (
+      this.elapsedTime >=
+      activity.nextIdleAt
+    ) {
+      const idleDuration =
+        1.8 +
+        Math.random() * 3;
+
+      activity.idleUntil =
+        this.elapsedTime +
+        idleDuration;
+
+      activity.nextIdleAt =
+        activity.idleUntil +
+        8 +
+        Math.random() * 12;
+
+      return true;
+    }
+
+    return false;
   }
 
   private getPersonality(
