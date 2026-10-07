@@ -22,6 +22,10 @@ import {
   createUnderwaterEffects,
 } from './createUnderwaterEffects';
 
+import {
+  createWaterEffects,
+} from './createWaterEffects';
+
 type ThreeAquariumViewProps = {
   createdFish: CreatedFish[];
 };
@@ -247,6 +251,17 @@ export function ThreeAquariumView({
  */
     const underwaterEffects =
       createUnderwaterEffects(
+        scene,
+        tankWidth,
+        tankHeight,
+        tankDepth,
+      );
+
+    /*
+ * Water surface + underwater light
+ */
+    const waterEffects =
+      createWaterEffects(
         scene,
         tankWidth,
         tankHeight,
@@ -785,6 +800,11 @@ export function ThreeAquariumView({
         elapsed,
       );
 
+      waterEffects.update(
+        deltaTime,
+        elapsed,
+      );
+
       /*
        * Synchronize food.
        */
@@ -1027,6 +1047,7 @@ export function ThreeAquariumView({
       loadingFishRef.current.clear();
 
       underwaterEffects.destroy();
+      waterEffects.destroy();
 
       /*
        * Food meshes share geometry and
