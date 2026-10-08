@@ -19,6 +19,7 @@ import {
   ThreeAquariumView,
 } from './components/Aquarium3D/ThreeAquariumView';
 
+const AQUARIUM_CAPACITY = 8;
 
 export type DrawnFish = {
   id: string;
@@ -61,6 +62,21 @@ function App() {
     null,
   );
 
+  const usedCapacity =
+    fish.reduce(
+      (total, item) =>
+        total +
+        item.size * item.size,
+      0,
+    );
+
+  const remainingCapacity =
+    Math.max(
+      0,
+      AQUARIUM_CAPACITY -
+      usedCapacity,
+    );
+
   const selectedFish =
     fish.find(
       (item) =>
@@ -71,7 +87,28 @@ function App() {
   const handleFishCreated = (
     creation: FishCreation,
   ) => {
+    const creationCost =
+      creation.size *
+      creation.size;
+
     setFish((current) => {
+      const currentCapacity =
+        current.reduce(
+          (total, item) =>
+            total +
+            item.size * item.size,
+          0,
+        );
+
+      if (
+        currentCapacity +
+        creationCost >
+        AQUARIUM_CAPACITY +
+        0.0001
+      ) {
+        return current;
+      }
+
       const baseFish = {
         id: crypto.randomUUID(),
 
@@ -298,6 +335,9 @@ function App() {
 
       {drawing && (
         <FishDrawingCanvas
+          remainingCapacity={
+            remainingCapacity
+          }
           onDone={
             handleFishCreated
           }

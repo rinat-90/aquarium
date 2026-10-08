@@ -31,6 +31,7 @@ type FishDrawingCanvasProps = {
     fish: FishCreation,
   ) => void;
   onCancel: () => void;
+  remainingCapacity: number;
 };
 
 type Tool = 'brush' | 'eraser';
@@ -67,6 +68,7 @@ const BRUSH_SIZES = [
 export function FishDrawingCanvas({
                                     onDone,
                                     onCancel,
+                                    remainingCapacity,
                                   }: FishDrawingCanvasProps) {
   const canvasRef =
     useRef<HTMLCanvasElement>(null);
@@ -120,6 +122,13 @@ export function FishDrawingCanvas({
           : fishSize < 1.3
             ? 'Large'
             : 'Huge';
+
+  const fishCapacityCost =
+    fishSize * fishSize;
+
+  const hasCapacity =
+    fishCapacityCost <=
+    remainingCapacity + 0.0001;
 
   useEffect(() => {
     const canvas =
@@ -422,6 +431,10 @@ export function FishDrawingCanvas({
   };
 
   const finish = () => {
+    if (!hasCapacity) {
+      return;
+    }
+
     const canvas =
       canvasRef.current;
 
@@ -460,6 +473,10 @@ export function FishDrawingCanvas({
   };
 
   const finish3D = () => {
+    if (!hasCapacity) {
+      return;
+    }
+
     onDone({
       type: '3d',
       model: 'basic',
@@ -574,6 +591,19 @@ export function FishDrawingCanvas({
           <div style={styles.sizeLabels}>
             <span>Small</span>
             <span>Big</span>
+          </div>
+
+          <div
+            style={{
+              ...styles.capacityStatus,
+              ...(!hasCapacity
+                ? styles.capacityStatusFull
+                : {}),
+            }}
+          >
+            {hasCapacity
+              ? `${remainingCapacity.toFixed(1)} aquarium space left · this fish uses ${fishCapacityCost.toFixed(1)}`
+              : `Aquarium is too full for a ${fishSizeLabel.toLowerCase()} fish. Choose a smaller size or release a fish.`}
           </div>
         </div>
 
@@ -1101,9 +1131,17 @@ export function FishDrawingCanvas({
                 ? finish
                 : finish3D
             }
-            style={styles.addButton}
+            disabled={!hasCapacity}
+            style={{
+              ...styles.addButton,
+              ...(!hasCapacity
+                ? styles.addButtonDisabled
+                : {}),
+            }}
           >
-            Add to Aquarium 🐠
+            {hasCapacity
+              ? 'Add to Aquarium 🐠'
+              : 'Aquarium Full'}
           </button>
         </div>
       </div>
@@ -1272,6 +1310,22 @@ const styles = {
     color: '#94a3b8',
     fontSize: 11,
     fontWeight: 600,
+  },
+
+  capacityStatus: {
+    marginTop: 10,
+    padding: '8px 10px',
+    borderRadius: 10,
+    background: '#ecfdf5',
+    color: '#047857',
+    fontSize: 12,
+    fontWeight: 700,
+    lineHeight: 1.4,
+  },
+
+  capacityStatusFull: {
+    background: '#fef2f2',
+    color: '#b91c1c',
   },
 
   color3DPlaceholder: {
@@ -1572,6 +1626,12 @@ const styles = {
     fontSize: 16,
 
     cursor: 'pointer',
+  },
+
+  addButtonDisabled: {
+    background: '#94a3b8',
+    cursor: 'not-allowed',
+    opacity: 0.75,
   },
 
   color3DContainer: {
