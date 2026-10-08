@@ -27,6 +27,35 @@ type PaintPoint = {
   u: number;
 };
 
+const PAINT_COLORS = [
+  '#ff2d8d',
+  '#ff3b30',
+  '#ff9500',
+  '#ffcc00',
+  '#34c759',
+  '#00b8d9',
+  '#007aff',
+  '#5856d6',
+  '#af52de',
+  '#ffffff',
+  '#111111',
+];
+
+const BRUSH_SIZES = [
+  {
+    label: 'S',
+    value: 12,
+  },
+  {
+    label: 'M',
+    value: 22,
+  },
+  {
+    label: 'L',
+    value: 38,
+  },
+];
+
 export function Fish3DPreview({
                                 bodyColor,
                                 finColor,
@@ -40,6 +69,9 @@ export function Fish3DPreview({
       null,
     );
 
+  /*
+   * Interaction mode
+   */
   const modeRef =
     useRef<InteractionMode>(
       'rotate',
@@ -51,16 +83,82 @@ export function Fish3DPreview({
     );
 
   /*
-   * Keep the event handlers inside
-   * Three.js in sync with React state.
+   * Brush settings
    */
-  useEffect(() => {
-    modeRef.current = mode;
-  }, [mode]);
+  const brushColorRef =
+    useRef('#ff2d8d');
+
+  const brushSizeRef =
+    useRef(22);
+
+  const eraserRef =
+    useRef(false);
+
+  const [
+    brushColor,
+    setBrushColor,
+  ] = useState('#ff2d8d');
+
+  const [
+    brushSize,
+    setBrushSize,
+  ] = useState(22);
+
+  const [
+    eraser,
+    setEraser,
+  ] = useState(false);
 
   /*
-   * Update colors without recreating
-   * the Three.js scene.
+   * Painting commands are created
+   * inside the Three.js effect but
+   * triggered by React buttons.
+   */
+  const undoRef =
+    useRef<(() => void) | null>(
+      null,
+    );
+
+  const clearRef =
+    useRef<(() => void) | null>(
+      null,
+    );
+
+  /*
+   * Used only to update the enabled
+   * state of the Undo button.
+   */
+  const [
+    canUndo,
+    setCanUndo,
+  ] = useState(false);
+
+  /*
+   * Sync React state with refs.
+   */
+  useEffect(() => {
+    modeRef.current =
+      mode;
+  }, [mode]);
+
+  useEffect(() => {
+    brushColorRef.current =
+      brushColor;
+  }, [brushColor]);
+
+  useEffect(() => {
+    brushSizeRef.current =
+      brushSize;
+  }, [brushSize]);
+
+  useEffect(() => {
+    eraserRef.current =
+      eraser;
+  }, [eraser]);
+
+  /*
+   * Update fish colors without
+   * recreating the Three.js scene.
    */
   useEffect(() => {
     fishRef.current?.setBodyColor(
@@ -75,7 +173,7 @@ export function Fish3DPreview({
   }, [finColor]);
 
   /*
-   * Create the Three.js scene once.
+   * Create Three.js scene once.
    */
   useEffect(() => {
     const container =
@@ -201,7 +299,7 @@ export function Fish3DPreview({
     );
 
     /*
-     * Painting
+     * Painting / raycasting
      */
     const raycaster =
       new THREE.Raycaster();
@@ -221,6 +319,117 @@ export function Fish3DPreview({
 
       return;
     }
+
+    /*
+     * Undo history.
+     *
+     * Each entry is the complete
+     * paint canvas BEFORE an action.
+     *
+     * That means one complete stroke
+     * becomes one Undo operation.
+     */
+    const history:
+      ImageData[] = [];
+
+    const HISTORY_LIMIT = 30;
+
+    const updateCanUndo = () => {
+      setCanUndo(
+        history.length > 0,
+      );
+    };
+
+    const saveSnapshot = () => {
+      const snapshot =
+        paintContext.getImageData(
+          0,
+          0,
+          fish.paintCanvas.width,
+          fish.paintCanvas.height,
+        );
+
+      history.push(
+        snapshot,
+      );
+
+      /*
+       * Keep memory usage bounded.
+       */
+      if (
+        history.length >
+        HISTORY_LIMIT
+      ) {
+        history.shift();
+      }
+
+      updateCanUndo();
+    };
+
+    const restoreSnapshot = (
+      snapshot: ImageData,
+    ) => {
+      paintContext.save();
+
+      /*
+       * putImageData ignores normal
+       * compositing, but resetting here
+       * keeps our canvas state clean.
+       */
+      paintContext
+        .globalCompositeOperation =
+        'source-over';
+
+      paintContext.putImageData(
+        snapshot,
+        0,
+        0,
+      );
+
+      paintContext.restore();
+
+      fish.paintTexture.needsUpdate =
+        true;
+    };
+
+    /*
+     * Expose Undo to React.
+     */
+    undoRef.current = () => {
+      const snapshot =
+        history.pop();
+
+      if (!snapshot) {
+        updateCanUndo();
+
+        return;
+      }
+
+      restoreSnapshot(
+        snapshot,
+      );
+
+      updateCanUndo();
+    };
+
+    /*
+     * Expose Clear to React.
+     *
+     * Clear itself is undoable.
+     */
+    clearRef.current = () => {
+      saveSnapshot();
+
+      paintContext.clearRect(
+        0,
+        0,
+        fish.paintCanvas.width,
+        fish.paintCanvas.height,
+      );
+
+      fish.paintTexture.needsUpdate =
+        true;
+    };
 
     const getBodyIntersection = (
       event: PointerEvent,
@@ -292,31 +501,61 @@ export function Fish3DPreview({
       };
     };
 
-    const brushColor =
-      '#ff2d8d';
+    /*
+     * Configure normal painting
+     * or erasing.
+     */
+    const configureBrush = (
+      type: 'fill' | 'stroke',
+    ) => {
+      if (eraserRef.current) {
+        paintContext
+          .globalCompositeOperation =
+          'destination-out';
 
-    const brushSize = 22;
+        if (type === 'fill') {
+          paintContext.fillStyle =
+            '#000000';
+        } else {
+          paintContext.strokeStyle =
+            '#000000';
+        }
+
+        return;
+      }
+
+      paintContext
+        .globalCompositeOperation =
+        'source-over';
+
+      if (type === 'fill') {
+        paintContext.fillStyle =
+          brushColorRef.current;
+      } else {
+        paintContext.strokeStyle =
+          brushColorRef.current;
+      }
+    };
 
     /*
      * Paint one round point.
-     *
-     * This makes taps work and also
-     * gives strokes rounded ends.
      */
     const paintPoint = (
       point: PaintPoint,
     ) => {
       paintContext.save();
 
-      paintContext.fillStyle =
-        brushColor;
+      configureBrush(
+        'fill',
+      );
 
       paintContext.beginPath();
 
       paintContext.arc(
         point.x,
         point.y,
-        brushSize / 2,
+        brushSizeRef.current /
+        2,
         0,
         Math.PI * 2,
       );
@@ -337,16 +576,7 @@ export function Fish3DPreview({
       to: PaintPoint,
     ) => {
       /*
-       * SphereGeometry has a UV seam.
-       *
-       * If U suddenly jumps from
-       * something like 0.99 to 0.01,
-       * those points are physically
-       * close on the fish but far apart
-       * on the texture.
-       *
-       * Don't connect them directly or
-       * we'd draw across the texture.
+       * Protect against UV seam.
        */
       const uDifference =
         Math.abs(
@@ -361,11 +591,12 @@ export function Fish3DPreview({
 
       paintContext.save();
 
-      paintContext.strokeStyle =
-        brushColor;
+      configureBrush(
+        'stroke',
+      );
 
       paintContext.lineWidth =
-        brushSize;
+        brushSizeRef.current;
 
       paintContext.lineCap =
         'round';
@@ -433,6 +664,12 @@ export function Fish3DPreview({
           return;
         }
 
+        /*
+         * Snapshot once at the start
+         * of the stroke.
+         */
+        saveSnapshot();
+
         painting = true;
 
         previousPaintPoint =
@@ -477,10 +714,6 @@ export function Fish3DPreview({
             event,
           );
 
-        /*
-         * Pointer can temporarily leave
-         * the fish while dragging.
-         */
         if (!intersection) {
           previousPaintPoint =
             null;
@@ -505,7 +738,9 @@ export function Fish3DPreview({
             point,
           );
         } else {
-          paintPoint(point);
+          paintPoint(
+            point,
+          );
         }
 
         previousPaintPoint =
@@ -714,6 +949,9 @@ export function Fish3DPreview({
           handlePointerUp,
         );
 
+      undoRef.current = null;
+      clearRef.current = null;
+
       fishRef.current = null;
 
       fish.dispose();
@@ -731,15 +969,17 @@ export function Fish3DPreview({
         width: '100%',
       }}
     >
+      {/* Paint / Rotate */}
       <div
         style={{
           position: 'absolute',
           top: 12,
           left: '50%',
+
           transform:
             'translateX(-50%)',
 
-          zIndex: 2,
+          zIndex: 3,
 
           display: 'flex',
           gap: 6,
@@ -814,11 +1054,317 @@ export function Fish3DPreview({
         </button>
       </div>
 
+      {/* Painting controls */}
+      {mode === 'paint' && (
+        <div
+          style={{
+            position: 'absolute',
+
+            left: 12,
+            right: 12,
+            bottom: 12,
+
+            zIndex: 3,
+
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent:
+              'center',
+
+            flexWrap: 'wrap',
+
+            gap: 10,
+
+            padding: 10,
+
+            borderRadius: 14,
+
+            background:
+              'rgba(255, 255, 255, 0.94)',
+
+            boxShadow:
+              '0 4px 14px rgba(0, 0, 0, 0.12)',
+          }}
+        >
+          {/* Colors */}
+          {PAINT_COLORS.map(
+            (color) => (
+              <button
+                key={color}
+                type="button"
+                aria-label={
+                  `Use ${color}`
+                }
+                onClick={() => {
+                  setBrushColor(
+                    color,
+                  );
+
+                  setEraser(
+                    false,
+                  );
+                }}
+                style={{
+                  width: 28,
+                  height: 28,
+
+                  padding: 0,
+
+                  flexShrink: 0,
+
+                  borderRadius:
+                    '50%',
+
+                  border:
+                    !eraser &&
+                    brushColor ===
+                    color
+                      ? '3px solid #17324d'
+                      : '2px solid rgba(0, 0, 0, 0.15)',
+
+                  background:
+                  color,
+
+                  cursor:
+                    'pointer',
+
+                  boxShadow:
+                    color ===
+                    '#ffffff'
+                      ? 'inset 0 0 0 1px #ddd'
+                      : undefined,
+                }}
+              />
+            ),
+          )}
+
+          {/* Custom color */}
+          <input
+            type="color"
+            value={brushColor}
+            title="Custom color"
+            aria-label="Custom paint color"
+            onChange={(
+              event,
+            ) => {
+              setBrushColor(
+                event.target.value,
+              );
+
+              setEraser(
+                false,
+              );
+            }}
+            style={{
+              width: 32,
+              height: 32,
+
+              padding: 0,
+              border: 0,
+
+              flexShrink: 0,
+
+              background:
+                'transparent',
+
+              cursor:
+                'pointer',
+            }}
+          />
+
+          <div
+            style={{
+              width: 1,
+              height: 30,
+
+              background:
+                'rgba(0, 0, 0, 0.12)',
+            }}
+          />
+
+          {/* Brush sizes */}
+          {BRUSH_SIZES.map(
+            (size) => (
+              <button
+                key={size.value}
+                type="button"
+                onClick={() =>
+                  setBrushSize(
+                    size.value,
+                  )
+                }
+                style={{
+                  minWidth: 34,
+                  height: 34,
+
+                  border:
+                    brushSize ===
+                    size.value
+                      ? '2px solid #37b6d5'
+                      : '1px solid #ccd7df',
+
+                  borderRadius: 9,
+
+                  background:
+                    brushSize ===
+                    size.value
+                      ? '#e7f8fc'
+                      : '#ffffff',
+
+                  color:
+                    '#17324d',
+
+                  fontWeight: 800,
+
+                  cursor:
+                    'pointer',
+                }}
+              >
+                {size.label}
+              </button>
+            ),
+          )}
+
+          <div
+            style={{
+              width: 1,
+              height: 30,
+
+              background:
+                'rgba(0, 0, 0, 0.12)',
+            }}
+          />
+
+          {/* Eraser */}
+          <button
+            type="button"
+            onClick={() =>
+              setEraser(
+                (current) =>
+                  !current,
+              )
+            }
+            style={{
+              height: 36,
+
+              padding:
+                '0 12px',
+
+              border:
+                eraser
+                  ? '2px solid #37b6d5'
+                  : '1px solid #ccd7df',
+
+              borderRadius: 9,
+
+              background:
+                eraser
+                  ? '#e7f8fc'
+                  : '#ffffff',
+
+              color:
+                '#17324d',
+
+              fontWeight: 800,
+
+              cursor:
+                'pointer',
+            }}
+          >
+            🧽 Eraser
+          </button>
+
+          <div
+            style={{
+              width: 1,
+              height: 30,
+
+              background:
+                'rgba(0, 0, 0, 0.12)',
+            }}
+          />
+
+          {/* Undo */}
+          <button
+            type="button"
+            disabled={!canUndo}
+            onClick={() =>
+              undoRef.current?.()
+            }
+            style={{
+              height: 36,
+
+              padding:
+                '0 12px',
+
+              border:
+                '1px solid #ccd7df',
+
+              borderRadius: 9,
+
+              background:
+                '#ffffff',
+
+              color:
+                '#17324d',
+
+              fontWeight: 800,
+
+              cursor:
+                canUndo
+                  ? 'pointer'
+                  : 'default',
+
+              opacity:
+                canUndo
+                  ? 1
+                  : 0.4,
+            }}
+          >
+            ↩️ Undo
+          </button>
+
+          {/* Clear */}
+          <button
+            type="button"
+            onClick={() =>
+              clearRef.current?.()
+            }
+            style={{
+              height: 36,
+
+              padding:
+                '0 12px',
+
+              border:
+                '1px solid #f0b5b5',
+
+              borderRadius: 9,
+
+              background:
+                '#fff5f5',
+
+              color:
+                '#b42318',
+
+              fontWeight: 800,
+
+              cursor:
+                'pointer',
+            }}
+          >
+            🗑️ Clear
+          </button>
+        </div>
+      )}
+
+      {/* Three.js */}
       <div
         ref={containerRef}
         style={{
           width: '100%',
           height,
+
           overflow: 'hidden',
 
           borderRadius: 18,
