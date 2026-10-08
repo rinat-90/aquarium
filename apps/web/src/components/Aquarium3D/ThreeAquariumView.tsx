@@ -1078,6 +1078,8 @@ export function ThreeAquariumView({
           fish.direction,
 
           fish.velocity.z,
+
+          fish.velocity.x,
         );
       }
 

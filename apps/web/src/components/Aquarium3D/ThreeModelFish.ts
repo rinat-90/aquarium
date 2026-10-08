@@ -16,6 +16,7 @@ export type ThreeModelFish = {
     speed: number,
     direction: FishDirection,
     depthVelocity: number,
+    horizontalVelocity?: number,
   ) => void;
 
   destroy: () => void;
@@ -38,62 +39,47 @@ export function createThreeModelFish(
     finColor,
   );
 
-  /**
-   * Restore the child's painted texture
-   * when this fish comes from storage.
-   *
-   * Undefined is valid for older 3D fish
-   * that were created before painting
-   * support existed.
-   */
   if (paintImage) {
     model.setPaintImage(
       paintImage,
     );
   }
 
-  /**
-   * Base aquarium scale is 0.38.
-   *
-   * The creator's size slider ranges
-   * from 0.6 to 1.4.
-   */
   model.group.scale.setScalar(
     0.38 * size,
   );
+
+  /*
+   * The model naturally faces +X.
+   *
+   * Keep track of yaw separately so
+   * turns can smoothly cross the
+   * -PI / +PI boundary.
+   */
+  let currentYaw = 0;
 
   const update = (
     time: number,
     speed: number,
     direction: FishDirection,
     depthVelocity: number,
+    horizontalVelocity?: number,
   ) => {
-    /**
-     * Swimming rhythm.
-     *
-     * time already speeds up/slows down
-     * based on the engine movement.
-     */
     const swim =
       Math.sin(
         time * 1.6,
       );
 
-    /**
-     * Tail swings from its base pivot.
-     *
-     * Neutral is 0 now — not PI / 2.
-     * This keeps the broad side of the
-     * tail visible most of the time.
+    /*
+     * Tail animation.
      */
     model.tail.rotation.y =
       swim *
       0.32 *
       speed;
 
-    /**
-     * Side fins move more gently than
-     * the tail.
+    /*
+     * Side fins.
      */
     const finMovement =
       Math.sin(
@@ -110,42 +96,84 @@ export function createThreeModelFish(
       -Math.PI / 2.5 -
       finMovement;
 
-    /**
-     * Small whole-body sway.
-     *
-     * Keep this subtle. The tail should
-     * provide most of the movement.
+    /*
+     * Small natural body sway.
      */
     const bodySway =
       swim *
-      0.035 *
+      0.025 *
       speed;
 
-    /**
-     * Turn the whole fish depending on
-     * its horizontal swimming direction.
+    /*
+     * Use the actual X/Z movement vector
+     * to determine where the fish faces.
      *
-     * The model naturally faces +X.
+     * +X = right
+     * -X = left
+     * +Z = toward the camera
+     * -Z = away from the camera
      */
-    const baseRotation =
-      direction === 'right'
-        ? -0.08
-        : Math.PI + 0.08;
-
-    /**
-     * Turn slightly into/out of the
-     * screen when moving through depth.
-     */
-    const depthTurn =
-      THREE.MathUtils.clamp(
-        depthVelocity * 0.12,
-        -0.22,
-        0.22,
+    const velocityX =
+      horizontalVelocity ??
+      (
+        direction === 'right'
+          ? 1
+          : -1
       );
 
+    const horizontalSpeed =
+      Math.sqrt(
+        velocityX *
+        velocityX +
+        depthVelocity *
+        depthVelocity,
+      );
+
+    if (horizontalSpeed > 0.03) {
+      const targetYaw =
+        Math.atan2(
+          -depthVelocity,
+          velocityX,
+        );
+
+      /*
+       * Find the shortest rotational path.
+       * Without this, crossing PI can make
+       * the fish spin almost 360 degrees.
+       */
+      const yawDifference =
+        Math.atan2(
+          Math.sin(
+            targetYaw -
+            currentYaw,
+          ),
+          Math.cos(
+            targetYaw -
+            currentYaw,
+          ),
+        );
+
+      /*
+       * Smooth turning.
+       *
+       * Higher visual swimming speed gives
+       * a slightly more responsive turn.
+       */
+      const turnAmount =
+        THREE.MathUtils.clamp(
+          0.055 +
+          speed * 0.025,
+          0.055,
+          0.11,
+        );
+
+      currentYaw +=
+        yawDifference *
+        turnAmount;
+    }
+
     model.group.rotation.y =
-      baseRotation +
-      depthTurn +
+      currentYaw +
       bodySway;
   };
 
