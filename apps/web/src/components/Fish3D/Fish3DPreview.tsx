@@ -1,6 +1,7 @@
 import {
   useEffect,
   useRef,
+  useState,
 } from 'react';
 
 import * as THREE from 'three';
@@ -16,6 +17,16 @@ type Fish3DPreviewProps = {
   height?: number;
 };
 
+type InteractionMode =
+  | 'paint'
+  | 'rotate';
+
+type PaintPoint = {
+  x: number;
+  y: number;
+  u: number;
+};
+
 export function Fish3DPreview({
                                 bodyColor,
                                 finColor,
@@ -28,6 +39,24 @@ export function Fish3DPreview({
     useRef<Fish3DModel | null>(
       null,
     );
+
+  const modeRef =
+    useRef<InteractionMode>(
+      'rotate',
+    );
+
+  const [mode, setMode] =
+    useState<InteractionMode>(
+      'rotate',
+    );
+
+  /*
+   * Keep the event handlers inside
+   * Three.js in sync with React state.
+   */
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
 
   /*
    * Update colors without recreating
@@ -172,9 +201,206 @@ export function Fish3DPreview({
     );
 
     /*
-     * Pointer rotation
+     * Painting
      */
-    let dragging = false;
+    const raycaster =
+      new THREE.Raycaster();
+
+    const pointer =
+      new THREE.Vector2();
+
+    const paintContext =
+      fish.paintCanvas.getContext(
+        '2d',
+      );
+
+    if (!paintContext) {
+      fish.dispose();
+      renderer.dispose();
+      renderer.domElement.remove();
+
+      return;
+    }
+
+    const getBodyIntersection = (
+      event: PointerEvent,
+    ) => {
+      const rect =
+        renderer.domElement
+          .getBoundingClientRect();
+
+      pointer.x =
+        (
+          (
+            event.clientX -
+            rect.left
+          ) /
+          rect.width
+        ) *
+        2 -
+        1;
+
+      pointer.y =
+        -(
+          (
+            event.clientY -
+            rect.top
+          ) /
+          rect.height
+        ) *
+        2 +
+        1;
+
+      raycaster.setFromCamera(
+        pointer,
+        camera,
+      );
+
+      const intersections =
+        raycaster.intersectObject(
+          fish.body,
+          false,
+        );
+
+      return (
+        intersections[0] ??
+        null
+      );
+    };
+
+    const getPaintPoint = (
+      intersection:
+      THREE.Intersection,
+    ): PaintPoint | null => {
+      const uv =
+        intersection.uv;
+
+      if (!uv) {
+        return null;
+      }
+
+      return {
+        x:
+          uv.x *
+          fish.paintCanvas.width,
+
+        y:
+          (1 - uv.y) *
+          fish.paintCanvas.height,
+
+        u: uv.x,
+      };
+    };
+
+    const brushColor =
+      '#ff2d8d';
+
+    const brushSize = 22;
+
+    /*
+     * Paint one round point.
+     *
+     * This makes taps work and also
+     * gives strokes rounded ends.
+     */
+    const paintPoint = (
+      point: PaintPoint,
+    ) => {
+      paintContext.save();
+
+      paintContext.fillStyle =
+        brushColor;
+
+      paintContext.beginPath();
+
+      paintContext.arc(
+        point.x,
+        point.y,
+        brushSize / 2,
+        0,
+        Math.PI * 2,
+      );
+
+      paintContext.fill();
+
+      paintContext.restore();
+
+      fish.paintTexture.needsUpdate =
+        true;
+    };
+
+    /*
+     * Connect two UV points.
+     */
+    const paintLine = (
+      from: PaintPoint,
+      to: PaintPoint,
+    ) => {
+      /*
+       * SphereGeometry has a UV seam.
+       *
+       * If U suddenly jumps from
+       * something like 0.99 to 0.01,
+       * those points are physically
+       * close on the fish but far apart
+       * on the texture.
+       *
+       * Don't connect them directly or
+       * we'd draw across the texture.
+       */
+      const uDifference =
+        Math.abs(
+          to.u - from.u,
+        );
+
+      if (uDifference > 0.5) {
+        paintPoint(to);
+
+        return;
+      }
+
+      paintContext.save();
+
+      paintContext.strokeStyle =
+        brushColor;
+
+      paintContext.lineWidth =
+        brushSize;
+
+      paintContext.lineCap =
+        'round';
+
+      paintContext.lineJoin =
+        'round';
+
+      paintContext.beginPath();
+
+      paintContext.moveTo(
+        from.x,
+        from.y,
+      );
+
+      paintContext.lineTo(
+        to.x,
+        to.y,
+      );
+
+      paintContext.stroke();
+
+      paintContext.restore();
+
+      fish.paintTexture.needsUpdate =
+        true;
+    };
+
+    /*
+     * Pointer state
+     */
+    let painting = false;
+    let rotating = false;
+
+    let previousPaintPoint:
+      PaintPoint | null = null;
 
     let previousX = 0;
     let previousY = 0;
@@ -182,7 +408,50 @@ export function Fish3DPreview({
     const handlePointerDown = (
       event: PointerEvent,
     ) => {
-      dragging = true;
+      /*
+       * PAINT MODE
+       */
+      if (
+        modeRef.current ===
+        'paint'
+      ) {
+        const intersection =
+          getBodyIntersection(
+            event,
+          );
+
+        if (!intersection) {
+          return;
+        }
+
+        const point =
+          getPaintPoint(
+            intersection,
+          );
+
+        if (!point) {
+          return;
+        }
+
+        painting = true;
+
+        previousPaintPoint =
+          point;
+
+        paintPoint(point);
+
+        renderer.domElement
+          .setPointerCapture(
+            event.pointerId,
+          );
+
+        return;
+      }
+
+      /*
+       * ROTATE MODE
+       */
+      rotating = true;
 
       previousX =
         event.clientX;
@@ -199,7 +468,56 @@ export function Fish3DPreview({
     const handlePointerMove = (
       event: PointerEvent,
     ) => {
-      if (!dragging) {
+      /*
+       * PAINT MODE
+       */
+      if (painting) {
+        const intersection =
+          getBodyIntersection(
+            event,
+          );
+
+        /*
+         * Pointer can temporarily leave
+         * the fish while dragging.
+         */
+        if (!intersection) {
+          previousPaintPoint =
+            null;
+
+          return;
+        }
+
+        const point =
+          getPaintPoint(
+            intersection,
+          );
+
+        if (!point) {
+          return;
+        }
+
+        if (
+          previousPaintPoint
+        ) {
+          paintLine(
+            previousPaintPoint,
+            point,
+          );
+        } else {
+          paintPoint(point);
+        }
+
+        previousPaintPoint =
+          point;
+
+        return;
+      }
+
+      /*
+       * ROTATE MODE
+       */
+      if (!rotating) {
         return;
       }
 
@@ -217,10 +535,6 @@ export function Fish3DPreview({
       fish.group.rotation.x +=
         deltaY * 0.006;
 
-      /*
-       * Don't allow the fish to
-       * turn upside down.
-       */
       fish.group.rotation.x =
         THREE.MathUtils.clamp(
           fish.group.rotation.x,
@@ -238,7 +552,11 @@ export function Fish3DPreview({
     const handlePointerUp = (
       event: PointerEvent,
     ) => {
-      dragging = false;
+      painting = false;
+      rotating = false;
+
+      previousPaintPoint =
+        null;
 
       if (
         renderer.domElement
@@ -284,24 +602,25 @@ export function Fish3DPreview({
       const width =
         container.clientWidth;
 
-      const height =
+      const currentHeight =
         container.clientHeight;
 
       if (
         width === 0 ||
-        height === 0
+        currentHeight === 0
       ) {
         return;
       }
 
       renderer.setSize(
         width,
-        height,
+        currentHeight,
         false,
       );
 
       camera.aspect =
-        width / height;
+        width /
+        currentHeight;
 
       camera
         .updateProjectionMatrix();
@@ -329,20 +648,11 @@ export function Fish3DPreview({
       const seconds =
         time * 0.001;
 
-      /*
-       * Tail now has a real pivot
-       * at the base of the body.
-       *
-       * Neutral rotation is 0.
-       */
       fish.tail.rotation.y =
         Math.sin(
           seconds * 5,
         ) * 0.28;
 
-      /*
-       * Small fin movement.
-       */
       fish.leftFin.rotation.z =
         -Math.PI / 2.5 +
         Math.sin(
@@ -416,15 +726,111 @@ export function Fish3DPreview({
 
   return (
     <div
-      ref={containerRef}
       style={{
+        position: 'relative',
         width: '100%',
-        height,
-        overflow: 'hidden',
-        borderRadius: 18,
-        touchAction: 'none',
-        cursor: 'grab',
       }}
-    />
+    >
+      <div
+        style={{
+          position: 'absolute',
+          top: 12,
+          left: '50%',
+          transform:
+            'translateX(-50%)',
+
+          zIndex: 2,
+
+          display: 'flex',
+          gap: 6,
+
+          padding: 5,
+
+          borderRadius: 14,
+
+          background:
+            'rgba(255, 255, 255, 0.92)',
+
+          boxShadow:
+            '0 4px 14px rgba(0, 0, 0, 0.12)',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() =>
+            setMode('paint')
+          }
+          style={{
+            padding:
+              '8px 14px',
+
+            border: 0,
+            borderRadius: 10,
+
+            background:
+              mode === 'paint'
+                ? '#37b6d5'
+                : 'transparent',
+
+            color:
+              mode === 'paint'
+                ? 'white'
+                : '#17324d',
+
+            fontWeight: 800,
+            cursor: 'pointer',
+          }}
+        >
+          🖌️ Paint
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setMode('rotate')
+          }
+          style={{
+            padding:
+              '8px 14px',
+
+            border: 0,
+            borderRadius: 10,
+
+            background:
+              mode === 'rotate'
+                ? '#37b6d5'
+                : 'transparent',
+
+            color:
+              mode === 'rotate'
+                ? 'white'
+                : '#17324d',
+
+            fontWeight: 800,
+            cursor: 'pointer',
+          }}
+        >
+          🔄 Rotate
+        </button>
+      </div>
+
+      <div
+        ref={containerRef}
+        style={{
+          width: '100%',
+          height,
+          overflow: 'hidden',
+
+          borderRadius: 18,
+
+          touchAction: 'none',
+
+          cursor:
+            mode === 'paint'
+              ? 'crosshair'
+              : 'grab',
+        }}
+      />
+    </div>
   );
 }

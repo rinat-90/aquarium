@@ -2,6 +2,20 @@ import * as THREE from 'three';
 
 export type Fish3DModel = {
   group: THREE.Group;
+
+  /*
+   * Expose the body because the painting
+   * system will raycast against it.
+   */
+  body: THREE.Mesh;
+
+  /*
+   * Canvas + texture will become our
+   * paint surface.
+   */
+  paintCanvas: HTMLCanvasElement;
+  paintTexture: THREE.CanvasTexture;
+
   tail: THREE.Mesh;
   leftFin: THREE.Mesh;
   rightFin: THREE.Mesh;
@@ -20,6 +34,60 @@ export type Fish3DModel = {
 export function createFish3DModel(): Fish3DModel {
   const group =
     new THREE.Group();
+
+  /*
+   * Paint layer
+   *
+   * For now this canvas is completely
+   * transparent, so the solid body color
+   * remains visible underneath.
+   */
+  const paintCanvas =
+    document.createElement(
+      'canvas',
+    );
+
+  paintCanvas.width = 1024;
+  paintCanvas.height = 512;
+
+  const paintContext =
+    paintCanvas.getContext(
+      '2d',
+    );
+
+  if (!paintContext) {
+    throw new Error(
+      'Could not create fish paint canvas.',
+    );
+  }
+
+  /*
+   * Explicitly start transparent.
+   */
+  paintContext.clearRect(
+    0,
+    0,
+    paintCanvas.width,
+    paintCanvas.height,
+  );
+
+  const paintTexture =
+    new THREE.CanvasTexture(
+      paintCanvas,
+    );
+
+  paintTexture.colorSpace =
+    THREE.SRGBColorSpace;
+
+  /*
+   * Prevent visible repetition outside
+   * the normal sphere UV range.
+   */
+  paintTexture.wrapS =
+    THREE.ClampToEdgeWrapping;
+
+  paintTexture.wrapT =
+    THREE.ClampToEdgeWrapping;
 
   /*
    * Materials
@@ -75,33 +143,68 @@ export function createFish3DModel(): Fish3DModel {
       bodyMaterial,
     );
 
+  /*
+   * This gives us an easy way to
+   * recognize the body during raycasts.
+   */
+  body.name =
+    'fish-paintable-body';
+
   group.add(body);
+
+
+  /*
+ * Transparent painting layer.
+ *
+ * This is a second copy of the body
+ * sitting just above the solid body.
+ */
+  const paintGeometry =
+    bodyGeometry.clone();
+
+  /*
+   * Make it only slightly larger to
+   * avoid z-fighting with the body.
+   */
+  paintGeometry.scale(
+    1.003,
+    1.003,
+    1.003,
+  );
+
+  const paintMaterial =
+    new THREE.MeshBasicMaterial({
+      map: paintTexture,
+
+      transparent: true,
+
+      depthWrite: false,
+
+      side: THREE.FrontSide,
+    });
+
+  const paintBody =
+    new THREE.Mesh(
+      paintGeometry,
+      paintMaterial,
+    );
+
+  paintBody.name =
+    'fish-paint-layer';
+
+  group.add(paintBody);
 
   /*
    * Tail
-   *
-   * ShapeGeometry already lies in the
-   * XY plane, which is exactly what we
-   * want when viewing the fish from
-   * the side.
-   *
-   * Do NOT rotate it 90deg around Y,
-   * otherwise it becomes edge-on.
    */
   const tailShape =
     new THREE.Shape();
 
-  /*
-   * Connection point at the body.
-   */
   tailShape.moveTo(
     0.15,
     0,
   );
 
-  /*
-   * Upper tail.
-   */
   tailShape.bezierCurveTo(
     -0.25,
     0.25,
@@ -111,10 +214,6 @@ export function createFish3DModel(): Fish3DModel {
     1.0,
   );
 
-  /*
-   * Pull inward at the center to give
-   * it a proper fish-tail silhouette.
-   */
   tailShape.quadraticCurveTo(
     -0.88,
     0.25,
@@ -122,9 +221,6 @@ export function createFish3DModel(): Fish3DModel {
     0,
   );
 
-  /*
-   * Lower half.
-   */
   tailShape.quadraticCurveTo(
     -0.88,
     -0.25,
@@ -152,11 +248,6 @@ export function createFish3DModel(): Fish3DModel {
       finMaterial,
     );
 
-  /*
-   * Body extends to about -1.55.
-   * Slight overlap prevents a visible
-   * gap between body and tail.
-   */
   tail.position.set(
     -1.48,
     0,
@@ -167,9 +258,6 @@ export function createFish3DModel(): Fish3DModel {
 
   /*
    * Dorsal / top fin
-   *
-   * Also stays in XY so its side
-   * silhouette is visible.
    */
   const dorsalShape =
     new THREE.Shape();
@@ -359,6 +447,8 @@ export function createFish3DModel(): Fish3DModel {
    */
   const dispose = () => {
     bodyGeometry.dispose();
+    paintGeometry.dispose();
+
     tailGeometry.dispose();
     dorsalGeometry.dispose();
 
@@ -368,7 +458,11 @@ export function createFish3DModel(): Fish3DModel {
     eyeGeometry.dispose();
     pupilGeometry.dispose();
 
+    paintTexture.dispose();
+
     bodyMaterial.dispose();
+    paintMaterial.dispose();
+
     finMaterial.dispose();
     whiteMaterial.dispose();
     pupilMaterial.dispose();
@@ -376,11 +470,18 @@ export function createFish3DModel(): Fish3DModel {
 
   return {
     group,
+    body,
+
+    paintCanvas,
+    paintTexture,
+
     tail,
     leftFin,
     rightFin,
+
     setBodyColor,
     setFinColor,
+
     dispose,
   };
 }
