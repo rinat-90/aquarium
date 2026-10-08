@@ -137,6 +137,7 @@ export function ThreeAquariumView({
     const fish =
       aquarium.createFish(
         created.id,
+        created.size,
       );
 
     try {

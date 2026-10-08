@@ -19,6 +19,7 @@ export type FishBehavior =
 
 export type Fish = {
   id: string;
+  size: number;
 
   position: Vector3;
   velocity: Vector3;

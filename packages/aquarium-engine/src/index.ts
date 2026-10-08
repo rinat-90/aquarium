@@ -61,16 +61,25 @@ export class Aquarium {
     );
   }
 
-  createFish(id: string): Fish {
+  createFish(
+    id: string,
+    size = 1,
+  ): Fish {
     const speed =
       0.7 +
       Math.random() * 0.7;
 
     const position =
-      this.createRandomPosition();
+      this.createRandomPosition(
+        size,
+      );
 
     const target =
-      this.createRandomTarget();
+      this.createRandomTarget(
+        undefined,
+        undefined,
+        size,
+      );
 
     const direction =
       this.directionTo(
@@ -83,7 +92,7 @@ export class Aquarium {
 
     const fish: Fish = {
       id,
-
+      size,
       position,
       target,
 
@@ -341,9 +350,25 @@ export class Aquarium {
     const halfDepth =
       this.options.depth / 2;
 
-    const marginX = 1.4;
-    const marginY = 1.2;
-    const marginZ = 0.9;
+    const {
+      horizontalPadding,
+      verticalPadding,
+      depthPadding,
+    } = this.getFishBounds(
+      fish.size,
+    );
+
+    const marginX =
+      horizontalPadding;
+
+    const marginY =
+      verticalPadding;
+
+    const marginZ =
+      Math.max(
+        0.9,
+        depthPadding,
+      );
 
     let x = desiredDirection.x;
     let y = desiredDirection.y;
@@ -433,6 +458,33 @@ export class Aquarium {
     };
   }
 
+  private getFishBounds(
+    size = 1,
+  ) {
+    const safeSize =
+      Math.max(
+        0.6,
+        Math.min(
+          1.4,
+          size,
+        ),
+      );
+
+    return {
+      horizontalPadding:
+        FISH_BOUNDS.horizontalPadding *
+        safeSize,
+
+      verticalPadding:
+        FISH_BOUNDS.verticalPadding *
+        safeSize,
+
+      depthPadding:
+        FISH_BOUNDS.depthPadding *
+        safeSize,
+    };
+  }
+
   private updateFish(
     fish: Fish,
     deltaTime: number,
@@ -501,6 +553,7 @@ export class Aquarium {
         this.createRandomTarget(
           fish.position,
           personality,
+          fish.size,
         );
 
       distanceToTarget =
@@ -673,7 +726,9 @@ export class Aquarium {
       horizontalPadding,
       verticalPadding,
       depthPadding,
-    } = FISH_BOUNDS;
+    } = this.getFishBounds(
+      fish.size,
+    );
 
     const minX =
       -this.options.width / 2 +
@@ -803,15 +858,20 @@ export class Aquarium {
       this.createRandomTarget(
         fish.position,
         personality,
+        fish.size,
       );
   }
 
-  private createRandomPosition(): Vector3 {
+  private createRandomPosition(
+    size = 1,
+  ): Vector3 {
     const {
       horizontalPadding,
       verticalPadding,
       depthPadding,
-    } = FISH_BOUNDS;
+    } = this.getFishBounds(
+      size,
+    );
 
     const minX =
       -this.options.width / 2 +
@@ -858,12 +918,15 @@ export class Aquarium {
   private createRandomTarget(
     from?: Vector3,
     personality?: FishPersonality,
+    size = 1,
   ): Vector3 {
     const {
       horizontalPadding,
       verticalPadding,
       depthPadding,
-    } = FISH_BOUNDS;
+    } = this.getFishBounds(
+      size,
+    );
 
     const minX =
       -this.options.width / 2 +
