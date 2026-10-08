@@ -4,6 +4,8 @@ import {
   createFish3DModel,
 } from '../Fish3D/createFish3DModel';
 
+import { createAngelfish3DModel } from '../Fish3D/createAngelfish3DModel';
+
 type FishDirection =
   | 'left'
   | 'right';
@@ -27,9 +29,12 @@ export function createThreeModelFish(
   finColor: string,
   paintImage?: string,
   size = 1,
+  species: 'classic' | 'angelfish' = 'classic',
 ): ThreeModelFish {
   const model =
-    createFish3DModel();
+    species === 'angelfish'
+      ? createAngelfish3DModel()
+      : createFish3DModel();
 
   model.setBodyColor(
     bodyColor,

@@ -33,7 +33,7 @@ export type DrawnFish = {
 export type ThreeDFish = {
   id: string;
   type: '3d';
-  model: 'basic';
+  model: 'basic' | 'angelfish';
   bodyColor: string;
   finColor: string;
   paintImage?: string;
@@ -84,43 +84,26 @@ function App() {
         selectedFishId,
     ) ?? null;
 
-  const handleFishCreated = (
-    creation: FishCreation,
-  ) => {
-    const creationCost =
-      creation.size *
-      creation.size;
+  const handleFishCreated = (creation: FishCreation) => {
+    const creationCost = creation.size * creation.size;
 
     setFish((current) => {
-      const currentCapacity =
-        current.reduce(
-          (total, item) =>
-            total +
-            item.size * item.size,
-          0,
-        );
+      const currentCapacity = current.reduce(
+        (total, item) => total + item.size * item.size,
+        0,
+      );
 
       if (
-        currentCapacity +
-        creationCost >
-        AQUARIUM_CAPACITY +
-        0.0001
+        currentCapacity + creationCost >
+        AQUARIUM_CAPACITY + 0.0001
       ) {
         return current;
       }
 
       const baseFish = {
         id: crypto.randomUUID(),
-
-        name:
-          `Fish ${
-            current.length + 1
-          }`,
-
-        createdAt:
-          new Date()
-            .toISOString(),
-
+        name: `Fish ${current.length + 1}`,
+        createdAt: new Date().toISOString(),
         size: creation.size,
       };
 
@@ -128,28 +111,22 @@ function App() {
         creation.type === 'drawn'
           ? {
             ...baseFish,
-
             type: 'drawn',
-
-            image:
-            creation.image,
+            image: creation.image,
           }
           : {
             ...baseFish,
-
             type: '3d',
 
+            // Convert preview species to saved model type
             model:
-            creation.model,
+              creation.model === 'angelfish'
+                ? 'angelfish'
+                : 'basic',
 
-            bodyColor:
-            creation.bodyColor,
-
-            finColor:
-            creation.finColor,
-
-            paintImage:
-            creation.paintImage,
+            bodyColor: creation.bodyColor,
+            finColor: creation.finColor,
+            paintImage: creation.paintImage,
           };
 
       const next: CreatedFish[] = [

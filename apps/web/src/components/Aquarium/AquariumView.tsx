@@ -1,8 +1,5 @@
-import {
-  useEffect,
-  useRef,
-} from 'react';
 
+import { useEffect, useRef } from 'react';
 import {
   Application,
   Assets,
@@ -10,23 +7,14 @@ import {
   type Texture,
 } from 'pixi.js';
 
-import {
-  Aquarium,
-} from '@aquarium/aquarium-engine';
+import { Aquarium } from '@aquarium/aquarium-engine';
+import type { CreatedFish } from '../../App';
 
-import type {
-  CreatedFish,
-} from '../../App';
-
-import {
-  createAquariumBackground,
-} from './createAquariumBackground';
-
+import { createAquariumBackground } from './createAquariumBackground';
 import {
   createAnimatedFish,
   type AnimatedFish,
 } from './fish/AnimatedFish';
-
 import {
   createFishAnimationState,
   updateFishAnimation,
@@ -40,24 +28,16 @@ type AquariumViewProps = {
 export function AquariumView({
                                createdFish,
                              }: AquariumViewProps) {
-  const containerRef =
-    useRef<HTMLDivElement>(null);
-
-  const aquariumRef =
-    useRef<Aquarium | null>(null);
-
-  const appRef =
-    useRef<Application | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const aquariumRef = useRef<Aquarium | null>(null);
+  const appRef = useRef<Application | null>(null);
 
   const animatedFishRef = useRef(
     new Map<string, AnimatedFish>(),
   );
 
   const fishAnimationRef = useRef(
-    new Map<
-      string,
-      FishAnimationState
-    >(),
+    new Map<string, FishAnimationState>(),
   );
 
   const foodGraphicsRef = useRef(
@@ -68,70 +48,63 @@ export function AquariumView({
     new Set<string>(),
   );
 
-  const createdFishRef =
-    useRef(createdFish);
+  const createdFishRef = useRef(createdFish);
 
   const addCreatedFish = async (
     created: CreatedFish,
   ) => {
-    const aquarium =
-      aquariumRef.current;
+    // The PixiJS aquarium only renders drawn fish.
+    // 3D models are handled by ThreeAquariumView.
+    if (created.type !== 'drawn') {
+      return;
+    }
 
-    const app =
-      appRef.current;
+    const aquarium = aquariumRef.current;
+    const app = appRef.current;
 
     if (!aquarium || !app) {
       return;
     }
 
     if (
-      animatedFishRef.current.has(
-        created.id,
-      )
+      animatedFishRef.current.has(created.id) ||
+      loadingFishRef.current.has(created.id)
     ) {
       return;
     }
 
-    if (
-      loadingFishRef.current.has(
-        created.id,
-      )
-    ) {
-      return;
-    }
+    loadingFishRef.current.add(created.id);
 
-    loadingFishRef.current.add(
+    const fish = aquarium.createFish(
       created.id,
+      created.size,
     );
 
-    const fish =
-      aquarium.createFish(
-        created.id,
+    try {
+      const texture = await Assets.load<Texture>(
+        created.image,
       );
 
-    try {
-      const texture =
-        await Assets.load<Texture>(
-          created.image,
-        );
-
+      // The original aquarium may have been
+      // destroyed while the texture was loading.
       if (
-        !appRef.current ||
-        !aquariumRef.current
+        aquariumRef.current !== aquarium ||
+        appRef.current !== app
       ) {
-        aquarium.removeFish(
-          created.id,
-        );
-
+        aquarium.removeFish(created.id);
         return;
       }
 
-      const animatedFish =
-        createAnimatedFish(
-          texture,
-          160,
-          120,
-        );
+      if (animatedFishRef.current.has(created.id)) {
+        aquarium.removeFish(created.id);
+        return;
+      }
+
+      const animatedFish = createAnimatedFish(
+        texture,
+        160,
+        120,
+      );
 
       animatedFish.container.position.set(
         fish.position.x,
@@ -152,9 +125,7 @@ export function AquariumView({
         animatedFish.container,
       );
     } catch (error) {
-      aquarium.removeFish(
-        created.id,
-      );
+      aquarium.removeFish(created.id);
 
       animatedFishRef.current.delete(
         created.id,
@@ -169,259 +140,164 @@ export function AquariumView({
         error,
       );
     } finally {
-      loadingFishRef.current.delete(
-        created.id,
-      );
+      if (aquariumRef.current === aquarium) {
+        loadingFishRef.current.delete(
+          created.id,
+        );
+      }
     }
   };
 
-  const addFood = (
-    x: number,
-    y: number,
-  ) => {
-    const aquarium =
-      aquariumRef.current;
-
-    const app =
-      appRef.current;
+  const addFood = (x: number, y: number) => {
+    const aquarium = aquariumRef.current;
+    const app = appRef.current;
 
     if (!aquarium || !app) {
       return;
     }
 
-    const id =
-      crypto.randomUUID();
+    const id = crypto.randomUUID();
 
     aquarium.addFood({
       id,
-
       position: {
         x,
         y,
+        z: 0,
       },
     });
 
-    const pellet =
-      new Graphics()
-        .circle(
-          0,
-          0,
-          7,
-        )
-        .fill(
-          '#7c3f00',
-        );
+    const pellet = new Graphics()
+      .circle(0, 0, 7)
+      .fill('#7c3f00');
 
-    pellet.position.set(
-      x,
-      y,
-    );
+    pellet.position.set(x, y);
 
     foodGraphicsRef.current.set(
       id,
       pellet,
     );
 
-    app.stage.addChild(
-      pellet,
-    );
+    app.stage.addChild(pellet);
   };
 
   useEffect(() => {
-    createdFishRef.current =
-      createdFish;
-  }, [createdFish]);
-
-  useEffect(() => {
-    const container =
-      containerRef.current;
+    const container = containerRef.current;
 
     if (!container) {
       return;
     }
 
-    const app =
-      new Application();
+    const app = new Application();
 
     let cancelled = false;
     let initialized = false;
 
     const init = async () => {
-      await app.init({
-        resizeTo: container,
-        background: '#58c8e8',
-        antialias: true,
-      });
+      try {
+        await app.init({
+          resizeTo: container,
+          background: '#58c8e8',
+          antialias: true,
+        });
 
-      initialized = true;
+        initialized = true;
 
-      if (cancelled) {
-        app.destroy(true);
-        return;
-      }
+        if (cancelled) {
+          app.destroy(true);
+          return;
+        }
 
-      container.appendChild(
-        app.canvas,
-      );
+        container.appendChild(app.canvas);
 
-      const background =
-        createAquariumBackground(
+        const background = createAquariumBackground(
           app.screen.width,
           app.screen.height,
         );
 
-      app.stage.addChild(
-        background.container,
-      );
+        app.stage.addChild(
+          background.container,
+        );
 
-      const aquarium =
-        new Aquarium({
-          width:
-          app.screen.width,
-
-          height:
-          app.screen.height,
+        const aquarium = new Aquarium({
+          width: app.screen.width,
+          height: app.screen.height,
+          depth: 10,
         });
 
-      aquariumRef.current =
-        aquarium;
+        aquariumRef.current = aquarium;
+        appRef.current = app;
 
-      appRef.current =
-        app;
+        app.stage.eventMode = 'static';
+        app.stage.hitArea = app.screen;
 
-      app.stage.eventMode =
-        'static';
-
-      app.stage.hitArea =
-        app.screen;
-
-      app.stage.on(
-        'pointerdown',
-        (event) => {
-          const position =
-            event.global;
+        app.stage.on('pointerdown', (event) => {
+          const position = event.global;
 
           addFood(
             position.x,
             position.y,
           );
-        },
-      );
+        });
 
-      for (
-        const created of
-        createdFishRef.current
-        ) {
-        void addCreatedFish(
-          created,
-        );
-      }
+        for (const created of createdFishRef.current) {
+          void addCreatedFish(created);
+        }
 
-      app.ticker.add(
-        (ticker) => {
-          const deltaTime =
-            ticker.deltaMS /
-            1000;
-
-          aquarium.update(
-            deltaTime,
+        app.ticker.add((ticker) => {
+          const deltaTime = Math.min(
+            ticker.deltaMS / 1000,
+            0.05,
           );
 
-          background.update(
-            deltaTime,
-          );
+          aquarium.update(deltaTime);
+          background.update(deltaTime);
 
-          /**
-           * Update and animate fish.
-           */
-          for (
-            const fish of
-            aquarium.getFish()
-            ) {
+          // Update and animate fish.
+          for (const fish of aquarium.getFish()) {
             const animatedFish =
-              animatedFishRef.current.get(
-                fish.id,
-              );
+              animatedFishRef.current.get(fish.id);
 
             const animationState =
-              fishAnimationRef.current.get(
-                fish.id,
-              );
+              fishAnimationRef.current.get(fish.id);
 
-            if (
-              !animatedFish ||
-              !animationState
-            ) {
+            if (!animatedFish || !animationState) {
               continue;
             }
 
-            /**
-             * Calculate actual movement
-             * speed relative to the fish's
-             * normal speed.
-             */
-            const velocityMagnitude =
-              Math.sqrt(
-                fish.velocity.x *
-                fish.velocity.x +
-                fish.velocity.y *
-                fish.velocity.y,
-              );
+            const velocityMagnitude = Math.sqrt(
+              fish.velocity.x * fish.velocity.x +
+              fish.velocity.y * fish.velocity.y,
+            );
 
             const speedRatio =
               fish.speed > 0
-                ? velocityMagnitude /
-                fish.speed
+                ? velocityMagnitude / fish.speed
                 : 1;
 
-            /**
-             * Update the overall swimming
-             * rhythm.
-             */
-            const animation =
-              updateFishAnimation(
-                animationState,
-                deltaTime,
-                speedRatio,
-              );
-
-            /**
-             * Follow the simulation
-             * position while adding a
-             * small natural drift.
-             */
-            animatedFish.container.position.set(
-              fish.position.x,
-              fish.position.y +
-              animation.yOffset,
+            const animation = updateFishAnimation(
+              animationState,
+              deltaTime,
+              speedRatio,
             );
 
-            /**
-             * Tilt the whole fish based
-             * on vertical movement.
-             */
-            const movementRotation =
-              Math.max(
-                -0.2,
-                Math.min(
-                  0.2,
-                  fish.velocity.y /
-                  500,
-                ),
-              );
+            animatedFish.container.position.set(
+              fish.position.x,
+              fish.position.y + animation.yOffset,
+            );
+
+            const movementRotation = Math.max(
+              -0.2,
+              Math.min(
+                0.2,
+                fish.velocity.y / 500,
+              ),
+            );
 
             animatedFish.container.rotation =
               movementRotation +
               animation.rotation;
 
-            /**
-             * Deform the actual fish body.
-             *
-             * AnimatedFish controls the
-             * individual segments while
-             * FishAnimation controls the
-             * swimming rhythm/intensity.
-             */
             animatedFish.update(
               animationState.elapsed,
               animation.swimIntensity,
@@ -429,17 +305,14 @@ export function AquariumView({
             );
           }
 
-          /**
-           * Update sinking food positions.
-           */
-          for (
-            const food of
-            aquarium.getFood()
-            ) {
+          // Update sinking food positions.
+          const existingFood = new Set<string>();
+
+          for (const food of aquarium.getFood()) {
+            existingFood.add(food.id);
+
             const graphic =
-              foodGraphicsRef.current.get(
-                food.id,
-              );
+              foodGraphicsRef.current.get(food.id);
 
             if (!graphic) {
               continue;
@@ -451,43 +324,28 @@ export function AquariumView({
             );
           }
 
-          /**
-           * Remove food that has
-           * been eaten.
-           */
-          const existingFood =
-            new Set(
-              aquarium
-                .getFood()
-                .map(
-                  (food) =>
-                    food.id,
-                ),
-            );
-
-          for (
-            const [
-              id,
-              graphic,
-            ] of
-            foodGraphicsRef.current
-            ) {
-            if (
-              existingFood.has(
-                id,
-              )
-            ) {
+          // Remove eaten food.
+          for (const [
+            id,
+            graphic,
+          ] of foodGraphicsRef.current) {
+            if (existingFood.has(id)) {
               continue;
             }
 
             graphic.destroy();
 
-            foodGraphicsRef.current.delete(
-              id,
-            );
+            foodGraphicsRef.current.delete(id);
           }
-        },
-      );
+        });
+      } catch (error) {
+        if (!cancelled) {
+          console.error(
+            'Failed to initialize 2D aquarium:',
+            error,
+          );
+        }
+      }
     };
 
     void init();
@@ -495,25 +353,16 @@ export function AquariumView({
     return () => {
       cancelled = true;
 
-      aquariumRef.current =
-        null;
+      aquariumRef.current = null;
+      appRef.current = null;
 
-      appRef.current =
-        null;
-
-      for (
-        const animatedFish of
-        animatedFishRef.current.values()
-        ) {
+      for (const animatedFish of animatedFishRef.current.values()) {
         animatedFish.destroy();
       }
 
       animatedFishRef.current.clear();
-
       fishAnimationRef.current.clear();
-
       foodGraphicsRef.current.clear();
-
       loadingFishRef.current.clear();
 
       if (initialized) {
@@ -523,16 +372,10 @@ export function AquariumView({
   }, []);
 
   useEffect(() => {
-    createdFishRef.current =
-      createdFish;
+    createdFishRef.current = createdFish;
 
-    for (
-      const created of
-      createdFish
-      ) {
-      void addCreatedFish(
-        created,
-      );
+    for (const created of createdFish) {
+      void addCreatedFish(created);
     }
   }, [createdFish]);
 

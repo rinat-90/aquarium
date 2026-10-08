@@ -85,6 +85,21 @@ export function ThreeAquariumView({
       >(),
     );
 
+
+  const removeCreatedFish = (id: string) => {
+    const rendered = threeFishRef.current.get(id);
+
+    if (rendered) {
+      sceneRef.current?.remove(rendered.view.group);
+      rendered.view.destroy();
+      threeFishRef.current.delete(id);
+    }
+
+    // Remove the fish from the swimming simulation too.
+    aquariumRef.current?.removeFish(id);
+  };
+
+
   const addCreatedFish = async (
     created: CreatedFish,
   ) => {
@@ -97,7 +112,6 @@ export function ThreeAquariumView({
 
     const aquarium =
       aquariumRef.current;
-
     if (
       !scene ||
       !aquarium
@@ -118,6 +132,11 @@ export function ThreeAquariumView({
         created.id,
       )
     ) {
+      return;
+    }
+
+    // Do not create fish that have already been released.
+    if (!createdFishRef.current.some((item) => item.id === created.id)) {
       return;
     }
 
@@ -157,7 +176,15 @@ export function ThreeAquariumView({
           created.finColor,
           created.paintImage,
           created.size,
+          created.model === 'angelfish' ? 'angelfish' : 'classic',
         );
+      }
+
+      // The fish may have been released while its texture was loading.
+      if (!createdFishRef.current.some((item) => item.id === created.id)) {
+        view.destroy();
+        aquarium.removeFish(created.id);
+        return;
       }
 
       const currentScene =
@@ -201,11 +228,6 @@ export function ThreeAquariumView({
         )
       ) {
         view.destroy();
-
-        aquarium.removeFish(
-          created.id,
-        );
-
         return;
       }
 
@@ -269,23 +291,30 @@ export function ThreeAquariumView({
   };
 
   useEffect(() => {
-    createdFishRef.current =
-      createdFish;
+    createdFishRef.current = createdFish;
 
-    if (
-      !sceneRef.current ||
-      !aquariumRef.current
-    ) {
-      return;
+    const aquarium = aquariumRef.current;
+    if (!sceneRef.current || !aquarium) return;
+
+    const activeIds = new Set(createdFish.map((fish) => fish.id));
+
+    // Remove released fish from both rendering and simulation.
+    for (const id of threeFishRef.current.keys()) {
+      if (!activeIds.has(id)) {
+        removeCreatedFish(id);
+      }
     }
 
-    for (
-      const created of
-      createdFish
-      ) {
-      void addCreatedFish(
-        created,
-      );
+    // A drawn fish may still be waiting for its texture.
+    // Its pending load will be discarded by the guard above.
+    for (const id of loadingFishRef.current) {
+      if (!activeIds.has(id)) {
+        aquarium.removeFish(id);
+      }
+    }
+
+    for (const created of createdFish) {
+      void addCreatedFish(created);
     }
   }, [createdFish]);
 
@@ -1255,8 +1284,3 @@ export function ThreeAquariumView({
     />
   );
 }
-
-
-
-
-

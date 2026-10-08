@@ -8,7 +8,7 @@ import {
 import { cropDrawing } from '@aquarium/drawing';
 
 import {
-  Fish3DPreview,
+  Fish3DPreview
 } from '../Fish3D/Fish3DPreview';
 
 export type FishCreation =
@@ -19,7 +19,7 @@ export type FishCreation =
 }
   | {
   type: '3d';
-  model: 'basic';
+  model: 'classic' | 'angelfish';
   bodyColor: string;
   finColor: string;
   paintImage?: string;
@@ -106,6 +106,11 @@ export function FishDrawingCanvas({
   ] = useState<string | null>(
     null,
   );
+
+  type FishSpecies = 'basic' | 'angelfish';
+
+  const [fishSpecies, setFishSpecies] =
+    useState<FishSpecies>('basic');
 
   const [
     fishSize,
@@ -479,7 +484,7 @@ export function FishDrawingCanvas({
 
     onDone({
       type: '3d',
-      model: 'basic',
+      model: fishSpecies === 'angelfish' ? 'angelfish' : 'classic',
       bodyColor,
       finColor,
       size: fishSize,
@@ -973,13 +978,49 @@ export function FishDrawingCanvas({
         ) : (
           <div style={styles.color3DSection}>
             <div style={styles.color3DContainer}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 10,
+                  padding: 12,
+                  background: '#f8fafc',
+                }}
+              >
+                {(['basic', 'angelfish'] as const).map((species) => (
+                  <button
+                    key={species}
+                    type="button"
+                    onClick={() => {
+                      setFishSpecies(species);
+                      setPaintImage(null);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '12px 16px',
+                      borderRadius: 12,
+                      border:
+                        fishSpecies === species
+                          ? '2px solid #2563eb'
+                          : '2px solid #e5e7eb',
+                      background:
+                        fishSpecies === species ? '#dbeafe' : '#ffffff',
+                      color: '#1e293b',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {species === 'basic' ? '🐠 Classic Fish' : '🐟 Angelfish'}
+                  </button>
+                ))}
+              </div>
+
               <Fish3DPreview
+                key={fishSpecies}
+                species={fishSpecies === 'basic' ? 'classic' : 'angelfish'}
                 bodyColor={bodyColor}
                 finColor={finColor}
                 size={fishSize}
-                onPaintChange={
-                  setPaintImage
-                }
+                onPaintChange={setPaintImage}
               />
 
               <div style={styles.rotateHint}>

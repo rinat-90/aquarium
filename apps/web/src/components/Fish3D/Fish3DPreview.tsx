@@ -11,19 +11,19 @@ import {
   type Fish3DModel,
 } from './createFish3DModel';
 
+import { createAngelfish3DModel } from './createAngelfish3DModel';
+
+export type FishSpecies = 'classic' | 'angelfish';
+
 type Fish3DPreviewProps = {
   bodyColor: string;
   finColor: string;
   height?: number;
   size?: number;
-
   paintImage?: string;
-
   editable?: boolean;
-
-  onPaintChange?: (
-    paintImage: string | null,
-  ) => void;
+  species?: FishSpecies;
+  onPaintChange?: (paintImage: string | null) => void;
 };
 
 type InteractionMode =
@@ -72,6 +72,7 @@ export function Fish3DPreview({
                                 size = 1,
                                 paintImage,
                                 editable = true,
+                                species = 'classic',
                                 onPaintChange,
                               }: Fish3DPreviewProps) {
   const containerRef =
@@ -229,7 +230,7 @@ export function Fish3DPreview({
     camera.position.set(
       0,
       0.2,
-      6.5,
+      8,
     );
 
     const renderer =
@@ -308,7 +309,9 @@ export function Fish3DPreview({
      * Fish
      */
     const fish =
-      createFish3DModel();
+      species === 'angelfish'
+        ? createAngelfish3DModel()
+        : createFish3DModel();
 
     fishRef.current =
       fish;
@@ -1030,7 +1033,7 @@ export function Fish3DPreview({
 
       renderer.domElement.remove();
     };
-  }, []);
+  }, [species]);
 
   return (
     <div

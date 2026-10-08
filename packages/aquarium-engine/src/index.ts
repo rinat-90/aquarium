@@ -60,9 +60,11 @@ export class Aquarium {
       }
     >();
 
-  constructor(
-    private options: AquariumOptions,
-  ) {}
+  private options: AquariumOptions;
+
+  constructor(options: AquariumOptions) {
+    this.options = options;
+  }
 
   addFish(fish: Fish) {
     this.fish.set(
