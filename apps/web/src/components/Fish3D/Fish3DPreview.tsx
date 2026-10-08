@@ -15,6 +15,10 @@ type Fish3DPreviewProps = {
   bodyColor: string;
   finColor: string;
   height?: number;
+
+  onPaintChange?: (
+    paintImage: string | null,
+  ) => void;
 };
 
 type InteractionMode =
@@ -60,6 +64,7 @@ export function Fish3DPreview({
                                 bodyColor,
                                 finColor,
                                 height = 400,
+                                onPaintChange,
                               }: Fish3DPreviewProps) {
   const containerRef =
     useRef<HTMLDivElement>(null);
@@ -93,6 +98,14 @@ export function Fish3DPreview({
 
   const eraserRef =
     useRef(false);
+
+  const onPaintChangeRef =
+    useRef(onPaintChange);
+
+  useEffect(() => {
+    onPaintChangeRef.current =
+      onPaintChange;
+  }, [onPaintChange]);
 
   const [
     brushColor,
@@ -320,6 +333,17 @@ export function Fish3DPreview({
       return;
     }
 
+    const emitPaintChange = () => {
+      const image =
+        fish.paintCanvas.toDataURL(
+          'image/png',
+        );
+
+      onPaintChangeRef.current?.(
+        image,
+      );
+    };
+
     /*
      * Undo history.
      *
@@ -409,6 +433,8 @@ export function Fish3DPreview({
         snapshot,
       );
 
+      emitPaintChange();
+
       updateCanUndo();
     };
 
@@ -429,6 +455,10 @@ export function Fish3DPreview({
 
       fish.paintTexture.needsUpdate =
         true;
+
+      onPaintChangeRef.current?.(
+        null,
+      );
     };
 
     const getBodyIntersection = (
@@ -566,6 +596,8 @@ export function Fish3DPreview({
 
       fish.paintTexture.needsUpdate =
         true;
+
+      emitPaintChange();
     };
 
     /*
@@ -622,6 +654,8 @@ export function Fish3DPreview({
 
       fish.paintTexture.needsUpdate =
         true;
+
+      emitPaintChange();
     };
 
     /*
@@ -787,8 +821,15 @@ export function Fish3DPreview({
     const handlePointerUp = (
       event: PointerEvent,
     ) => {
+      const finishedPainting =
+        painting;
+
       painting = false;
       rotating = false;
+
+      if (finishedPainting) {
+        emitPaintChange();
+      }
 
       previousPaintPoint =
         null;

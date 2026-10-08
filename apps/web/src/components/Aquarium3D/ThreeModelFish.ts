@@ -24,6 +24,7 @@ export type ThreeModelFish = {
 export function createThreeModelFish(
   bodyColor: string,
   finColor: string,
+  paintImage?: string,
 ): ThreeModelFish {
   const model =
     createFish3DModel();
@@ -36,7 +37,21 @@ export function createThreeModelFish(
     finColor,
   );
 
-  /*
+  /**
+   * Restore the child's painted texture
+   * when this fish comes from storage.
+   *
+   * Undefined is valid for older 3D fish
+   * that were created before painting
+   * support existed.
+   */
+  if (paintImage) {
+    model.setPaintImage(
+      paintImage,
+    );
+  }
+
+  /**
    * Creator preview uses the full-size
    * model. Scale it for the aquarium.
    */
@@ -50,7 +65,7 @@ export function createThreeModelFish(
     direction: FishDirection,
     depthVelocity: number,
   ) => {
-    /*
+    /**
      * Swimming rhythm.
      *
      * time already speeds up/slows down
@@ -61,7 +76,7 @@ export function createThreeModelFish(
         time * 1.6,
       );
 
-    /*
+    /**
      * Tail swings from its base pivot.
      *
      * Neutral is 0 now — not PI / 2.
@@ -73,7 +88,7 @@ export function createThreeModelFish(
       0.32 *
       speed;
 
-    /*
+    /**
      * Side fins move more gently than
      * the tail.
      */
@@ -92,7 +107,7 @@ export function createThreeModelFish(
       -Math.PI / 2.5 -
       finMovement;
 
-    /*
+    /**
      * Small whole-body sway.
      *
      * Keep this subtle. The tail should
@@ -103,7 +118,7 @@ export function createThreeModelFish(
       0.035 *
       speed;
 
-    /*
+    /**
      * Turn the whole fish depending on
      * its horizontal swimming direction.
      *
@@ -114,7 +129,7 @@ export function createThreeModelFish(
         ? -0.08
         : Math.PI + 0.08;
 
-    /*
+    /**
      * Turn slightly into/out of the
      * screen when moving through depth.
      */

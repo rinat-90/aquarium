@@ -34,6 +34,7 @@ export type ThreeDFish = {
   model: 'basic';
   bodyColor: string;
   finColor: string;
+  paintImage?: string;
   name: string;
   createdAt: string;
 };
@@ -105,6 +106,9 @@ function App() {
 
             finColor:
             creation.finColor,
+
+            paintImage:
+            creation.paintImage,
           };
 
       const next: CreatedFish[] = [

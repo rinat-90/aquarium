@@ -154,6 +154,7 @@ export function ThreeAquariumView({
           : createThreeModelFish(
             created.bodyColor,
             created.finColor,
+            created.paintImage,
           );
 
       const stillExists =

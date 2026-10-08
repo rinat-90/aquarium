@@ -12,6 +12,11 @@ type StoredFish = {
   model?: unknown;
   bodyColor?: unknown;
   finColor?: unknown;
+
+  // Saved PNG data URL containing
+  // the child's 3D fish painting.
+  paintImage?: unknown;
+
   name?: unknown;
   createdAt?: unknown;
 };
@@ -70,10 +75,15 @@ export function loadFish():
           typeof storedFish.createdAt ===
           'string'
             ? storedFish.createdAt
-            : new Date().toISOString();
+            : new Date()
+              .toISOString();
 
         /**
-         * New 3D fish format.
+         * 3D fish.
+         *
+         * paintImage is optional so fish
+         * created before painting support
+         * continue loading normally.
          */
         if (
           storedFish.type === '3d' &&
@@ -86,12 +96,24 @@ export function loadFish():
         ) {
           fish.push({
             id: storedFish.id,
+
             type: '3d',
             model: 'basic',
+
             bodyColor:
             storedFish.bodyColor,
+
             finColor:
             storedFish.finColor,
+
+            ...(typeof storedFish.paintImage ===
+            'string'
+              ? {
+                paintImage:
+                storedFish.paintImage,
+              }
+              : {}),
+
             name,
             createdAt,
           });
@@ -102,7 +124,7 @@ export function loadFish():
         /**
          * Drawn fish.
          *
-         * This also handles the OLD
+         * This also handles the old
          * storage format where `type`
          * didn't exist yet.
          */
@@ -113,8 +135,10 @@ export function loadFish():
           fish.push({
             id: storedFish.id,
             type: 'drawn',
+
             image:
             storedFish.image,
+
             name,
             createdAt,
           });

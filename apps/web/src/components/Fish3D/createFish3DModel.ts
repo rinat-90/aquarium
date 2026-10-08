@@ -3,15 +3,15 @@ import * as THREE from 'three';
 export type Fish3DModel = {
   group: THREE.Group;
 
-  /*
+  /**
    * Expose the body because the painting
-   * system will raycast against it.
+   * system raycasts against it.
    */
   body: THREE.Mesh;
 
-  /*
-   * Canvas + texture will become our
-   * paint surface.
+  /**
+   * Canvas + texture used by the
+   * painting system.
    */
   paintCanvas: HTMLCanvasElement;
   paintTexture: THREE.CanvasTexture;
@@ -28,6 +28,14 @@ export type Fish3DModel = {
     color: string,
   ) => void;
 
+  /**
+   * Restore a previously saved painted
+   * PNG onto the fish.
+   */
+  setPaintImage: (
+    image?: string,
+  ) => void;
+
   dispose: () => void;
 };
 
@@ -35,12 +43,12 @@ export function createFish3DModel(): Fish3DModel {
   const group =
     new THREE.Group();
 
-  /*
+  /**
    * Paint layer
    *
-   * For now this canvas is completely
-   * transparent, so the solid body color
-   * remains visible underneath.
+   * The canvas starts transparent so
+   * the solid body color remains visible
+   * underneath.
    */
   const paintCanvas =
     document.createElement(
@@ -61,9 +69,6 @@ export function createFish3DModel(): Fish3DModel {
     );
   }
 
-  /*
-   * Explicitly start transparent.
-   */
   paintContext.clearRect(
     0,
     0,
@@ -79,17 +84,23 @@ export function createFish3DModel(): Fish3DModel {
   paintTexture.colorSpace =
     THREE.SRGBColorSpace;
 
-  /*
-   * Prevent visible repetition outside
-   * the normal sphere UV range.
-   */
   paintTexture.wrapS =
     THREE.ClampToEdgeWrapping;
 
   paintTexture.wrapT =
     THREE.ClampToEdgeWrapping;
 
-  /*
+  /**
+   * Used to protect asynchronous image
+   * loading.
+   *
+   * A fish could be removed while its
+   * saved texture is still loading.
+   */
+  let disposed = false;
+  let paintLoadVersion = 0;
+
+  /**
    * Materials
    */
   const bodyMaterial =
@@ -119,7 +130,7 @@ export function createFish3DModel(): Fish3DModel {
       roughness: 0.5,
     });
 
-  /*
+  /**
    * Body
    *
    * Fish faces +X.
@@ -143,29 +154,20 @@ export function createFish3DModel(): Fish3DModel {
       bodyMaterial,
     );
 
-  /*
-   * This gives us an easy way to
-   * recognize the body during raycasts.
-   */
   body.name =
     'fish-paintable-body';
 
   group.add(body);
 
-
-  /*
- * Transparent painting layer.
- *
- * This is a second copy of the body
- * sitting just above the solid body.
- */
+  /**
+   * Transparent painting layer.
+   *
+   * This is a second copy of the body
+   * sitting just above the solid body.
+   */
   const paintGeometry =
     bodyGeometry.clone();
 
-  /*
-   * Make it only slightly larger to
-   * avoid z-fighting with the body.
-   */
   paintGeometry.scale(
     1.003,
     1.003,
@@ -175,11 +177,8 @@ export function createFish3DModel(): Fish3DModel {
   const paintMaterial =
     new THREE.MeshBasicMaterial({
       map: paintTexture,
-
       transparent: true,
-
       depthWrite: false,
-
       side: THREE.FrontSide,
     });
 
@@ -194,7 +193,7 @@ export function createFish3DModel(): Fish3DModel {
 
   group.add(paintBody);
 
-  /*
+  /**
    * Tail
    */
   const tailShape =
@@ -256,7 +255,7 @@ export function createFish3DModel(): Fish3DModel {
 
   group.add(tail);
 
-  /*
+  /**
    * Dorsal / top fin
    */
   const dorsalShape =
@@ -309,7 +308,7 @@ export function createFish3DModel(): Fish3DModel {
 
   group.add(dorsalFin);
 
-  /*
+  /**
    * Side fins
    */
   const leftFinGeometry =
@@ -362,7 +361,7 @@ export function createFish3DModel(): Fish3DModel {
 
   group.add(rightFin);
 
-  /*
+  /**
    * Eyes
    */
   const eyeGeometry =
@@ -416,14 +415,14 @@ export function createFish3DModel(): Fish3DModel {
   createEye(0.58);
   createEye(-0.58);
 
-  /*
+  /**
    * Slight default angle so the
    * creator preview feels 3D.
    */
   group.rotation.y =
     -0.18;
 
-  /*
+  /**
    * Customization
    */
   const setBodyColor = (
@@ -442,10 +441,107 @@ export function createFish3DModel(): Fish3DModel {
     );
   };
 
-  /*
+  /**
+   * Restore a saved paint image.
+   *
+   * paintImage is a PNG data URL created
+   * from paintCanvas.toDataURL().
+   */
+  const setPaintImage = (
+    image?: string,
+  ) => {
+    /**
+     * Invalidate any image load that may
+     * already be in progress.
+     */
+    const loadVersion =
+      ++paintLoadVersion;
+
+    paintContext.clearRect(
+      0,
+      0,
+      paintCanvas.width,
+      paintCanvas.height,
+    );
+
+    /**
+     * No saved painting means the
+     * transparent layer stays empty.
+     */
+    if (!image) {
+      paintTexture.needsUpdate =
+        true;
+
+      return;
+    }
+
+    const source =
+      new Image();
+
+    source.onload = () => {
+      /**
+       * Ignore stale loads.
+       *
+       * This can happen if another paint
+       * image is set or the model is
+       * destroyed before loading finishes.
+       */
+      if (
+        disposed ||
+        loadVersion !==
+        paintLoadVersion
+      ) {
+        return;
+      }
+
+      paintContext.clearRect(
+        0,
+        0,
+        paintCanvas.width,
+        paintCanvas.height,
+      );
+
+      paintContext.drawImage(
+        source,
+        0,
+        0,
+        paintCanvas.width,
+        paintCanvas.height,
+      );
+
+      paintTexture.needsUpdate =
+        true;
+    };
+
+    source.onerror = () => {
+      if (
+        disposed ||
+        loadVersion !==
+        paintLoadVersion
+      ) {
+        return;
+      }
+
+      console.error(
+        'Failed to load fish paint image.',
+      );
+    };
+
+    source.src = image;
+  };
+
+  /**
    * Cleanup
    */
   const dispose = () => {
+    disposed = true;
+
+    /**
+     * Invalidate any pending paint image
+     * load.
+     */
+    paintLoadVersion += 1;
+
     bodyGeometry.dispose();
     paintGeometry.dispose();
 
@@ -481,6 +577,7 @@ export function createFish3DModel(): Fish3DModel {
 
     setBodyColor,
     setFinColor,
+    setPaintImage,
 
     dispose,
   };

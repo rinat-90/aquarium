@@ -21,6 +21,7 @@ export type FishCreation =
   model: 'basic';
   bodyColor: string;
   finColor: string;
+  paintImage?: string;
 };
 
 type FishDrawingCanvasProps = {
@@ -94,6 +95,13 @@ export function FishDrawingCanvas({
 
   const [finColor, setFinColor] =
     useState('#ffb347');
+
+  const [
+    paintImage,
+    setPaintImage,
+  ] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const canvas =
@@ -438,6 +446,12 @@ export function FishDrawingCanvas({
       model: 'basic',
       bodyColor,
       finColor,
+
+      ...(paintImage
+        ? {
+          paintImage,
+        }
+        : {}),
     });
   };
 
@@ -869,6 +883,9 @@ export function FishDrawingCanvas({
               <Fish3DPreview
                 bodyColor={bodyColor}
                 finColor={finColor}
+                onPaintChange={
+                  setPaintImage
+                }
               />
 
               <div style={styles.rotateHint}>
