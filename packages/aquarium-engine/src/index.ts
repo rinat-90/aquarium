@@ -458,6 +458,127 @@ export class Aquarium {
     };
   }
 
+  private applyFishSeparation(
+    fish: Fish,
+    desiredDirection: Vector3,
+  ): Vector3 {
+    let separationX = 0;
+    let separationY = 0;
+    let separationZ = 0;
+    let nearbyFish = 0;
+
+    for (
+      const other of
+      this.fish.values()
+    ) {
+      if (other.id === fish.id) {
+        continue;
+      }
+
+      const dx =
+        fish.position.x -
+        other.position.x;
+
+      const dy =
+        fish.position.y -
+        other.position.y;
+
+      const dz =
+        fish.position.z -
+        other.position.z;
+
+      const distanceSquared =
+        dx * dx +
+        dy * dy +
+        dz * dz;
+
+      if (distanceSquared <= 0.0001) {
+        const direction =
+          fish.id < other.id
+            ? -1
+            : 1;
+
+        separationX += direction;
+        nearbyFish += 1;
+        continue;
+      }
+
+      const distance =
+        Math.sqrt(
+          distanceSquared,
+        );
+
+      const separationDistance =
+        0.72 *
+        (fish.size + other.size);
+
+      if (
+        distance >=
+        separationDistance
+      ) {
+        continue;
+      }
+
+      const strength =
+        1 -
+        distance /
+        separationDistance;
+
+      separationX +=
+        (dx / distance) *
+        strength;
+
+      separationY +=
+        (dy / distance) *
+        strength *
+        0.7;
+
+      separationZ +=
+        (dz / distance) *
+        strength;
+
+      nearbyFish += 1;
+    }
+
+    if (nearbyFish === 0) {
+      return desiredDirection;
+    }
+
+    const separationWeight =
+      fish.behavior ===
+      'seeking-food'
+        ? 1.15
+        : 1.45;
+
+    const x =
+      desiredDirection.x +
+      separationX *
+      separationWeight;
+
+    const y =
+      desiredDirection.y +
+      separationY *
+      separationWeight;
+
+    const z =
+      desiredDirection.z +
+      separationZ *
+      separationWeight;
+
+    const length =
+      Math.sqrt(
+        x * x +
+        y * y +
+        z * z,
+      ) || 1;
+
+    return {
+      x: x / length,
+      y: y / length,
+      z: z / length,
+    };
+  }
+
   private getFishBounds(
     size = 1,
   ) {
@@ -569,7 +690,7 @@ export class Aquarium {
         fish.target,
       );
 
-    const desiredDirection =
+    const boundaryDirection =
       fish.behavior ===
       'wandering'
         ? this.applyBoundaryAvoidance(
@@ -577,6 +698,12 @@ export class Aquarium {
           targetDirection,
         )
         : targetDirection;
+
+    const desiredDirection =
+      this.applyFishSeparation(
+        fish,
+        boundaryDirection,
+      );
 
     /*
      * Small continuous speed variation keeps
