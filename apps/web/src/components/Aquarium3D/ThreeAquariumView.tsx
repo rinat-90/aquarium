@@ -22,7 +22,15 @@ import {
   createUnderwaterEffects,
 } from './createUnderwaterEffects';
 
+import {
+  createWaterEffects,
+} from './createWaterEffects';
+
 import {createThreeModelFish, type ThreeModelFish} from "./ThreeModelFish.ts";
+
+import {
+  createSandCaustics,
+} from './createSandCaustics';
 
 type ThreeAquariumViewProps = {
   createdFish: CreatedFish[];
@@ -33,7 +41,7 @@ type ThreeAquariumViewProps = {
 };
 
 type RenderedFish = {
-  view: ThreeFish;
+  view: ThreeFish | ThreeModelFish;
 };
 
 export function ThreeAquariumView({
@@ -353,6 +361,21 @@ export function ThreeAquariumView({
       );
 
     /*
+     * Dynamic water lighting.
+     *
+     * This renders animated sunlight shafts and
+     * screen-aligned caustics over the illustrated
+     * aquarium background.
+     */
+    const waterEffects =
+      createWaterEffects(
+        scene,
+        tankWidth,
+        tankHeight,
+        tankDepth,
+      );
+
+    /*
      * Camera
      */
     const camera =
@@ -377,6 +400,16 @@ export function ThreeAquariumView({
       0,
       0,
     );
+
+    waterEffects.setCamera(
+      camera,
+    );
+
+    const sandCaustics =
+      createSandCaustics(
+        scene,
+        camera,
+      );
 
     /*
      * Foreground occlusion layer.
@@ -520,6 +553,14 @@ export function ThreeAquariumView({
 
     renderer.toneMappingExposure =
       1.05;
+
+    // Layer order: background -> sand caustics -> 3D fish and foreground.
+    container.appendChild(sandCaustics.element);
+    sandCaustics.resize(camera);
+
+    renderer.domElement.style.position = 'absolute';
+    renderer.domElement.style.inset = '0';
+    renderer.domElement.style.zIndex = '1';
 
     container.appendChild(
       renderer.domElement,
@@ -895,6 +936,13 @@ export function ThreeAquariumView({
         elapsed,
       );
 
+      waterEffects.update(
+        deltaTime,
+        elapsed,
+      );
+
+      sandCaustics.update(elapsed);
+
       /*
        * Synchronize food.
        */
@@ -1071,6 +1119,12 @@ export function ThreeAquariumView({
 
       camera.updateProjectionMatrix();
 
+      waterEffects.resize(
+        camera,
+      );
+
+      sandCaustics.resize(camera);
+
       /*
        * Keep the transparent foreground aligned
        * with the fullscreen camera after resize.
@@ -1146,6 +1200,8 @@ export function ThreeAquariumView({
       loadingFishRef.current.clear();
 
       underwaterEffects.destroy();
+      waterEffects.destroy();
+      sandCaustics.destroy();
 
       scene.remove(
         foregroundLayer,
@@ -1199,6 +1255,8 @@ export function ThreeAquariumView({
     />
   );
 }
+
+
 
 
 
