@@ -24,8 +24,8 @@ type FishActivity = {
 };
 
 const FISH_BOUNDS = {
-  horizontalPadding: 1.45,
-  verticalPadding: 1.15,
+  horizontalPadding: 1.7,
+  verticalPadding: 1.55,
   depthPadding: 0.55,
 };
 
@@ -49,6 +49,16 @@ export class Aquarium {
     >();
 
   private elapsedTime = 0;
+
+  private foodSeekProgress =
+    new Map<
+      string,
+      {
+        foodId: string;
+        bestDistance: number;
+        lastProgressAt: number;
+      }
+    >();
 
   constructor(
     private options: AquariumOptions,
@@ -136,6 +146,10 @@ export class Aquarium {
     this.activities.delete(
       id,
     );
+
+    this.foodSeekProgress.delete(
+      id,
+    );
   }
 
   getFish(): Fish[] {
@@ -152,10 +166,18 @@ export class Aquarium {
       sinkSpeed?: number;
     },
   ) {
+    const safePosition =
+      this.getSafeFoodPosition(
+        food.position,
+      );
+
     this.food.set(
       food.id,
       {
         ...food,
+
+        position:
+          safePosition,
 
         sinkSpeed:
           food.sinkSpeed ??
@@ -201,9 +223,8 @@ export class Aquarium {
     deltaTime: number,
   ) {
     const bottom =
-      -this.options.height /
-      2 +
-      0.8;
+      this.getFoodBounds()
+        .minY;
 
     for (
       const food of
@@ -359,10 +380,10 @@ export class Aquarium {
     );
 
     const marginX =
-      horizontalPadding;
+      horizontalPadding * 1.2;
 
     const marginY =
-      verticalPadding;
+      verticalPadding * 1.2;
 
     const marginZ =
       Math.max(
@@ -389,7 +410,7 @@ export class Aquarium {
         (1 -
           rightDistance /
           marginX) *
-        1.8;
+        2.0;
     }
 
     if (leftDistance < marginX) {
@@ -397,7 +418,7 @@ export class Aquarium {
         (1 -
           leftDistance /
           marginX) *
-        1.8;
+        2.0;
     }
 
     const topDistance =
@@ -411,7 +432,7 @@ export class Aquarium {
         (1 -
           topDistance /
           marginY) *
-        1.4;
+        1.9;
     }
 
     if (bottomDistance < marginY) {
@@ -419,7 +440,7 @@ export class Aquarium {
         (1 -
           bottomDistance /
           marginY) *
-        1.4;
+        1.9;
     }
 
     const frontDistance =
@@ -639,11 +660,14 @@ export class Aquarium {
           ...food.position,
         };
 
-        if (
+        const foodDistance =
           this.distance(
             fish.position,
             food.position,
-          ) < 0.4
+          );
+
+        if (
+          foodDistance < 0.4
         ) {
           this.eatFood(
             fish,
@@ -651,6 +675,18 @@ export class Aquarium {
           );
 
           return;
+        }
+
+        if (
+          this.isFoodTargetStalled(
+            fish,
+            food,
+            foodDistance,
+          )
+        ) {
+          this.returnToWandering(
+            fish,
+          );
         }
       }
     }
@@ -691,13 +727,10 @@ export class Aquarium {
       );
 
     const boundaryDirection =
-      fish.behavior ===
-      'wandering'
-        ? this.applyBoundaryAvoidance(
-          fish,
-          targetDirection,
-        )
-        : targetDirection;
+      this.applyBoundaryAvoidance(
+        fish,
+        targetDirection,
+      );
 
     const desiredDirection =
       this.applyFishSeparation(
@@ -976,6 +1009,10 @@ export class Aquarium {
     fish.targetFoodId =
       undefined;
 
+    this.foodSeekProgress.delete(
+      fish.id,
+    );
+
     const personality =
       this.getPersonality(
         fish,
@@ -987,6 +1024,143 @@ export class Aquarium {
         personality,
         fish.size,
       );
+  }
+
+  private getFoodBounds() {
+    /*
+     * Food stays away from the extreme sides
+     * and above the substrate / decoration
+     * zone. This prevents fish from being
+     * asked to chase pellets into rocks.
+     */
+    return {
+      minX:
+        -this.options.width / 2 +
+        1.15,
+
+      maxX:
+        this.options.width / 2 -
+        1.15,
+
+      minY:
+        -this.options.height / 2 +
+        1.45,
+
+      maxY:
+        this.options.height / 2 -
+        0.55,
+
+      minZ:
+        -this.options.depth / 2 +
+        0.65,
+
+      maxZ:
+        this.options.depth / 2 -
+        0.65,
+    };
+  }
+
+  private getSafeFoodPosition(
+    position: Vector3,
+  ): Vector3 {
+    const bounds =
+      this.getFoodBounds();
+
+    return {
+      x: Math.max(
+        bounds.minX,
+        Math.min(
+          bounds.maxX,
+          position.x,
+        ),
+      ),
+
+      y: Math.max(
+        bounds.minY,
+        Math.min(
+          bounds.maxY,
+          position.y,
+        ),
+      ),
+
+      z: Math.max(
+        bounds.minZ,
+        Math.min(
+          bounds.maxZ,
+          position.z,
+        ),
+      ),
+    };
+  }
+
+  private isFoodTargetStalled(
+    fish: Fish,
+    food: Food,
+    distance: number,
+  ): boolean {
+    const existing =
+      this.foodSeekProgress.get(
+        fish.id,
+      );
+
+    if (
+      !existing ||
+      existing.foodId !== food.id
+    ) {
+      this.foodSeekProgress.set(
+        fish.id,
+        {
+          foodId: food.id,
+          bestDistance: distance,
+          lastProgressAt:
+            this.elapsedTime,
+        },
+      );
+
+      return false;
+    }
+
+    /*
+     * Only count meaningful progress so tiny
+     * steering oscillations do not keep an
+     * unreachable target alive forever.
+     */
+    if (
+      distance <
+      existing.bestDistance -
+      0.12
+    ) {
+      existing.bestDistance =
+        distance;
+
+      existing.lastProgressAt =
+        this.elapsedTime;
+
+      return false;
+    }
+
+    const stalledFor =
+      this.elapsedTime -
+      existing.lastProgressAt;
+
+    if (stalledFor < 4.5) {
+      return false;
+    }
+
+    /*
+     * Remove the unreachable pellet as well.
+     * Otherwise another fish would immediately
+     * claim the same bad target.
+     */
+    this.food.delete(
+      food.id,
+    );
+
+    this.foodSeekProgress.delete(
+      fish.id,
+    );
+
+    return true;
   }
 
   private createRandomPosition(

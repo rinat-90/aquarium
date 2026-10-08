@@ -34,11 +34,14 @@ export function createWaterEffects(
   tankDepth: number,
 ): WaterEffects {
   /*
-   * --------------------------------
    * WATER SURFACE
-   * --------------------------------
+   *
+   * The previous horizontal plane was visible
+   * edge-on from the front camera and produced
+   * a strong horizontal band. Keep the animated
+   * surface, but make it much subtler and move
+   * it slightly above the visible tank area.
    */
-
   const surfaceGeometry =
     new THREE.PlaneGeometry(
       tankWidth,
@@ -59,16 +62,12 @@ export function createWaterEffects(
 
   const surfaceMaterial =
     new THREE.MeshPhysicalMaterial({
-      color: 0x78cbd4,
-
+      color: 0xb8edf1,
       transparent: true,
-      opacity: 0.1,
-
-      roughness: 0.22,
+      opacity: 0.035,
+      roughness: 0.28,
       metalness: 0,
-
-      transmission: 0.25,
-
+      transmission: 0.15,
       side: THREE.DoubleSide,
       depthWrite: false,
     });
@@ -80,22 +79,14 @@ export function createWaterEffects(
     );
 
   surface.position.y =
-    tankHeight / 2 -
+    tankHeight / 2 +
     0.08;
 
   scene.add(surface);
 
   /*
-   * --------------------------------
    * CAUSTICS
-   * --------------------------------
-   *
-   * These are intentionally subtle.
-   * They should be something you
-   * notice after looking at the tank,
-   * not the first thing you see.
    */
-
   const causticGeometry =
     new THREE.CircleGeometry(
       1,
@@ -109,15 +100,11 @@ export function createWaterEffects(
   const causticMaterial =
     new THREE.MeshBasicMaterial({
       color: 0xd9f4ef,
-
       transparent: true,
-      opacity: 0.025,
-
+      opacity: 0.018,
       blending:
       THREE.AdditiveBlending,
-
       depthWrite: false,
-
       side: THREE.DoubleSide,
     });
 
@@ -167,10 +154,8 @@ export function createWaterEffects(
 
     mesh.position.set(
       baseX,
-
       -tankHeight / 2 +
-      0.29,
-
+      0.31,
       baseZ,
     );
 
@@ -188,10 +173,8 @@ export function createWaterEffects(
 
     caustics.push({
       mesh,
-
       baseX,
       baseZ,
-
       baseScaleX,
       baseScaleY,
 
@@ -208,26 +191,15 @@ export function createWaterEffects(
   }
 
   /*
-   * --------------------------------
    * SOFT LIGHT RAYS
-   * --------------------------------
    *
-   * Unlike the previous trapezoids,
-   * these use a shader.
-   *
-   * Alpha fades:
-   * - at both horizontal edges
-   * - near the bottom
-   * - slightly near the top
-   *
-   * This removes the visible polygon
-   * edges from the old version.
+   * Keep the rays behind the fish and fade
+   * them before they reach the bottom.
    */
-
   const rayGeometry =
     new THREE.PlaneGeometry(
       2.8,
-      tankHeight * 1.15,
+      tankHeight * 1.05,
       1,
       1,
     );
@@ -238,7 +210,6 @@ export function createWaterEffects(
     ) =>
       new THREE.ShaderMaterial({
         transparent: true,
-
         depthWrite: false,
 
         blending:
@@ -277,51 +248,38 @@ export function createWaterEffects(
           uniform float uTime;
 
           void main() {
-            /*
-             * Soft horizontal center.
-             */
             float distanceFromCenter =
               abs(vUv.x - 0.5) * 2.0;
 
             float horizontalFade =
               1.0 -
               smoothstep(
-                0.15,
+                0.1,
                 1.0,
                 distanceFromCenter
               );
 
-            /*
-             * Fade the bottom heavily.
-             */
             float bottomFade =
               smoothstep(
-                0.02,
-                0.42,
+                0.08,
+                0.48,
                 vUv.y
               );
 
-            /*
-             * Slight fade near the top.
-             */
             float topFade =
               1.0 -
               smoothstep(
-                0.82,
+                0.88,
                 1.0,
                 vUv.y
-              ) * 0.35;
+              ) * 0.25;
 
-            /*
-             * Very subtle underwater
-             * movement inside the ray.
-             */
             float shimmer =
-              0.92 +
+              0.94 +
               sin(
-                vUv.y * 8.0 +
-                uTime * 0.7
-              ) * 0.08;
+                vUv.y * 7.0 +
+                uTime * 0.55
+              ) * 0.06;
 
             float alpha =
               horizontalFade *
@@ -332,8 +290,8 @@ export function createWaterEffects(
 
             gl_FragColor =
               vec4(
-                0.78,
-                0.96,
+                0.72,
+                0.94,
                 1.0,
                 alpha
               );
@@ -364,10 +322,9 @@ export function createWaterEffects(
 
     ray.position.set(
       x,
-      0.35,
-
-      -tankDepth / 2 +
-      0.04,
+      0.55,
+      -tankDepth / 2 -
+      0.12,
     );
 
     ray.rotation.z =
@@ -381,54 +338,33 @@ export function createWaterEffects(
     rays.push({
       mesh: ray,
       material,
-
       baseX: x,
-
       baseRotation:
       rotation,
-
       phase,
     });
   };
 
-  /*
-   * Only two broad rays.
-   *
-   * They should feel like sunlight
-   * entering the water rather than
-   * stage spotlights.
-   */
-
   addRay(
-    -2.1,
-    -0.12,
-    1.25,
-    0.065,
+    -2.2,
+    -0.1,
+    1.35,
+    0.038,
     0,
   );
 
   addRay(
-    2.2,
-    0.1,
-    1.45,
-    0.045,
+    2.25,
+    0.08,
+    1.5,
+    0.03,
     Math.PI,
   );
-
-  /*
-   * --------------------------------
-   * UPDATE
-   * --------------------------------
-   */
 
   const update = (
     _deltaTime: number,
     elapsed: number,
   ) => {
-    /*
-     * Water surface.
-     */
-
     const position =
       surfaceGeometry.attributes
         .position as
@@ -458,30 +394,24 @@ export function createWaterEffects(
         offset + 2
           ];
 
-      /*
-       * Slower and smaller waves than
-       * before.
-       */
-
       const wave =
         Math.sin(
           originalX *
-          1.15 +
+          1.05 +
+          elapsed *
+          0.65,
+        ) *
+        0.014 +
+        Math.cos(
+          originalZ *
+          1.55 +
           elapsed *
           0.75,
         ) *
-        0.022 +
-        Math.cos(
-          originalZ *
-          1.7 +
-          elapsed *
-          0.9,
-        ) *
-        0.016;
+        0.01;
 
       position.setXYZ(
         index,
-
         originalX,
         originalY +
         wave,
@@ -494,10 +424,6 @@ export function createWaterEffects(
 
     surfaceGeometry
       .computeVertexNormals();
-
-    /*
-     * Caustics.
-     */
 
     for (
       const caustic of
@@ -550,10 +476,6 @@ export function createWaterEffects(
         );
     }
 
-    /*
-     * Light rays.
-     */
-
     for (
       const ray of
       rays
@@ -582,12 +504,6 @@ export function createWaterEffects(
         0.018;
     }
   };
-
-  /*
-   * --------------------------------
-   * CLEANUP
-   * --------------------------------
-   */
 
   const destroy = () => {
     scene.remove(surface);

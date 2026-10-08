@@ -40,46 +40,6 @@ export function createAquariumEnvironment(
 
   /*
    * --------------------------------
-   * BACKGROUND
-   * --------------------------------
-   *
-   * Darker and less saturated than
-   * the old bright cyan wall.
-   */
-  const backGeometry =
-    new THREE.PlaneGeometry(
-      tankWidth,
-      tankHeight,
-    );
-
-  const backMaterial =
-    new THREE.MeshStandardMaterial({
-      color: 0x277f91,
-      roughness: 1,
-    });
-
-  geometries.push(
-    backGeometry,
-  );
-
-  materials.push(
-    backMaterial,
-  );
-
-  const backWall =
-    new THREE.Mesh(
-      backGeometry,
-      backMaterial,
-    );
-
-  backWall.position.z =
-    -tankDepth / 2 -
-    0.02;
-
-  group.add(backWall);
-
-  /*
-   * --------------------------------
    * SAND
    * --------------------------------
    *
@@ -140,10 +100,20 @@ export function createAquariumEnvironment(
         0.018,
       );
 
+    const rearRise =
+      THREE.MathUtils.mapLinear(
+        z,
+        -tankDepth / 2,
+        tankDepth / 2,
+        0.12,
+        -0.03,
+      );
+
     sandPositions.setY(
       index,
       mound +
-      edgeRise,
+      edgeRise +
+      rearRise,
     );
   }
 
@@ -155,7 +125,7 @@ export function createAquariumEnvironment(
 
   const sandMaterial =
     new THREE.MeshStandardMaterial({
-      color: 0xc9b17a,
+      color: 0xa99268,
       roughness: 1,
       metalness: 0,
     });
@@ -193,7 +163,7 @@ export function createAquariumEnvironment(
 
   const substrateMaterial =
     new THREE.MeshStandardMaterial({
-      color: 0x7f7156,
+      color: 0x514b3f,
       roughness: 1,
     });
 
@@ -305,29 +275,29 @@ export function createAquariumEnvironment(
    * Left rock formation.
    */
   createRock(
-    -3.65,
-    -0.65,
+    -3.95,
+    -2.05,
     0.78,
     0,
   );
 
   createRock(
-    -3.05,
-    -0.25,
+    -3.15,
+    -1.75,
     0.58,
     1,
   );
 
   createRock(
-    -4.1,
-    0.15,
+    -4.45,
+    -1.45,
     0.48,
     2,
   );
 
   createRock(
     -2.65,
-    -0.9,
+    -2.15,
     0.34,
     0,
   );
@@ -336,15 +306,15 @@ export function createAquariumEnvironment(
    * Smaller right formation.
    */
   createRock(
-    3.65,
-    -1.05,
+    4.05,
+    -2.05,
     0.52,
     1,
   );
 
   createRock(
-    4.05,
-    -0.55,
+    4.55,
+    -1.55,
     0.34,
     2,
   );
@@ -424,15 +394,15 @@ export function createAquariumEnvironment(
 
   createBranch(
     new THREE.Vector3(
-      -1.8,
+      -2.9,
       woodBase,
-      -0.8,
+      -1.75,
     ),
 
     new THREE.Vector3(
-      0.5,
+      -0.75,
       woodBase + 0.55,
-      -0.45,
+      -1.95,
     ),
 
     0.13,
@@ -440,15 +410,15 @@ export function createAquariumEnvironment(
 
   createBranch(
     new THREE.Vector3(
-      -0.6,
+      -2.15,
       woodBase + 0.28,
-      -0.6,
+      -1.82,
     ),
 
     new THREE.Vector3(
-      0.25,
+      -1.45,
       woodBase + 1.15,
-      -0.75,
+      -2.05,
     ),
 
     0.08,
@@ -456,15 +426,15 @@ export function createAquariumEnvironment(
 
   createBranch(
     new THREE.Vector3(
-      -0.15,
+      -1.7,
       woodBase + 0.42,
-      -0.5,
+      -1.9,
     ),
 
     new THREE.Vector3(
-      1.05,
+      -0.55,
       woodBase + 0.8,
-      -0.65,
+      -2.15,
     ),
 
     0.065,
@@ -882,8 +852,8 @@ export function createAquariumEnvironment(
   };
 
   createTallPlantCluster(
-    -4.05,
-    -1.35,
+    -4.25,
+    -2.35,
     11,
     1.2,
     2.55,
@@ -892,7 +862,7 @@ export function createAquariumEnvironment(
 
   createTallPlantCluster(
     -3.25,
-    -1.55,
+    -2.45,
     6,
     0.8,
     1.65,
@@ -900,8 +870,8 @@ export function createAquariumEnvironment(
   );
 
   createTallPlantCluster(
-    3.75,
-    -1.4,
+    4.15,
+    -2.35,
     13,
     1.35,
     2.75,
@@ -909,8 +879,8 @@ export function createAquariumEnvironment(
   );
 
   createTallPlantCluster(
-    2.95,
-    -1.6,
+    3.05,
+    -2.45,
     7,
     0.85,
     1.7,
@@ -918,32 +888,32 @@ export function createAquariumEnvironment(
   );
 
   createBroadPlant(
-    -3.7,
-    -0.15,
+    -3.9,
+    -1.35,
     0.95,
   );
 
   createBroadPlant(
     -2.9,
-    -0.55,
+    -1.5,
     0.7,
   );
 
   createBroadPlant(
-    3.55,
-    -0.7,
+    3.85,
+    -1.45,
     0.9,
   );
 
   createBroadPlant(
-    4.15,
-    0.45,
+    4.45,
+    -0.85,
     0.7,
   );
 
   createBroadPlant(
-    -0.85,
-    -0.75,
+    -1.0,
+    -2.15,
     0.55,
   );
 
