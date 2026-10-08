@@ -25,6 +25,7 @@ export function createThreeModelFish(
   bodyColor: string,
   finColor: string,
   paintImage?: string,
+  size = 1,
 ): ThreeModelFish {
   const model =
     createFish3DModel();
@@ -52,11 +53,13 @@ export function createThreeModelFish(
   }
 
   /**
-   * Creator preview uses the full-size
-   * model. Scale it for the aquarium.
+   * Base aquarium scale is 0.38.
+   *
+   * The creator's size slider ranges
+   * from 0.6 to 1.4.
    */
   model.group.scale.setScalar(
-    0.38,
+    0.38 * size,
   );
 
   const update = (

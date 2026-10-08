@@ -15,6 +15,7 @@ export type FishCreation =
   | {
   type: 'drawn';
   image: string;
+  size: number;
 }
   | {
   type: '3d';
@@ -22,6 +23,7 @@ export type FishCreation =
   bodyColor: string;
   finColor: string;
   paintImage?: string;
+  size: number;
 };
 
 type FishDrawingCanvasProps = {
@@ -102,6 +104,22 @@ export function FishDrawingCanvas({
   ] = useState<string | null>(
     null,
   );
+
+  const [
+    fishSize,
+    setFishSize,
+  ] = useState(1);
+
+  const fishSizeLabel =
+    fishSize < 0.75
+      ? 'Tiny'
+      : fishSize < 0.95
+        ? 'Small'
+        : fishSize < 1.1
+          ? 'Medium'
+          : fishSize < 1.3
+            ? 'Large'
+            : 'Huge';
 
   useEffect(() => {
     const canvas =
@@ -437,6 +455,7 @@ export function FishDrawingCanvas({
     onDone({
       type: 'drawn',
       image,
+      size: fishSize,
     });
   };
 
@@ -446,7 +465,7 @@ export function FishDrawingCanvas({
       model: 'basic',
       bodyColor,
       finColor,
-
+      size: fishSize,
       ...(paintImage
         ? {
           paintImage,
@@ -512,6 +531,50 @@ export function FishDrawingCanvas({
           >
             🎨 Color 3D
           </button>
+        </div>
+
+        <div style={styles.sizeSection}>
+          <div style={styles.sizeHeader}>
+            <span style={styles.sizeTitle}>
+              Fish Size
+            </span>
+
+            <span style={styles.sizeValue}>
+              {fishSizeLabel}
+            </span>
+          </div>
+
+          <div style={styles.sizeSliderRow}>
+            <span style={styles.sizeFishSmall}>
+              🐟
+            </span>
+
+            <input
+              type="range"
+              min={0.6}
+              max={1.4}
+              step={0.05}
+              value={fishSize}
+              onChange={(event) =>
+                setFishSize(
+                  Number(
+                    event.target.value,
+                  ),
+                )
+              }
+              style={styles.sizeSlider}
+              aria-label="Fish size"
+            />
+
+            <span style={styles.sizeFishLarge}>
+              🐟
+            </span>
+          </div>
+
+          <div style={styles.sizeLabels}>
+            <span>Small</span>
+            <span>Big</span>
+          </div>
         </div>
 
         {activeTab === 'draw' ? (
@@ -883,6 +946,7 @@ export function FishDrawingCanvas({
               <Fish3DPreview
                 bodyColor={bodyColor}
                 finColor={finColor}
+                size={fishSize}
                 onPaintChange={
                   setPaintImage
                 }
@@ -1147,6 +1211,67 @@ const styles = {
     color: '#2563eb',
     boxShadow:
       '0 2px 8px rgba(0, 0, 0, 0.08)',
+  },
+
+  sizeSection: {
+    marginBottom: 18,
+    padding: '14px 18px',
+    border: '1px solid #e5e7eb',
+    borderRadius: 14,
+    background: '#f8fafc',
+  },
+
+  sizeHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+
+  sizeTitle: {
+    color: '#374151',
+    fontSize: 14,
+    fontWeight: 700,
+  },
+
+  sizeValue: {
+    padding: '4px 10px',
+    borderRadius: 999,
+    background: '#dbeafe',
+    color: '#2563eb',
+    fontSize: 13,
+    fontWeight: 700,
+  },
+
+  sizeSliderRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+  },
+
+  sizeSlider: {
+    flex: 1,
+    cursor: 'pointer',
+    accentColor: '#2563eb',
+  },
+
+  sizeFishSmall: {
+    fontSize: 16,
+  },
+
+  sizeFishLarge: {
+    fontSize: 25,
+  },
+
+  sizeLabels: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginTop: 2,
+    paddingLeft: 28,
+    paddingRight: 31,
+    color: '#94a3b8',
+    fontSize: 11,
+    fontWeight: 600,
   },
 
   color3DPlaceholder: {

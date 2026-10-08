@@ -15,6 +15,7 @@ type Fish3DPreviewProps = {
   bodyColor: string;
   finColor: string;
   height?: number;
+  size?: number;
 
   paintImage?: string;
 
@@ -68,6 +69,7 @@ export function Fish3DPreview({
                                 bodyColor,
                                 finColor,
                                 height = 400,
+                                size = 1,
                                 paintImage,
                                 editable = true,
                                 onPaintChange,
@@ -191,6 +193,12 @@ export function Fish3DPreview({
     );
   }, [finColor]);
 
+  useEffect(() => {
+    fishRef.current?.group.scale.setScalar(
+      size,
+    );
+  }, [size]);
+
   /*
    * Create Three.js scene once.
    */
@@ -311,6 +319,10 @@ export function Fish3DPreview({
 
     fish.setFinColor(
       finColor,
+    );
+
+    fish.group.scale.setScalar(
+      size,
     );
 
     if (paintImage) {

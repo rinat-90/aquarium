@@ -150,11 +150,13 @@ export function ThreeAquariumView({
         created.type === 'drawn'
           ? await createThreeFish(
             created.image,
+            1.3 * created.size,
           )
           : createThreeModelFish(
             created.bodyColor,
             created.finColor,
             created.paintImage,
+            created.size,
           );
 
       const stillExists =

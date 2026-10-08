@@ -5,6 +5,10 @@ import type {
 const STORAGE_KEY =
   'aquarium-created-fish';
 
+const MIN_FISH_SIZE = 0.6;
+const MAX_FISH_SIZE = 1.4;
+const DEFAULT_FISH_SIZE = 1;
+
 type StoredFish = {
   id?: unknown;
   type?: unknown;
@@ -17,9 +21,32 @@ type StoredFish = {
   // the child's 3D fish painting.
   paintImage?: unknown;
 
+  // Added after the original fish
+  // storage format.
+  size?: unknown;
+
   name?: unknown;
   createdAt?: unknown;
 };
+
+function getFishSize(
+  value: unknown,
+): number {
+  if (
+    typeof value !== 'number' ||
+    !Number.isFinite(value)
+  ) {
+    return DEFAULT_FISH_SIZE;
+  }
+
+  return Math.max(
+    MIN_FISH_SIZE,
+    Math.min(
+      MAX_FISH_SIZE,
+      value,
+    ),
+  );
+}
 
 export function loadFish():
   CreatedFish[] {
@@ -78,6 +105,15 @@ export function loadFish():
             : new Date()
               .toISOString();
 
+        /*
+         * Existing fish created before
+         * size support default to 1.
+         */
+        const size =
+          getFishSize(
+            storedFish.size,
+          );
+
         /**
          * 3D fish.
          *
@@ -114,6 +150,8 @@ export function loadFish():
               }
               : {}),
 
+            size,
+
             name,
             createdAt,
           });
@@ -138,6 +176,8 @@ export function loadFish():
 
             image:
             storedFish.image,
+
+            size,
 
             name,
             createdAt,

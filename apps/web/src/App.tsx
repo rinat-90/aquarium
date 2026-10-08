@@ -24,6 +24,7 @@ export type DrawnFish = {
   id: string;
   type: 'drawn';
   image: string;
+  size: number;
   name: string;
   createdAt: string;
 };
@@ -35,6 +36,7 @@ export type ThreeDFish = {
   bodyColor: string;
   finColor: string;
   paintImage?: string;
+  size: number;
   name: string;
   createdAt: string;
 };
@@ -81,6 +83,8 @@ function App() {
         createdAt:
           new Date()
             .toISOString(),
+
+        size: creation.size,
       };
 
       const newFish: CreatedFish =
