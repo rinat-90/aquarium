@@ -27,7 +27,7 @@ const SEGMENT_COUNT = 18;
 
 export async function createThreeFish(
   image: string,
-  maxWidth = 2.2,
+  maxWidth = 1.3,
 ): Promise<ThreeFish> {
   const loader =
     new THREE.TextureLoader();

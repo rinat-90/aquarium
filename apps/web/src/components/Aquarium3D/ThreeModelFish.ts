@@ -56,7 +56,7 @@ export function createThreeModelFish(
    * model. Scale it for the aquarium.
    */
   model.group.scale.setScalar(
-    0.65,
+    0.38,
   );
 
   const update = (

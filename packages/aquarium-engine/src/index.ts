@@ -23,6 +23,12 @@ type FishActivity = {
   nextIdleAt: number;
 };
 
+const FISH_BOUNDS = {
+  horizontalPadding: 1.45,
+  verticalPadding: 1.15,
+  depthPadding: 0.55,
+};
+
 export class Aquarium {
   private fish =
     new Map<string, Fish>();
@@ -663,43 +669,34 @@ export class Aquarium {
   private keepFishInsideAquarium(
     fish: Fish,
   ) {
-    const horizontalPadding =
-      0.7;
-
-    const verticalPadding =
-      0.7;
-
-    const depthPadding =
-      0.45;
+    const {
+      horizontalPadding,
+      verticalPadding,
+      depthPadding,
+    } = FISH_BOUNDS;
 
     const minX =
-      -this.options.width /
-      2 +
+      -this.options.width / 2 +
       horizontalPadding;
 
     const maxX =
-      this.options.width /
-      2 -
+      this.options.width / 2 -
       horizontalPadding;
 
     const minY =
-      -this.options.height /
-      2 +
+      -this.options.height / 2 +
       verticalPadding;
 
     const maxY =
-      this.options.height /
-      2 -
+      this.options.height / 2 -
       verticalPadding;
 
     const minZ =
-      -this.options.depth /
-      2 +
+      -this.options.depth / 2 +
       depthPadding;
 
     const maxZ =
-      this.options.depth /
-      2 -
+      this.options.depth / 2 -
       depthPadding;
 
     if (
@@ -810,36 +807,51 @@ export class Aquarium {
   }
 
   private createRandomPosition(): Vector3 {
+    const {
+      horizontalPadding,
+      verticalPadding,
+      depthPadding,
+    } = FISH_BOUNDS;
+
+    const minX =
+      -this.options.width / 2 +
+      horizontalPadding;
+
+    const maxX =
+      this.options.width / 2 -
+      horizontalPadding;
+
+    const minY =
+      -this.options.height / 2 +
+      verticalPadding;
+
+    const maxY =
+      this.options.height / 2 -
+      verticalPadding;
+
+    const minZ =
+      -this.options.depth / 2 +
+      depthPadding;
+
+    const maxZ =
+      this.options.depth / 2 -
+      depthPadding;
+
     return {
       x:
-        (
-          Math.random() -
-          0.5
-        ) *
-        (
-          this.options.width -
-          2
-        ),
+        minX +
+        Math.random() *
+        (maxX - minX),
 
       y:
-        (
-          Math.random() -
-          0.5
-        ) *
-        (
-          this.options.height -
-          2
-        ),
+        minY +
+        Math.random() *
+        (maxY - minY),
 
       z:
-        (
-          Math.random() -
-          0.5
-        ) *
-        (
-          this.options.depth -
-          1
-        ),
+        minZ +
+        Math.random() *
+        (maxZ - minZ),
     };
   }
 
@@ -847,9 +859,11 @@ export class Aquarium {
     from?: Vector3,
     personality?: FishPersonality,
   ): Vector3 {
-    const horizontalPadding = 1;
-    const verticalPadding = 0.9;
-    const depthPadding = 0.6;
+    const {
+      horizontalPadding,
+      verticalPadding,
+      depthPadding,
+    } = FISH_BOUNDS;
 
     const minX =
       -this.options.width / 2 +

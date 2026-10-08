@@ -418,9 +418,9 @@ export function ThreeAquariumView({
     const waterEffects =
       createWaterEffects(
         scene,
-        tankWidth,
+        tankWidth * 1.8,
         tankHeight,
-        tankDepth,
+        tankDepth * 1.8,
       );
 
     /*
@@ -428,7 +428,7 @@ export function ThreeAquariumView({
      */
     const camera =
       new THREE.PerspectiveCamera(
-        45,
+        42,
 
         container.clientWidth /
         container.clientHeight,
@@ -439,14 +439,14 @@ export function ThreeAquariumView({
 
     camera.position.set(
       0,
-      2,
-      12,
+      0,
+      6.2,
     );
 
     camera.lookAt(
       0,
       0,
-      0,
+      -1,
     );
 
     /*
@@ -565,9 +565,9 @@ export function ThreeAquariumView({
     const environment =
       createAquariumEnvironment(
         scene,
-        tankWidth,
+        tankWidth * 1.8,
         tankHeight,
-        tankDepth,
+        tankDepth * 1.8,
       );
 
     /*
@@ -644,9 +644,9 @@ export function ThreeAquariumView({
         glassMaterial,
       );
 
-    scene.add(
-      glassLines,
-    );
+    // scene.add(
+    //   glassLines,
+    // );
 
     /*
      * Feeding
@@ -1198,8 +1198,10 @@ export function ThreeAquariumView({
     <div
       ref={containerRef}
       style={{
-        width: '100%',
-        height: '100vh',
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100dvh',
         overflow: 'hidden',
       }}
     />
