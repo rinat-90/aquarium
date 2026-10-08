@@ -22,18 +22,7 @@ import {
   createUnderwaterEffects,
 } from './createUnderwaterEffects';
 
-import {
-  createWaterEffects,
-} from './createWaterEffects';
-
-import {
-  createAquariumEnvironment,
-} from './createAquariumEnvironment';
-
-import {
-  createThreeModelFish,
-  type ThreeModelFish,
-} from './ThreeModelFish';
+import {createThreeModelFish, type ThreeModelFish} from "./ThreeModelFish.ts";
 
 type ThreeAquariumViewProps = {
   createdFish: CreatedFish[];
@@ -44,9 +33,7 @@ type ThreeAquariumViewProps = {
 };
 
 type RenderedFish = {
-  view:
-    | ThreeFish
-    | ThreeModelFish;
+  view: ThreeFish;
 };
 
 export function ThreeAquariumView({
@@ -147,33 +134,22 @@ export function ThreeAquariumView({
        * React may destroy/recreate the
        * aquarium while this is waiting.
        */
-      const view =
-        created.type === 'drawn'
-          ? await createThreeFish(
-            created.image,
-            1.3 * created.size,
-          )
-          : createThreeModelFish(
-            created.bodyColor,
-            created.finColor,
-            created.paintImage,
-            created.size,
-          );
+      let view:
+        | ThreeFish
+        | ThreeModelFish;
 
-      const stillExists =
-        createdFishRef.current.some(
-          (fish) =>
-            fish.id === created.id,
+      if (created.type === 'drawn') {
+        view = await createThreeFish(
+          created.image,
+          1.3 * created.size,
         );
-
-      if (!stillExists) {
-        view.destroy();
-
-        aquarium.removeFish(
-          created.id,
+      } else {
+        view = createThreeModelFish(
+          created.bodyColor,
+          created.finColor,
+          created.paintImage,
+          created.size,
         );
-
-        return;
       }
 
       const currentScene =
@@ -288,54 +264,13 @@ export function ThreeAquariumView({
     createdFishRef.current =
       createdFish;
 
-    const currentFishIds =
-      new Set(
-        createdFish.map(
-          (fish) => fish.id,
-        ),
-      );
-
-    /*
-     * REMOVE deleted fish
-     */
-    for (
-      const [
-        fishId,
-        renderedFish,
-      ] of
-      threeFishRef.current
-      ) {
-      if (
-        currentFishIds.has(
-          fishId,
-        )
-      ) {
-        continue;
-      }
-
-      sceneRef.current?.remove(
-        renderedFish.view.group,
-      );
-
-      renderedFish.view.destroy();
-
-      aquariumRef.current
-        ?.removeFish(
-          fishId,
-        );
-
-      threeFishRef.current.delete(
-        fishId,
-      );
-
-      loadingFishRef.current.delete(
-        fishId,
-      );
+    if (
+      !sceneRef.current ||
+      !aquariumRef.current
+    ) {
+      return;
     }
 
-    /*
-     * ADD new fish
-     */
     for (
       const created of
       createdFish
@@ -359,9 +294,9 @@ export function ThreeAquariumView({
     /*
      * Aquarium dimensions
      */
-    const tankWidth = 10;
-    const tankHeight = 6;
-    const tankDepth = 4;
+    const tankWidth = 13;
+    const tankHeight = 8;
+    const tankDepth = 10;
 
     /*
      * Simulation
@@ -385,10 +320,12 @@ export function ThreeAquariumView({
     sceneRef.current =
       scene;
 
-    scene.background =
-      new THREE.Color(
-        0x1f7587,
-      );
+    /*
+     * The illustrated aquarium is rendered
+     * by the container behind the transparent
+     * WebGL canvas.
+     */
+    scene.background = null;
 
     /*
      * Gentle underwater depth.
@@ -416,22 +353,11 @@ export function ThreeAquariumView({
       );
 
     /*
- * Water surface + underwater light
- */
-    const waterEffects =
-      createWaterEffects(
-        scene,
-        tankWidth * 1.8,
-        tankHeight,
-        tankDepth * 1.8,
-      );
-
-    /*
      * Camera
      */
     const camera =
       new THREE.PerspectiveCamera(
-        42,
+        45,
 
         container.clientWidth /
         container.clientHeight,
@@ -442,14 +368,14 @@ export function ThreeAquariumView({
 
     camera.position.set(
       0,
-      0,
-      6.2,
+      2,
+      12,
     );
 
     camera.lookAt(
       0,
       0,
-      -1,
+      0,
     );
 
     /*
@@ -458,8 +384,13 @@ export function ThreeAquariumView({
     const renderer =
       new THREE.WebGLRenderer({
         antialias: true,
-        alpha: false,
+        alpha: true,
       });
+
+    renderer.setClearColor(
+      0x000000,
+      0,
+    );
 
     renderer.setPixelRatio(
       Math.min(
@@ -561,95 +492,6 @@ export function ThreeAquariumView({
         color: 0x7c3f00,
         roughness: 0.9,
       });
-
-    /*
-    * Natural aquarium environment.
-    */
-    const environment =
-      createAquariumEnvironment(
-        scene,
-        tankWidth * 1.8,
-        tankHeight,
-        tankDepth * 1.8,
-      );
-
-    /*
-     * Subtle glass depth cues.
-     *
-     * The old full BoxGeometry outline
-     * made the aquarium look like a 3D
-     * editor/debug box. Keep only the
-     * rear rectangle and four faint
-     * corner depth lines.
-     */
-    const halfWidth =
-      tankWidth / 2;
-
-    const halfHeight =
-      tankHeight / 2;
-
-    const frontZ =
-      tankDepth / 2;
-
-    const backZ =
-      -tankDepth / 2;
-
-    const glassPoints = [
-      // Rear rectangle.
-      -halfWidth, -halfHeight, backZ,
-      halfWidth, -halfHeight, backZ,
-
-      halfWidth, -halfHeight, backZ,
-      halfWidth, halfHeight, backZ,
-
-      halfWidth, halfHeight, backZ,
-      -halfWidth, halfHeight, backZ,
-
-      -halfWidth, halfHeight, backZ,
-      -halfWidth, -halfHeight, backZ,
-
-      // Corner depth hints.
-      -halfWidth, -halfHeight, backZ,
-      -halfWidth, -halfHeight, frontZ,
-
-      halfWidth, -halfHeight, backZ,
-      halfWidth, -halfHeight, frontZ,
-
-      -halfWidth, halfHeight, backZ,
-      -halfWidth, halfHeight, frontZ,
-
-      halfWidth, halfHeight, backZ,
-      halfWidth, halfHeight, frontZ,
-    ];
-
-    const glassGeometry =
-      new THREE.BufferGeometry();
-
-    glassGeometry.setAttribute(
-      'position',
-      new THREE.Float32BufferAttribute(
-        glassPoints,
-        3,
-      ),
-    );
-
-    const glassMaterial =
-      new THREE.LineBasicMaterial({
-        color: 0xc9f7ff,
-        transparent: true,
-        opacity: 0.045,
-        depthWrite: false,
-      });
-
-    const glassLines =
-      new THREE.LineSegments(
-        glassGeometry,
-        glassMaterial,
-      );
-
-    // scene.add(
-    //   glassLines,
-    // );
 
     /*
      * Feeding
@@ -926,11 +768,6 @@ export function ThreeAquariumView({
         elapsed,
       );
 
-      waterEffects.update(
-        deltaTime,
-        elapsed,
-      );
-
       /*
        * Synchronize food.
        */
@@ -995,10 +832,6 @@ export function ThreeAquariumView({
           id,
         );
       }
-
-      environment.update(
-        elapsed,
-      );
 
       /*
        * Synchronize rendered fish with
@@ -1078,8 +911,6 @@ export function ThreeAquariumView({
           fish.direction,
 
           fish.velocity.z,
-
-          fish.velocity.x,
         );
       }
 
@@ -1163,7 +994,6 @@ export function ThreeAquariumView({
       loadingFishRef.current.clear();
 
       underwaterEffects.destroy();
-      waterEffects.destroy();
 
       /*
        * Food meshes share geometry and
@@ -1184,15 +1014,6 @@ export function ThreeAquariumView({
       foodGeometry.dispose();
       foodMaterial.dispose();
 
-      environment.destroy();
-
-      scene.remove(
-        glassLines,
-      );
-
-      glassGeometry.dispose();
-      glassMaterial.dispose();
-
       renderer.dispose();
 
       renderer.domElement.remove();
@@ -1208,7 +1029,15 @@ export function ThreeAquariumView({
         width: '100vw',
         height: '100dvh',
         overflow: 'hidden',
+        backgroundImage:
+          "url('/aquarium-background.png')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center',
+        backgroundRepeat: 'no-repeat',
+        backgroundColor: '#087fc4',
       }}
     />
   );
 }
+
+

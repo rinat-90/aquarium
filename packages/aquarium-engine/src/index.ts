@@ -177,7 +177,7 @@ export class Aquarium {
         ...food,
 
         position:
-          safePosition,
+        safePosition,
 
         sinkSpeed:
           food.sinkSpeed ??
@@ -491,7 +491,7 @@ export class Aquarium {
     for (
       const other of
       this.fish.values()
-    ) {
+      ) {
       if (other.id === fish.id) {
         continue;
       }
@@ -1113,7 +1113,7 @@ export class Aquarium {
           foodId: food.id,
           bestDistance: distance,
           lastProgressAt:
-            this.elapsedTime,
+          this.elapsedTime,
         },
       );
 
@@ -1319,6 +1319,16 @@ export class Aquarium {
         ),
       ),
 
+      /*
+       * The illustrated aquarium is visually
+       * much deeper than the original tank.
+       *
+       * Give wandering fish meaningful
+       * front/back travel so they can move
+       * between foreground and background
+       * layers instead of hovering around
+       * one Z plane.
+       */
       z: Math.max(
         minZ,
         Math.min(
@@ -1328,7 +1338,7 @@ export class Aquarium {
             Math.random() -
             0.5
           ) *
-          1.8 *
+          4.8 *
           depthRange,
         ),
       ),
