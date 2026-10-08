@@ -454,19 +454,19 @@ export function createAquariumEnvironment(
 
   const tallPlantMaterials = [
     new THREE.MeshStandardMaterial({
-      color: 0x2f7d4f,
+      color: 0x1f7447,
       roughness: 0.8,
       side: THREE.DoubleSide,
     }),
 
     new THREE.MeshStandardMaterial({
-      color: 0x3f9460,
+      color: 0x3f9b5f,
       roughness: 0.82,
       side: THREE.DoubleSide,
     }),
 
     new THREE.MeshStandardMaterial({
-      color: 0x245f42,
+      color: 0x155b3a,
       roughness: 0.88,
       side: THREE.DoubleSide,
     }),
@@ -569,7 +569,13 @@ export function createAquariumEnvironment(
           normalized *
           Math.PI,
         ) *
-        0.08,
+        0.11 +
+        Math.sin(
+          normalized *
+          Math.PI *
+          2,
+        ) *
+        0.025,
       );
     }
 
@@ -604,7 +610,7 @@ export function createAquariumEnvironment(
         Math.random() -
         0.5
       ) *
-      1.15;
+      0.9;
 
     const baseRotationZ =
       (
@@ -629,14 +635,14 @@ export function createAquariumEnvironment(
         2,
 
       sway:
-        0.025 +
+        0.018 +
         Math.random() *
-        0.035,
+        0.026,
 
       speed:
-        0.45 +
+        0.32 +
         Math.random() *
-        0.25,
+        0.22,
     });
   };
 
@@ -662,16 +668,16 @@ export function createAquariumEnvironment(
         );
 
       const width =
-        0.13 +
+        0.075 +
         Math.random() *
-        0.11;
+        0.095;
 
       const lean =
         (
           Math.random() -
           0.5
         ) *
-        0.55;
+        0.72;
 
       createTallLeaf(
         x +
@@ -854,37 +860,37 @@ export function createAquariumEnvironment(
   createTallPlantCluster(
     -4.25,
     -2.35,
-    11,
-    1.2,
-    2.55,
-    0.85,
+    9,
+    1.05,
+    2.35,
+    0.95,
   );
 
   createTallPlantCluster(
     -3.25,
     -2.45,
-    6,
-    0.8,
-    1.65,
-    0.65,
+    5,
+    0.75,
+    1.55,
+    0.72,
   );
 
   createTallPlantCluster(
     4.15,
     -2.35,
-    13,
-    1.35,
-    2.75,
-    0.9,
+    10,
+    1.1,
+    2.45,
+    1.0,
   );
 
   createTallPlantCluster(
     3.05,
     -2.45,
-    7,
-    0.85,
-    1.7,
-    0.7,
+    5,
+    0.75,
+    1.6,
+    0.78,
   );
 
   createBroadPlant(
