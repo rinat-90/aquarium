@@ -16,6 +16,10 @@ type Fish3DPreviewProps = {
   finColor: string;
   height?: number;
 
+  paintImage?: string;
+
+  editable?: boolean;
+
   onPaintChange?: (
     paintImage: string | null,
   ) => void;
@@ -64,6 +68,8 @@ export function Fish3DPreview({
                                 bodyColor,
                                 finColor,
                                 height = 400,
+                                paintImage,
+                                editable = true,
                                 onPaintChange,
                               }: Fish3DPreviewProps) {
   const containerRef =
@@ -306,6 +312,12 @@ export function Fish3DPreview({
     fish.setFinColor(
       finColor,
     );
+
+    if (paintImage) {
+      fish.setPaintImage(
+        paintImage,
+      );
+    }
 
     scene.add(
       fish.group,
@@ -673,6 +685,11 @@ export function Fish3DPreview({
     const handlePointerDown = (
       event: PointerEvent,
     ) => {
+
+      if (!editable) {
+        return;
+      }
+
       /*
        * PAINT MODE
        */
@@ -1011,7 +1028,7 @@ export function Fish3DPreview({
       }}
     >
       {/* Paint / Rotate */}
-      <div
+      {editable && <div
         style={{
           position: 'absolute',
           top: 12,
@@ -1093,10 +1110,10 @@ export function Fish3DPreview({
         >
           🔄 Rotate
         </button>
-      </div>
+      </div>}
 
       {/* Painting controls */}
-      {mode === 'paint' && (
+      {editable && mode === 'paint' && (
         <div
           style={{
             position: 'absolute',
@@ -1413,9 +1430,11 @@ export function Fish3DPreview({
           touchAction: 'none',
 
           cursor:
-            mode === 'paint'
-              ? 'crosshair'
-              : 'grab',
+            !editable
+              ? 'default'
+              : mode === 'paint'
+                ? 'crosshair'
+                : 'grab',
         }}
       />
     </div>

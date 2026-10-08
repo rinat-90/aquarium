@@ -159,13 +159,11 @@ export function FishProfileCard({
             }}
           >
             <Fish3DPreview
-              bodyColor={
-                fish.bodyColor
-              }
-              finColor={
-                fish.finColor
-              }
+              bodyColor={fish.bodyColor}
+              finColor={fish.finColor}
+              paintImage={fish.paintImage}
               height={150}
+              editable={false}
             />
           </div>
         )}
