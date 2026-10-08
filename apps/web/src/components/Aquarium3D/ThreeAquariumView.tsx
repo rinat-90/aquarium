@@ -294,8 +294,8 @@ export function ThreeAquariumView({
     /*
      * Aquarium dimensions
      */
-    const tankWidth = 13;
-    const tankHeight = 8;
+    const tankWidth = 16;
+    const tankHeight = 10;
     const tankDepth = 10;
 
     /*
@@ -379,6 +379,114 @@ export function ThreeAquariumView({
     );
 
     /*
+     * Foreground occlusion layer.
+     *
+     * This is the transparent coral/rock PNG
+     * placed inside the real 3D scene.
+     *
+     * Fish with a larger Z than this plane are
+     * closer to the camera and render in front.
+     * Fish with a smaller Z swim behind it and
+     * are naturally hidden by the opaque parts
+     * of the PNG.
+     */
+    const foregroundDepth = 2.2;
+
+    const foregroundTexture =
+      new THREE.TextureLoader().load(
+        '/aquarium-foreground.png',
+      );
+
+    foregroundTexture.colorSpace =
+      THREE.SRGBColorSpace;
+
+    foregroundTexture.minFilter =
+      THREE.LinearFilter;
+
+    foregroundTexture.magFilter =
+      THREE.LinearFilter;
+
+    /*
+     * Place the plane on the camera's viewing
+     * axis so it lines up with the fullscreen
+     * illustrated background.
+     */
+    const cameraDirection =
+      new THREE.Vector3();
+
+    camera.getWorldDirection(
+      cameraDirection,
+    );
+
+    const distanceToForeground =
+      (
+        foregroundDepth -
+        camera.position.z
+      ) /
+      cameraDirection.z;
+
+    const foregroundCenter =
+      camera.position
+        .clone()
+        .add(
+          cameraDirection
+            .clone()
+            .multiplyScalar(
+              distanceToForeground,
+            ),
+        );
+
+    const foregroundHeight =
+      2 *
+      distanceToForeground *
+      Math.tan(
+        THREE.MathUtils.degToRad(
+          camera.fov / 2,
+        ),
+      );
+
+    const foregroundWidth =
+      foregroundHeight *
+      camera.aspect;
+
+    const foregroundGeometry =
+      new THREE.PlaneGeometry(
+        foregroundWidth,
+        foregroundHeight,
+      );
+
+    const foregroundMaterial =
+      new THREE.MeshBasicMaterial({
+        map: foregroundTexture,
+        transparent: true,
+        alphaTest: 0.08,
+        depthTest: true,
+        depthWrite: true,
+        side: THREE.DoubleSide,
+        toneMapped: false,
+      });
+
+    const foregroundLayer =
+      new THREE.Mesh(
+        foregroundGeometry,
+        foregroundMaterial,
+      );
+
+    foregroundLayer.position.copy(
+      foregroundCenter,
+    );
+
+    foregroundLayer.quaternion.copy(
+      camera.quaternion,
+    );
+
+    foregroundLayer.renderOrder = 1;
+
+    scene.add(
+      foregroundLayer,
+    );
+
+    /*
      * Renderer
      */
     const renderer =
@@ -435,6 +543,25 @@ export function ThreeAquariumView({
 
     scene.add(
       waterLight,
+    );
+
+    /*
+ * Soft ambient fill.
+ *
+ * Fish can turn through the full X/Z plane,
+ * so some orientations receive very little
+ * directional light. Keep enough ambient
+ * underwater light that their chosen colors
+ * never become almost black.
+ */
+    const ambientLight =
+      new THREE.AmbientLight(
+        0xbfefff,
+        1.15,
+      );
+
+    scene.add(
+      ambientLight,
     );
 
     /*
@@ -944,6 +1071,31 @@ export function ThreeAquariumView({
 
       camera.updateProjectionMatrix();
 
+      /*
+       * Keep the transparent foreground aligned
+       * with the fullscreen camera after resize.
+       */
+      const resizedForegroundHeight =
+        2 *
+        distanceToForeground *
+        Math.tan(
+          THREE.MathUtils.degToRad(
+            camera.fov / 2,
+          ),
+        );
+
+      const resizedForegroundWidth =
+        resizedForegroundHeight *
+        camera.aspect;
+
+      foregroundLayer.scale.set(
+        resizedForegroundWidth /
+        foregroundWidth,
+        resizedForegroundHeight /
+        foregroundHeight,
+        1,
+      );
+
       renderer.setSize(
         width,
         height,
@@ -995,6 +1147,14 @@ export function ThreeAquariumView({
 
       underwaterEffects.destroy();
 
+      scene.remove(
+        foregroundLayer,
+      );
+
+      foregroundGeometry.dispose();
+      foregroundMaterial.dispose();
+      foregroundTexture.dispose();
+
       /*
        * Food meshes share geometry and
        * material, so remove meshes first
@@ -1039,5 +1199,6 @@ export function ThreeAquariumView({
     />
   );
 }
+
 
 

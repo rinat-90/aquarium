@@ -106,16 +106,22 @@ export function createFish3DModel(): Fish3DModel {
   const bodyMaterial =
     new THREE.MeshStandardMaterial({
       color: 0xff8a3d,
-      roughness: 0.55,
+      roughness: 0.65,
       metalness: 0,
+
+      emissive: 0xff8a3d,
+      emissiveIntensity: 0.18,
     });
 
   const finMaterial =
     new THREE.MeshStandardMaterial({
       color: 0xffb347,
-      roughness: 0.6,
+      roughness: 0.7,
       metalness: 0,
       side: THREE.DoubleSide,
+
+      emissive: 0xffb347,
+      emissiveIntensity: 0.16,
     });
 
   const whiteMaterial =
@@ -431,12 +437,20 @@ export function createFish3DModel(): Fish3DModel {
     bodyMaterial.color.set(
       color,
     );
+
+    bodyMaterial.emissive.set(
+      color,
+    );
   };
 
   const setFinColor = (
     color: string,
   ) => {
     finMaterial.color.set(
+      color,
+    );
+
+    finMaterial.emissive.set(
       color,
     );
   };
