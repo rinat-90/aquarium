@@ -30,6 +30,11 @@ import {
   createAquariumEnvironment,
 } from './createAquariumEnvironment';
 
+import {
+  createThreeModelFish,
+  type ThreeModelFish,
+} from './ThreeModelFish';
+
 type ThreeAquariumViewProps = {
   createdFish: CreatedFish[];
 
@@ -39,7 +44,9 @@ type ThreeAquariumViewProps = {
 };
 
 type RenderedFish = {
-  view: ThreeFish;
+  view:
+    | ThreeFish
+    | ThreeModelFish;
 };
 
 export function ThreeAquariumView({
@@ -140,9 +147,14 @@ export function ThreeAquariumView({
        * aquarium while this is waiting.
        */
       const view =
-        await createThreeFish(
-          created.image,
-        );
+        created.type === 'drawn'
+          ? await createThreeFish(
+            created.image,
+          )
+          : createThreeModelFish(
+            created.bodyColor,
+            created.finColor,
+          );
 
       const stillExists =
         createdFishRef.current.some(

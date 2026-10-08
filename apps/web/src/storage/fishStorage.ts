@@ -5,6 +5,17 @@ import type {
 const STORAGE_KEY =
   'aquarium-created-fish';
 
+type StoredFish = {
+  id?: unknown;
+  type?: unknown;
+  image?: unknown;
+  model?: unknown;
+  bodyColor?: unknown;
+  finColor?: unknown;
+  name?: unknown;
+  createdAt?: unknown;
+};
+
 export function loadFish():
   CreatedFish[] {
   try {
@@ -24,42 +35,94 @@ export function loadFish():
       return [];
     }
 
-    return parsed
-      .filter(
-        (
-          fish,
-        ): fish is {
-          id: string;
-          image: string;
-          name?: string;
-          createdAt?: string;
-        } => {
-          return (
-            typeof fish ===
-            'object' &&
-            fish !== null &&
-            typeof fish.id ===
-            'string' &&
-            typeof fish.image ===
-            'string'
-          );
-        },
-      )
-      .map(
-        (fish, index) => ({
-          id: fish.id,
-          image: fish.image,
+    const fish: CreatedFish[] = [];
 
-          name:
-            fish.name ??
-            `Fish ${index + 1}`,
+    parsed.forEach(
+      (
+        value: unknown,
+        index,
+      ) => {
+        if (
+          typeof value !==
+          'object' ||
+          value === null
+        ) {
+          return;
+        }
 
-          createdAt:
-            fish.createdAt ??
-            new Date()
-              .toISOString(),
-        }),
-      );
+        const storedFish =
+          value as StoredFish;
+
+        if (
+          typeof storedFish.id !==
+          'string'
+        ) {
+          return;
+        }
+
+        const name =
+          typeof storedFish.name ===
+          'string'
+            ? storedFish.name
+            : `Fish ${index + 1}`;
+
+        const createdAt =
+          typeof storedFish.createdAt ===
+          'string'
+            ? storedFish.createdAt
+            : new Date().toISOString();
+
+        /**
+         * New 3D fish format.
+         */
+        if (
+          storedFish.type === '3d' &&
+          storedFish.model ===
+          'basic' &&
+          typeof storedFish.bodyColor ===
+          'string' &&
+          typeof storedFish.finColor ===
+          'string'
+        ) {
+          fish.push({
+            id: storedFish.id,
+            type: '3d',
+            model: 'basic',
+            bodyColor:
+            storedFish.bodyColor,
+            finColor:
+            storedFish.finColor,
+            name,
+            createdAt,
+          });
+
+          return;
+        }
+
+        /**
+         * Drawn fish.
+         *
+         * This also handles the OLD
+         * storage format where `type`
+         * didn't exist yet.
+         */
+        if (
+          typeof storedFish.image ===
+          'string'
+        ) {
+          fish.push({
+            id: storedFish.id,
+            type: 'drawn',
+            image:
+            storedFish.image,
+            name,
+            createdAt,
+          });
+        }
+      },
+    );
+
+    return fish;
   } catch (error) {
     console.error(
       'Failed to load fish:',

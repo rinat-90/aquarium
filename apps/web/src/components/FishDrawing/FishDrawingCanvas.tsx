@@ -7,12 +7,32 @@ import {
 
 import { cropDrawing } from '@aquarium/drawing';
 
+import {
+  Fish3DPreview,
+} from '../Fish3D/Fish3DPreview';
+
+export type FishCreation =
+  | {
+  type: 'drawn';
+  image: string;
+}
+  | {
+  type: '3d';
+  model: 'basic';
+  bodyColor: string;
+  finColor: string;
+};
+
 type FishDrawingCanvasProps = {
-  onDone: (image: string) => void;
+  onDone: (
+    fish: FishCreation,
+  ) => void;
   onCancel: () => void;
 };
 
 type Tool = 'brush' | 'eraser';
+
+type CreatorTab = 'draw' | 'color-3d';
 
 const COLORS = [
   '#ff6b35',
@@ -65,6 +85,15 @@ export function FishDrawingCanvas({
 
   const [canUndo, setCanUndo] =
     useState(false);
+
+  const [activeTab, setActiveTab] =
+    useState<CreatorTab>('draw');
+
+  const [bodyColor, setBodyColor] =
+    useState('#ff8a3d');
+
+  const [finColor, setFinColor] =
+    useState('#ffb347');
 
   useEffect(() => {
     const canvas =
@@ -397,7 +426,19 @@ export function FishDrawingCanvas({
       return;
     }
 
-    onDone(image);
+    onDone({
+      type: 'drawn',
+      image,
+    });
+  };
+
+  const finish3D = () => {
+    onDone({
+      type: '3d',
+      model: 'basic',
+      bodyColor,
+      finColor,
+    });
   };
 
   return (
@@ -406,7 +447,7 @@ export function FishDrawingCanvas({
         <div style={styles.header}>
           <div>
             <h2 style={styles.title}>
-              Draw your fish 🐟
+              Create a Fish 🐟
             </h2>
 
             <div
@@ -414,7 +455,7 @@ export function FishDrawingCanvas({
                 styles.subtitle
               }
             >
-              Draw anything you want!
+              Draw your own fish or color a 3D fish.
             </div>
           </div>
 
@@ -427,12 +468,46 @@ export function FishDrawingCanvas({
           </button>
         </div>
 
-        <div
-          style={
-            styles.canvasContainer
-          }
-        >
-          {/*
+        <div style={styles.tabs}>
+          <button
+            type="button"
+            onClick={() =>
+              setActiveTab('draw')
+            }
+            style={{
+              ...styles.tabButton,
+              ...(activeTab === 'draw'
+                ? styles.activeTabButton
+                : {}),
+            }}
+          >
+            ✏️ Draw
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              setActiveTab('color-3d')
+            }
+            style={{
+              ...styles.tabButton,
+              ...(activeTab === 'color-3d'
+                ? styles.activeTabButton
+                : {}),
+            }}
+          >
+            🎨 Color 3D
+          </button>
+        </div>
+
+        {activeTab === 'draw' ? (
+          <>
+            <div
+              style={
+                styles.canvasContainer
+              }
+            >
+              {/*
             This guide is behind the
             transparent canvas.
 
@@ -440,16 +515,16 @@ export function FishDrawingCanvas({
             NOT drawn onto the canvas,
             it won't be exported.
           */}
-          <div style={styles.fishGuide}>
-            <svg
-              viewBox="0 0 600 320"
-              width="100%"
-              height="100%"
-              aria-hidden="true"
-            >
-              {/* Tail */}
-              <path
-                d="
+              <div style={styles.fishGuide}>
+                <svg
+                  viewBox="0 0 600 320"
+                  width="100%"
+                  height="100%"
+                  aria-hidden="true"
+                >
+                  {/* Tail */}
+                  <path
+                    d="
         M 155 160
         C 110 130, 72 96, 38 72
         C 48 116, 50 140, 50 160
@@ -457,16 +532,16 @@ export function FishDrawingCanvas({
         C 72 224, 110 190, 155 160
         Z
       "
-                fill="#64748b"
-                fillOpacity="0.18"
-                stroke="#64748b"
-                strokeWidth="5"
-                strokeLinejoin="round"
-              />
+                    fill="#64748b"
+                    fillOpacity="0.18"
+                    stroke="#64748b"
+                    strokeWidth="5"
+                    strokeLinejoin="round"
+                  />
 
-              {/* Body */}
-              <path
-                d="
+                  {/* Body */}
+                  <path
+                    d="
         M 145 160
         C 190 78, 300 60, 405 86
         C 485 106, 540 132, 555 160
@@ -474,89 +549,89 @@ export function FishDrawingCanvas({
         C 300 260, 190 242, 145 160
         Z
       "
-                fill="none"
-                stroke="#64748b"
-                strokeWidth="5"
-                strokeDasharray="11 9"
-                strokeLinecap="round"
-              />
+                    fill="none"
+                    stroke="#64748b"
+                    strokeWidth="5"
+                    strokeDasharray="11 9"
+                    strokeLinecap="round"
+                  />
 
-              {/* Top fin */}
-              <path
-                d="
+                  {/* Top fin */}
+                  <path
+                    d="
         M 280 82
         C 305 42, 345 35, 375 76
       "
-                fill="none"
-                stroke="#64748b"
-                strokeWidth="5"
-                strokeDasharray="9 8"
-                strokeLinecap="round"
-              />
+                    fill="none"
+                    stroke="#64748b"
+                    strokeWidth="5"
+                    strokeDasharray="9 8"
+                    strokeLinecap="round"
+                  />
 
-              {/* Bottom fin */}
-              <path
-                d="
+                  {/* Bottom fin */}
+                  <path
+                    d="
         M 295 239
         C 320 276, 355 278, 380 230
       "
-                fill="none"
-                stroke="#64748b"
-                strokeWidth="5"
-                strokeDasharray="9 8"
-                strokeLinecap="round"
+                    fill="none"
+                    stroke="#64748b"
+                    strokeWidth="5"
+                    strokeDasharray="9 8"
+                    strokeLinecap="round"
+                  />
+
+                  {/* Eye */}
+                  <circle
+                    cx="475"
+                    cy="137"
+                    r="10"
+                    fill="#64748b"
+                  />
+
+                  {/* Small smile */}
+                  <path
+                    d="M 510 170 Q 525 180 538 168"
+                    fill="none"
+                    stroke="#64748b"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+
+              <canvas
+                ref={canvasRef}
+                width={600}
+                height={400}
+                onPointerDown={
+                  startDrawing
+                }
+                onPointerMove={draw}
+                onPointerUp={
+                  stopDrawing
+                }
+                onPointerCancel={
+                  stopDrawing
+                }
+                style={{
+                  ...styles.canvas,
+
+                  cursor:
+                    tool === 'eraser'
+                      ? 'cell'
+                      : 'crosshair',
+                }}
               />
+            </div>
 
-              {/* Eye */}
-              <circle
-                cx="475"
-                cy="137"
-                r="10"
-                fill="#64748b"
-              />
-
-              {/* Small smile */}
-              <path
-                d="M 510 170 Q 525 180 538 168"
-                fill="none"
-                stroke="#64748b"
-                strokeWidth="4"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
-
-          <canvas
-            ref={canvasRef}
-            width={600}
-            height={400}
-            onPointerDown={
-              startDrawing
-            }
-            onPointerMove={draw}
-            onPointerUp={
-              stopDrawing
-            }
-            onPointerCancel={
-              stopDrawing
-            }
-            style={{
-              ...styles.canvas,
-
-              cursor:
-                tool === 'eraser'
-                  ? 'cell'
-                  : 'crosshair',
-            }}
-          />
-        </div>
-
-        <div style={styles.toolbar}>
-          <div
-            style={
-              styles.toolSection
-            }
-          >
+            <div style={styles.toolbar}>
+              <div
+                style={
+                  styles.toolSection
+                }
+              >
             <span
               style={
                 styles.toolLabel
@@ -565,75 +640,75 @@ export function FishDrawingCanvas({
               Colors
             </span>
 
-            <div
-              style={
-                styles.colorRow
-              }
-            >
-              {COLORS.map(
-                (
-                  paletteColor,
-                ) => (
-                  <button
-                    key={
-                      paletteColor
-                    }
-                    onClick={() =>
+                <div
+                  style={
+                    styles.colorRow
+                  }
+                >
+                  {COLORS.map(
+                    (
+                      paletteColor,
+                    ) => (
+                      <button
+                        key={
+                          paletteColor
+                        }
+                        onClick={() =>
+                          selectColor(
+                            paletteColor,
+                          )
+                        }
+                        aria-label={`Select ${paletteColor}`}
+                        style={{
+                          ...styles.colorButton,
+
+                          background:
+                          paletteColor,
+
+                          transform:
+                            color ===
+                            paletteColor &&
+                            tool ===
+                            'brush'
+                              ? 'scale(1.18)'
+                              : 'scale(1)',
+
+                          outline:
+                            color ===
+                            paletteColor &&
+                            tool ===
+                            'brush'
+                              ? '3px solid #111827'
+                              : '2px solid #ffffff',
+                        }}
+                      />
+                    ),
+                  )}
+
+                  <input
+                    type="color"
+                    value={color}
+                    onChange={(
+                      event,
+                    ) =>
                       selectColor(
-                        paletteColor,
+                        event.target
+                          .value,
                       )
                     }
-                    aria-label={`Select ${paletteColor}`}
-                    style={{
-                      ...styles.colorButton,
-
-                      background:
-                      paletteColor,
-
-                      transform:
-                        color ===
-                        paletteColor &&
-                        tool ===
-                        'brush'
-                          ? 'scale(1.18)'
-                          : 'scale(1)',
-
-                      outline:
-                        color ===
-                        paletteColor &&
-                        tool ===
-                        'brush'
-                          ? '3px solid #111827'
-                          : '2px solid #ffffff',
-                    }}
+                    title="Custom color"
+                    style={
+                      styles.colorPicker
+                    }
                   />
-                ),
-              )}
+                </div>
+              </div>
 
-              <input
-                type="color"
-                value={color}
-                onChange={(
-                  event,
-                ) =>
-                  selectColor(
-                    event.target
-                      .value,
-                  )
-                }
-                title="Custom color"
+              <div
                 style={
-                  styles.colorPicker
+                  styles.toolSection
                 }
-              />
-            </div>
-          </div>
-
-          <div
-            style={
-              styles.toolSection
-            }
-          >
+              >
             <span
               style={
                 styles.toolLabel
@@ -642,49 +717,49 @@ export function FishDrawingCanvas({
               Brush
             </span>
 
-            <div
-              style={
-                styles.brushRow
-              }
-            >
-              {BRUSH_SIZES.map(
-                (brush) => (
-                  <button
-                    key={
-                      brush.size
-                    }
-                    onClick={() => {
-                      setBrushSize(
-                        brush.size,
-                      );
+                <div
+                  style={
+                    styles.brushRow
+                  }
+                >
+                  {BRUSH_SIZES.map(
+                    (brush) => (
+                      <button
+                        key={
+                          brush.size
+                        }
+                        onClick={() => {
+                          setBrushSize(
+                            brush.size,
+                          );
 
-                      setTool(
-                        'brush',
-                      );
-                    }}
-                    title={
-                      brush.label
-                    }
-                    style={{
-                      ...styles.brushButton,
+                          setTool(
+                            'brush',
+                          );
+                        }}
+                        title={
+                          brush.label
+                        }
+                        style={{
+                          ...styles.brushButton,
 
-                      background:
-                        brushSize ===
-                        brush.size &&
-                        tool ===
-                        'brush'
-                          ? '#dbeafe'
-                          : '#ffffff',
+                          background:
+                            brushSize ===
+                            brush.size &&
+                            tool ===
+                            'brush'
+                              ? '#dbeafe'
+                              : '#ffffff',
 
-                      borderColor:
-                        brushSize ===
-                        brush.size &&
-                        tool ===
-                        'brush'
-                          ? '#2563eb'
-                          : '#d1d5db',
-                    }}
-                  >
+                          borderColor:
+                            brushSize ===
+                            brush.size &&
+                            tool ===
+                            'brush'
+                              ? '#2563eb'
+                              : '#d1d5db',
+                        }}
+                      >
                     <span
                       style={{
                         width:
@@ -711,17 +786,17 @@ export function FishDrawingCanvas({
                           'block',
                       }}
                     />
-                  </button>
-                ),
-              )}
-            </div>
-          </div>
+                      </button>
+                    ),
+                  )}
+                </div>
+              </div>
 
-          <div
-            style={
-              styles.toolSection
-            }
-          >
+              <div
+                style={
+                  styles.toolSection
+                }
+              >
             <span
               style={
                 styles.toolLabel
@@ -730,78 +805,222 @@ export function FishDrawingCanvas({
               Tools
             </span>
 
-            <div
-              style={
-                styles.actionRow
-              }
-            >
-              <button
-                onClick={() =>
-                  setTool(
-                    'eraser',
-                  )
-                }
-                style={{
-                  ...styles.toolButton,
+                <div
+                  style={
+                    styles.actionRow
+                  }
+                >
+                  <button
+                    onClick={() =>
+                      setTool(
+                        'eraser',
+                      )
+                    }
+                    style={{
+                      ...styles.toolButton,
 
-                  background:
-                    tool ===
-                    'eraser'
-                      ? '#dbeafe'
-                      : '#ffffff',
+                      background:
+                        tool ===
+                        'eraser'
+                          ? '#dbeafe'
+                          : '#ffffff',
 
-                  borderColor:
-                    tool ===
-                    'eraser'
-                      ? '#2563eb'
-                      : '#d1d5db',
-                }}
-              >
-                🧽 Eraser
-              </button>
+                      borderColor:
+                        tool ===
+                        'eraser'
+                          ? '#2563eb'
+                          : '#d1d5db',
+                    }}
+                  >
+                    🧽 Eraser
+                  </button>
 
-              <button
-                onClick={undo}
-                disabled={!canUndo}
-                style={{
-                  ...styles.toolButton,
+                  <button
+                    onClick={undo}
+                    disabled={!canUndo}
+                    style={{
+                      ...styles.toolButton,
 
-                  opacity:
-                    canUndo
-                      ? 1
-                      : 0.4,
-                }}
-              >
-                ↩ Undo
-              </button>
+                      opacity:
+                        canUndo
+                          ? 1
+                          : 0.4,
+                    }}
+                  >
+                    ↩ Undo
+                  </button>
 
-              <button
-                onClick={clear}
-                style={
-                  styles.toolButton
-                }
-              >
-                🗑 Clear
-              </button>
+                  <button
+                    onClick={clear}
+                    style={
+                      styles.toolButton
+                    }
+                  >
+                    🗑 Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </>
+        ) : (
+          <div style={styles.color3DSection}>
+            <div style={styles.color3DContainer}>
+              <Fish3DPreview
+                bodyColor={bodyColor}
+                finColor={finColor}
+              />
+
+              <div style={styles.rotateHint}>
+                👆 Drag the fish to turn it
+              </div>
+            </div>
+
+            <div style={styles.fishColorControls}>
+              <div style={styles.fishColorSection}>
+      <span style={styles.toolLabel}>
+        Body
+      </span>
+
+                <div style={styles.colorRow}>
+                  {COLORS.map(
+                    (paletteColor) => (
+                      <button
+                        key={paletteColor}
+                        type="button"
+                        onClick={() =>
+                          setBodyColor(
+                            paletteColor,
+                          )
+                        }
+                        aria-label={`Body color ${paletteColor}`}
+                        style={{
+                          ...styles.fishColorButton,
+
+                          background:
+                          paletteColor,
+
+                          transform:
+                            bodyColor ===
+                            paletteColor
+                              ? 'scale(1.18)'
+                              : 'scale(1)',
+
+                          outline:
+                            bodyColor ===
+                            paletteColor
+                              ? '3px solid #2563eb'
+                              : '2px solid #ffffff',
+                        }}
+                      />
+                    ),
+                  )}
+
+                  <label
+                    style={
+                      styles.customColorWrapper
+                    }
+                    title="Custom body color"
+                  >
+                    🎨
+
+                    <input
+                      type="color"
+                      value={bodyColor}
+                      onChange={(event) =>
+                        setBodyColor(
+                          event.target.value,
+                        )
+                      }
+                      style={
+                        styles.hiddenColorInput
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div style={styles.fishColorSection}>
+      <span style={styles.toolLabel}>
+        Fins & Tail
+      </span>
+
+                <div style={styles.colorRow}>
+                  {COLORS.map(
+                    (paletteColor) => (
+                      <button
+                        key={paletteColor}
+                        type="button"
+                        onClick={() =>
+                          setFinColor(
+                            paletteColor,
+                          )
+                        }
+                        aria-label={`Fin color ${paletteColor}`}
+                        style={{
+                          ...styles.fishColorButton,
+
+                          background:
+                          paletteColor,
+
+                          transform:
+                            finColor ===
+                            paletteColor
+                              ? 'scale(1.18)'
+                              : 'scale(1)',
+
+                          outline:
+                            finColor ===
+                            paletteColor
+                              ? '3px solid #2563eb'
+                              : '2px solid #ffffff',
+                        }}
+                      />
+                    ),
+                  )}
+
+                  <label
+                    style={
+                      styles.customColorWrapper
+                    }
+                    title="Custom fin color"
+                  >
+                    🎨
+
+                    <input
+                      type="color"
+                      value={finColor}
+                      onChange={(event) =>
+                        setFinColor(
+                          event.target.value,
+                        )
+                      }
+                      style={
+                        styles.hiddenColorInput
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div style={styles.footer}>
           <button
             onClick={onCancel}
-            style={
-              styles.cancelButton
-            }
+            style={styles.cancelButton}
           >
             Cancel
           </button>
 
           <button
-            onClick={finish}
-            style={
-              styles.addButton
+            onClick={
+              activeTab === 'draw'
+                ? finish
+                : finish3D
             }
+            style={styles.addButton}
           >
             Add to Aquarium 🐠
           </button>
@@ -883,6 +1102,67 @@ const styles = {
     fontSize: 18,
 
     cursor: 'pointer',
+  },
+
+  tabs: {
+    display: 'flex',
+    gap: 8,
+    marginBottom: 18,
+    padding: 5,
+    borderRadius: 14,
+    background: '#f3f4f6',
+  },
+
+  tabButton: {
+    flex: 1,
+    minHeight: 46,
+    border: 0,
+    borderRadius: 10,
+    background: 'transparent',
+    color: '#6b7280',
+    fontSize: 15,
+    fontWeight: 700,
+    cursor: 'pointer',
+  },
+
+  activeTabButton: {
+    background: '#ffffff',
+    color: '#2563eb',
+    boxShadow:
+      '0 2px 8px rgba(0, 0, 0, 0.08)',
+  },
+
+  color3DPlaceholder: {
+    minHeight: 400,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    border: '2px solid #dbeafe',
+    borderRadius: 18,
+    background:
+      'linear-gradient(180deg, #f8fdff 0%, #eef9ff 100%)',
+    textAlign: 'center',
+  },
+
+  placeholderFish: {
+    marginBottom: 14,
+    fontSize: 72,
+  },
+
+  placeholderTitle: {
+    margin: 0,
+    color: '#111827',
+    fontSize: 22,
+  },
+
+  placeholderText: {
+    maxWidth: 360,
+    margin: '8px 0 0',
+    color: '#6b7280',
+    fontSize: 15,
+    lineHeight: 1.5,
   },
 
   canvasContainer: {
@@ -1148,6 +1428,98 @@ const styles = {
     fontWeight: 700,
 
     fontSize: 16,
+
+    cursor: 'pointer',
+  },
+
+  color3DContainer: {
+    overflow: 'hidden',
+    border: '2px solid #dbeafe',
+    borderRadius: 18,
+    background: '#eaf8ff',
+  },
+
+  rotateHint: {
+    padding: '10px 16px 14px',
+    color: '#64748b',
+    fontSize: 14,
+    fontWeight: 600,
+    textAlign: 'center',
+  },
+  color3DSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 18,
+  },
+
+  fishColorControls: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 18,
+
+    padding: 18,
+
+    border: '2px solid #e5e7eb',
+    borderRadius: 16,
+
+    background: '#f8fafc',
+  },
+
+  fishColorSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  },
+
+  fishColorButton: {
+    width: 38,
+    height: 38,
+
+    padding: 0,
+
+    border: 0,
+    borderRadius: '50%',
+
+    cursor: 'pointer',
+
+    boxShadow:
+      '0 1px 4px rgba(0, 0, 0, 0.15)',
+
+    transition:
+      'transform 120ms ease',
+  },
+
+  customColorWrapper: {
+    position: 'relative',
+
+    width: 40,
+    height: 40,
+
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    border: '2px solid #d1d5db',
+    borderRadius: '50%',
+
+    background: '#ffffff',
+
+    fontSize: 20,
+
+    cursor: 'pointer',
+
+    overflow: 'hidden',
+  },
+
+  hiddenColorInput: {
+    position: 'absolute',
+
+    width: '100%',
+    height: '100%',
+
+    inset: 0,
+
+    opacity: 0,
 
     cursor: 'pointer',
   },

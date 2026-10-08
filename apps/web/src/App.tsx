@@ -9,8 +9,8 @@ import {
 
 import {
   FishDrawingCanvas,
+  type FishCreation,
 } from './components/FishDrawing/FishDrawingCanvas';
-
 import {
   FishProfileCard,
 } from './components/FishProfile/FishProfileCard';
@@ -19,12 +19,28 @@ import {
   ThreeAquariumView,
 } from './components/Aquarium3D/ThreeAquariumView';
 
-export type CreatedFish = {
+
+export type DrawnFish = {
   id: string;
+  type: 'drawn';
   image: string;
   name: string;
   createdAt: string;
 };
+
+export type ThreeDFish = {
+  id: string;
+  type: '3d';
+  model: 'basic';
+  bodyColor: string;
+  finColor: string;
+  name: string;
+  createdAt: string;
+};
+
+export type CreatedFish =
+  | DrawnFish
+  | ThreeDFish;
 
 function App() {
   const [drawing, setDrawing] =
@@ -50,26 +66,50 @@ function App() {
     ) ?? null;
 
   const handleFishCreated = (
-    image: string,
+    creation: FishCreation,
   ) => {
     setFish((current) => {
-      const next = [
+      const baseFish = {
+        id: crypto.randomUUID(),
+
+        name:
+          `Fish ${
+            current.length + 1
+          }`,
+
+        createdAt:
+          new Date()
+            .toISOString(),
+      };
+
+      const newFish: CreatedFish =
+        creation.type === 'drawn'
+          ? {
+            ...baseFish,
+
+            type: 'drawn',
+
+            image:
+            creation.image,
+          }
+          : {
+            ...baseFish,
+
+            type: '3d',
+
+            model:
+            creation.model,
+
+            bodyColor:
+            creation.bodyColor,
+
+            finColor:
+            creation.finColor,
+          };
+
+      const next: CreatedFish[] = [
         ...current,
-        {
-          id:
-            crypto.randomUUID(),
-
-          image,
-
-          name:
-            `Fish ${
-              current.length + 1
-            }`,
-
-          createdAt:
-            new Date()
-              .toISOString(),
-        },
+        newFish,
       ];
 
       saveFish(next);

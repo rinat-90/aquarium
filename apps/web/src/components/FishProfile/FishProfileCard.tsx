@@ -7,6 +7,10 @@ import type {
   CreatedFish,
 } from '../../App';
 
+import {
+  Fish3DPreview,
+} from '../Fish3D/Fish3DPreview';
+
 type FishProfileCardProps = {
   fish: CreatedFish;
 
@@ -110,6 +114,8 @@ export function FishProfileCard({
           fontSize: 18,
 
           cursor: 'pointer',
+
+          zIndex: 2,
         }}
       >
         ✕
@@ -117,7 +123,7 @@ export function FishProfileCard({
 
       <div
         style={{
-          height: 130,
+          height: 150,
 
           display: 'flex',
 
@@ -134,16 +140,35 @@ export function FishProfileCard({
           overflow: 'hidden',
         }}
       >
-        <img
-          src={fish.image}
-          alt={fish.name}
-          style={{
-            maxWidth: '90%',
-            maxHeight: 110,
+        {fish.type === 'drawn' ? (
+          <img
+            src={fish.image}
+            alt={fish.name}
+            style={{
+              maxWidth: '90%',
+              maxHeight: 125,
 
-            objectFit: 'contain',
-          }}
-        />
+              objectFit: 'contain',
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+            }}
+          >
+            <Fish3DPreview
+              bodyColor={
+                fish.bodyColor
+              }
+              finColor={
+                fish.finColor
+              }
+              height={150}
+            />
+          </div>
+        )}
       </div>
 
       <div
@@ -161,7 +186,9 @@ export function FishProfileCard({
           letterSpacing: 1,
         }}
       >
-        My Fish
+        {fish.type === '3d'
+          ? 'My 3D Fish'
+          : 'My Fish'}
       </div>
 
       <div
