@@ -16,11 +16,9 @@ import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { isNativeError } from 'node:util/types';
 
-const STORAGE_DIR = join(
-  process.cwd(),
-  'storage',
-  'fish-textures',
-);
+const STORAGE_DIR =
+  process.env.STORAGE_DIR ??
+  join(process.cwd(), 'storage', 'fish-textures');
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 

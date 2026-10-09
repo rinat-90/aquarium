@@ -180,7 +180,7 @@ async function start() {
     // Start API server.
     await app.listen({
       port: Number(process.env.PORT ?? 3001),
-      host: process.env.HOST ?? '127.0.0.1',
+      host: process.env.HOST ?? '0.0.0.0',
     });
 
     app.log.info('Aquarium API is running');
