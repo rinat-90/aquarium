@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import type { CreatedFish } from '../../App';
+import type {CreatedFish} from "../../types/fish.ts";
 import type { ApiAquarium } from '../../lib/aquarium-api';
 
 import { Fish3DPreview } from '../Fish3D/Fish3DPreview';

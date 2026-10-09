@@ -1,8 +1,8 @@
-
 import { createBrowserRouter, Navigate } from 'react-router';
-import App from '../App';
+
 import { AuthScreen } from '../components/Auth/AuthScreen';
 import { AquariumsPage } from '../pages/AquariumsPage/AquariumsPage';
+import { AquariumPage } from '../pages/AquariumPage/AquariumPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export const router = createBrowserRouter([
@@ -27,7 +27,7 @@ export const router = createBrowserRouter([
       },
       {
         path: '/aquariums/:id',
-        element: <App />,
+        element: <AquariumPage />,
       },
       {
         path: '/aquarium',

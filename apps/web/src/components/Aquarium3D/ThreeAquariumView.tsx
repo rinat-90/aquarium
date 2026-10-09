@@ -9,9 +9,6 @@ import {
   Aquarium,
 } from '@aquarium/aquarium-engine';
 
-import type {
-  CreatedFish,
-} from '../../App';
 
 import {
   createThreeFish,
@@ -31,6 +28,8 @@ import {createThreeModelFish, type ThreeModelFish} from "./ThreeModelFish.ts";
 import {
   createSandCaustics,
 } from './createSandCaustics';
+
+import type {CreatedFish} from "../../types/fish.ts";
 
 type ThreeAquariumViewProps = {
   createdFish: CreatedFish[];
