@@ -13,7 +13,7 @@ import {
 
 import { createAngelfish3DModel } from './createAngelfish3DModel';
 
-export type FishSpecies = 'classic' | 'angelfish';
+type FishSpecies = 'classic' | 'angelfish';
 
 type Fish3DPreviewProps = {
   bodyColor: string;

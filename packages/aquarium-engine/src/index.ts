@@ -80,7 +80,7 @@ export class Aquarium {
   createFish(
     id: string,
     size = 1,
-    species: FishSpecies = 'basic',
+    _species: FishSpecies = 'basic',
   ): Fish {
     const speed =
       0.7 +

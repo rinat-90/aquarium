@@ -1,20 +1,21 @@
 
 import type { FastifyInstance } from 'fastify';
+import type { ZodTypeProvider } from 'fastify-type-provider-zod';
+
 import { prisma } from '@aquarium/database';
 import { getAuthenticatedUser } from '../lib/get-authenticated-user.js';
 
-type CreateFishBody = {
-  name: string;
-  species?: string;
-  bodyColor?: string;
-  finColor?: string;
-  size?: number;
-  aquariumId?: string;
-};
+import {
+  fishIdParamsSchema,
+  createFishSchema,
+  updateFishSchema,
+} from '../schemas/fish.schema.js';
 
 export async function fishRoutes(app: FastifyInstance) {
-  // List fish belonging to the signed-in parent.
-  app.get('/fish', async (request, reply) => {
+  const api = app.withTypeProvider<ZodTypeProvider>();
+
+  // List fish belonging to the signed-in user.
+  api.get('/fish', async (request, reply) => {
     const user = await getAuthenticatedUser(request);
 
     if (!user) {
@@ -24,50 +25,21 @@ export async function fishRoutes(app: FastifyInstance) {
     }
 
     return prisma.fish.findMany({
-      where: { ownerId: user.id },
-      orderBy: { createdAt: 'asc' },
+      where: {
+        ownerId: user.id,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
     });
   });
 
   // Create a fish.
-  app.post<{ Body: CreateFishBody }>(
+  api.post(
     '/fish',
     {
       schema: {
-        body: {
-          type: 'object',
-          required: ['name'],
-          additionalProperties: false,
-          properties: {
-            name: {
-              type: 'string',
-              minLength: 1,
-              maxLength: 100,
-              pattern: '\\S',
-            },
-            species: {
-              type: 'string',
-              enum: ['classic', 'angelfish'],
-            },
-            bodyColor: {
-              type: 'string',
-              pattern: '^#[0-9a-fA-F]{6}$',
-            },
-            finColor: {
-              type: 'string',
-              pattern: '^#[0-9a-fA-F]{6}$',
-            },
-            size: {
-              type: 'number',
-              minimum: 0.1,
-              maximum: 5,
-            },
-            aquariumId: {
-              type: 'string',
-              minLength: 1,
-            },
-          },
-        },
+        body: createFishSchema,
       },
     },
     async (request, reply) => {
@@ -88,14 +60,15 @@ export async function fishRoutes(app: FastifyInstance) {
         aquariumId,
       } = request.body;
 
-      // Never allow a fish to be assigned to another parent's aquarium.
       if (aquariumId) {
         const aquarium = await prisma.aquarium.findFirst({
           where: {
             id: aquariumId,
             ownerId: user.id,
           },
-          select: { id: true },
+          select: {
+            id: true,
+          },
         });
 
         if (!aquarium) {
@@ -107,13 +80,13 @@ export async function fishRoutes(app: FastifyInstance) {
 
       const fish = await prisma.fish.create({
         data: {
-          name: name.trim(),
+          name,
           species: species ?? 'classic',
-          bodyColor: bodyColor ?? '#4F9CF9',
-          finColor: finColor ?? '#3B82F6',
-          size: size ?? 1,
+          ...(bodyColor !== undefined && { bodyColor }),
+          ...(finColor !== undefined && { finColor }),
+          ...(size !== undefined && { size }),
+          ...(aquariumId !== undefined && { aquariumId }),
           ownerId: user.id,
-          aquariumId: aquariumId ?? null,
         },
       });
 
@@ -121,10 +94,14 @@ export async function fishRoutes(app: FastifyInstance) {
     },
   );
 
-
-  // Get a single fish
-  app.get<{ Params: { id: string } }>(
+  // Get a fish owned by the signed-in user.
+  api.get(
     '/fish/:id',
+    {
+      schema: {
+        params: fishIdParamsSchema,
+      },
+    },
     async (request, reply) => {
       const user = await getAuthenticatedUser(request);
 
@@ -151,57 +128,13 @@ export async function fishRoutes(app: FastifyInstance) {
     },
   );
 
-  // Update a fish, including moving it between aquariums
-  app.patch<{
-    Params: { id: string };
-    Body: {
-      name?: string;
-      species?: string;
-      bodyColor?: string;
-      finColor?: string;
-      size?: number;
-      aquariumId?: string | null;
-    };
-  }>(
+  // Update a fish.
+  api.patch(
     '/fish/:id',
     {
       schema: {
-        body: {
-          type: 'object',
-          minProperties: 1,
-          additionalProperties: false,
-          properties: {
-            name: {
-              type: 'string',
-              minLength: 1,
-              maxLength: 100,
-              pattern: '\\S',
-            },
-            species: {
-              type: 'string',
-              enum: ['classic', 'angelfish'],
-            },
-            bodyColor: {
-              type: 'string',
-              pattern: '^#[0-9a-fA-F]{6}$',
-            },
-            finColor: {
-              type: 'string',
-              pattern: '^#[0-9a-fA-F]{6}$',
-            },
-            size: {
-              type: 'number',
-              minimum: 0.1,
-              maximum: 5,
-            },
-            aquariumId: {
-              anyOf: [
-                { type: 'string', minLength: 1 },
-                { type: 'null' },
-              ],
-            },
-          },
-        },
+        params: fishIdParamsSchema,
+        body: updateFishSchema,
       },
     },
     async (request, reply) => {
@@ -213,29 +146,25 @@ export async function fishRoutes(app: FastifyInstance) {
         });
       }
 
-      const existingFish = await prisma.fish.findFirst({
-        where: {
-          id: request.params.id,
-          ownerId: user.id,
-        },
-        select: { id: true },
-      });
+      const {
+        name,
+        species,
+        bodyColor,
+        finColor,
+        size,
+        aquariumId,
+      } = request.body;
 
-      if (!existingFish) {
-        return reply.code(404).send({
-          error: 'Fish not found',
-        });
-      }
-
-      const { aquariumId, name, ...otherFields } = request.body;
-
-      if (aquariumId !== undefined && aquariumId !== null) {
+      // Verify ownership before assigning an aquarium.
+      if (aquariumId) {
         const aquarium = await prisma.aquarium.findFirst({
           where: {
             id: aquariumId,
             ownerId: user.id,
           },
-          select: { id: true },
+          select: {
+            id: true,
+          },
         });
 
         if (!aquarium) {
@@ -251,9 +180,12 @@ export async function fishRoutes(app: FastifyInstance) {
           ownerId: user.id,
         },
         data: {
-          ...otherFields,
-          ...(name !== undefined ? { name: name.trim() } : {}),
-          ...(aquariumId !== undefined ? { aquariumId } : {}),
+          ...(name !== undefined && { name }),
+          ...(species !== undefined && { species }),
+          ...(bodyColor !== undefined && { bodyColor }),
+          ...(finColor !== undefined && { finColor }),
+          ...(size !== undefined && { size }),
+          ...(aquariumId !== undefined && { aquariumId }),
         },
       });
 
@@ -272,9 +204,14 @@ export async function fishRoutes(app: FastifyInstance) {
     },
   );
 
-  // Delete a fish
-  app.delete<{ Params: { id: string } }>(
+  // Delete a fish.
+  api.delete(
     '/fish/:id',
+    {
+      schema: {
+        params: fishIdParamsSchema,
+      },
+    },
     async (request, reply) => {
       const user = await getAuthenticatedUser(request);
 
@@ -300,5 +237,4 @@ export async function fishRoutes(app: FastifyInstance) {
       return reply.code(204).send();
     },
   );
-
 }

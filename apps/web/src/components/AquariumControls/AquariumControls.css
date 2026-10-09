@@ -1,0 +1,224 @@
+
+.aquarium-controls {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.aquarium-settings-button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 14px;
+    background: rgba(5, 52, 96, 0.85);
+    color: #fff;
+    cursor: pointer;
+    backdrop-filter: blur(14px);
+    transition: background 160ms ease, transform 160ms ease;
+}
+
+.aquarium-settings-button:hover:not(:disabled) {
+    background: rgba(8, 78, 131, 0.95);
+    transform: translateY(-1px);
+}
+
+.aquarium-settings-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.aquarium-delete-link {
+    margin-top: 18px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #ffb2b2;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.aquarium-delete-warning {
+    margin: 0;
+    color: #d5e9f5;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.aquarium-form-error {
+    margin: 12px 0 0;
+    color: #ffc5c5;
+    font-size: 13px;
+}
+
+
+.aquarium-default-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    margin-top: 20px;
+    padding: 16px;
+
+    border: 1px solid rgba(100, 190, 225, 0.25);
+    border-radius: 16px;
+
+    background: rgba(31, 112, 160, 0.12);
+}
+
+.aquarium-default-info strong {
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.aquarium-default-info p {
+    margin: 6px 0 0;
+    color: #b8d7e8;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.aquarium-default-badge {
+    align-self: flex-start;
+
+    padding: 8px 12px;
+    border-radius: 10px;
+
+    background: rgba(69, 190, 160, 0.18);
+    color: #9ff0d5;
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.aquarium-default-section .ui-button {
+    align-self: flex-start;
+}
+
+
+.aquarium-settings-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #d9edf8;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.aquarium-default-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    margin-top: 20px;
+    padding: 16px;
+
+    border: 1px solid rgba(100, 190, 225, 0.25);
+    border-radius: 16px;
+
+    background: rgba(31, 112, 160, 0.12);
+}
+
+.aquarium-default-info strong {
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.aquarium-default-info p {
+    margin: 6px 0 0;
+    color: #b8d7e8;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.aquarium-default-badge {
+    align-self: flex-start;
+
+    padding: 8px 12px;
+    border-radius: 10px;
+
+    background: rgba(69, 190, 160, 0.18);
+    color: #9ff0d5;
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.aquarium-default-section .ui-button {
+    align-self: flex-start;
+}
+
+
+/* Safe Aquarium Deletion */
+
+.aquarium-delete-transfer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    padding: 16px;
+    border: 1px solid rgba(100, 190, 225, 0.25);
+    border-radius: 16px;
+    background: rgba(31, 112, 160, 0.12);
+}
+
+.aquarium-delete-fish-count {
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.aquarium-delete-description {
+    margin: 0;
+    color: #b8d7e8;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.aquarium-delete-label {
+    color: #dceef8;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.aquarium-delete-transfer .ui-select {
+    width: 100%;
+}
+
+.aquarium-delete-default-note {
+    margin: 14px 0 0;
+    color: #b8d7e8;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+
+
+@media (max-width: 480px) {
+    .aquarium-controls {
+        top: 12px;
+        left: 12px;
+        gap: 6px;
+    }
+
+    .aquarium-controls .ui-button {
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    .aquarium-settings-button {
+        width: 42px;
+        height: 42px;
+        flex-shrink: 0;
+    }
+}

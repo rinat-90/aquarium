@@ -1,0 +1,327 @@
+
+.fish-profile-card {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 1000;
+
+    box-sizing: border-box;
+    width: 320px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+
+    padding: 20px;
+    border-radius: 24px;
+
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(12px);
+
+    color: #17324d;
+    font-family: system-ui, sans-serif;
+}
+
+.fish-profile-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+
+    display: grid;
+    place-items: center;
+
+    width: 34px;
+    height: 34px;
+
+    border: 0;
+    border-radius: 50%;
+
+    background: #eaf5f8;
+    color: #17324d;
+
+    font-size: 18px;
+    cursor: pointer;
+
+    transition: background 160ms ease, transform 160ms ease;
+}
+
+.fish-profile-close:hover {
+    background: #d2edf5;
+    transform: rotate(90deg);
+}
+
+.fish-profile-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    height: 150px;
+    margin-bottom: 14px;
+
+    border-radius: 18px;
+    background: #dff6fb;
+    overflow: hidden;
+}
+
+.fish-profile-image {
+    max-width: 90%;
+    max-height: 125px;
+    object-fit: contain;
+}
+
+.fish-profile-3d {
+    width: 100%;
+    height: 100%;
+}
+
+.fish-profile-type {
+    margin-bottom: 4px;
+
+    color: #60849a;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.fish-profile-name {
+    margin-bottom: 16px;
+    padding-right: 36px;
+
+    font-size: 26px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.fish-profile-created {
+    margin-bottom: 18px;
+
+    color: #688397;
+    font-size: 14px;
+}
+
+.fish-profile-label {
+    display: block;
+    margin-bottom: 6px;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.fish-profile-input {
+    box-sizing: border-box;
+    width: 100%;
+
+    padding: 11px 12px;
+
+    border: 2px solid #cce8ef;
+    border-radius: 12px;
+    outline: none;
+
+    background: white;
+    color: #17324d;
+    font-size: 16px;
+
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.fish-profile-input:focus {
+    border-color: #37b6d5;
+    box-shadow: 0 0 0 3px rgba(55, 182, 213, 0.15);
+}
+
+.fish-profile-save {
+    width: 100%;
+    margin-top: 10px;
+    padding: 11px 16px;
+
+    border: 0;
+    border-radius: 12px;
+
+    background: #37b6d5;
+    color: white;
+
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+
+    transition: background 160ms ease, opacity 160ms ease;
+}
+
+.fish-profile-save:hover:not(:disabled) {
+    background: #229bbd;
+}
+
+.fish-profile-save:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.fish-profile-divider {
+    height: 1px;
+    margin: 18px 0;
+    background: #e1edf1;
+}
+
+.fish-profile-release {
+    width: 100%;
+    padding: 11px 16px;
+
+    border: 2px solid #f0a0a0;
+    border-radius: 12px;
+
+    background: transparent;
+    color: #c44747;
+
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+
+    transition: background 160ms ease;
+}
+
+.fish-profile-release:hover {
+    background: #fff1f1;
+}
+
+.fish-profile-confirm {
+    padding: 12px;
+    border-radius: 14px;
+    background: #fff1f1;
+}
+
+.fish-profile-confirm-text {
+    margin-bottom: 10px;
+
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.fish-profile-confirm-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.fish-profile-confirm-button {
+    flex: 1;
+    padding: 10px 12px;
+
+    border: 0;
+    border-radius: 10px;
+
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.fish-profile-keep {
+    background: #dcecef;
+    color: #17324d;
+}
+
+.fish-profile-keep:hover {
+    background: #c6e3e9;
+}
+
+.fish-profile-confirm-release {
+    background: #dc5b5b;
+    color: white;
+    font-weight: 800;
+}
+
+.fish-profile-confirm-release:hover {
+    background: #c74747;
+}
+
+
+/* Move Fish */
+
+.fish-profile-move {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fish-profile-section-title {
+    color: #17324d;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.fish-profile-section-description {
+    margin: 0;
+    color: #688397;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.fish-profile-move .ui-select {
+    width: 100%;
+}
+
+.fish-profile-move-button {
+    width: 100%;
+    padding: 11px 16px;
+
+    border: 0;
+    border-radius: 12px;
+
+    background: #176b99;
+    color: white;
+
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+
+    transition: background 160ms ease, opacity 160ms ease;
+}
+
+.fish-profile-move-button:hover:not(:disabled) {
+    background: #12577e;
+}
+
+.fish-profile-move-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.fish-profile-move-error {
+    margin: 0;
+    color: #c44747;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.fish-profile-card button:disabled {
+    cursor: not-allowed;
+}
+
+
+@media (max-width: 480px) {
+    .fish-profile-card {
+        top: 12px;
+        right: 12px;
+
+        max-width: calc(100vw - 24px);
+        max-height: calc(100dvh - 24px);
+        padding: 16px;
+    }
+
+    .fish-profile-preview {
+        height: 130px;
+    }
+
+    .fish-profile-name {
+        font-size: 23px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fish-profile-card button,
+    .fish-profile-input {
+        transition: none;
+    }
+}
