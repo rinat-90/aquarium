@@ -1,14 +1,15 @@
+
 import * as THREE from 'three';
 
 import {
   createFish3DModel,
 } from '../Fish3D/createFish3DModel';
 
-import { createAngelfish3DModel } from '../Fish3D/createAngelfish3DModel';
+import {
+  createAngelfish3DModel,
+} from '../Fish3D/createAngelfish3DModel';
 
-type FishDirection =
-  | 'left'
-  | 'right';
+type FishDirection = 'left' | 'right';
 
 export type ThreeModelFish = {
   group: THREE.Group;
@@ -36,32 +37,25 @@ export function createThreeModelFish(
       ? createAngelfish3DModel()
       : createFish3DModel();
 
-  model.setBodyColor(
-    bodyColor,
-  );
+  const isAngelfish = species === 'angelfish';
 
-  model.setFinColor(
-    finColor,
-  );
+  model.setBodyColor(bodyColor);
+  model.setFinColor(finColor);
 
   if (paintImage) {
-    model.setPaintImage(
-      paintImage,
-    );
+    model.setPaintImage(paintImage);
   }
 
-  model.group.scale.setScalar(
-    0.38 * size,
-  );
+  model.group.scale.setScalar(0.38 * size);
 
-  /*
-   * The model naturally faces +X.
-   *
-   * Keep track of yaw separately so
-   * turns can smoothly cross the
-   * -PI / +PI boundary.
-   */
+  const baseLeftFinRotation = model.leftFin.rotation.z;
+  const baseRightFinRotation = model.rightFin.rotation.z;
+
   let currentYaw = 0;
+  let previousTargetYaw: number | null = null;
+  let turnLean = 0;
+  let smoothedSpeed = 0.5;
+  let lastTime: number | null = null;
 
   const update = (
     time: number,
@@ -70,116 +64,124 @@ export function createThreeModelFish(
     depthVelocity: number,
     horizontalVelocity?: number,
   ) => {
-    const swim =
-      Math.sin(
-        time * 1.6,
-      );
+    const deltaTime =
+      lastTime === null
+        ? 1 / 60
+        : THREE.MathUtils.clamp(
+          time - lastTime,
+          0,
+          0.05,
+        );
 
-    /*
-     * Tail animation.
-     */
+    lastTime = time;
+
+    const speedBlend =
+      1 - Math.exp(-4 * deltaTime);
+
+    smoothedSpeed +=
+      (Math.max(0, speed) - smoothedSpeed) *
+      speedBlend;
+
+    const activity = THREE.MathUtils.clamp(
+      smoothedSpeed,
+      0,
+      1.5,
+    );
+
+    // Different swimming rhythms for each species.
+    const tailFrequency = isAngelfish ? 1.15 : 1.9;
+    const tailAmplitude = isAngelfish ? 0.16 : 0.32;
+
+    const swim = Math.sin(time * tailFrequency);
+
+    // Keep the tail moving gently even when idling.
     model.tail.rotation.y =
       swim *
-      0.32 *
-      speed;
+      tailAmplitude *
+      (0.3 + activity * 0.7);
 
-    /*
-     * Side fins.
-     */
+    // Side fins paddle continuously.
+    const finFrequency = isAngelfish ? 1.7 : 2.6;
+    const finAmplitude = isAngelfish ? 0.11 : 0.085;
+
     const finMovement =
-      Math.sin(
-        time * 1.3,
-      ) *
-      0.08 *
-      speed;
+      Math.sin(time * finFrequency) *
+      finAmplitude *
+      (0.45 + activity * 0.55);
 
     model.leftFin.rotation.z =
-      -Math.PI / 2.5 +
-      finMovement;
+      baseLeftFinRotation + finMovement;
 
     model.rightFin.rotation.z =
-      -Math.PI / 2.5 -
-      finMovement;
+      baseRightFinRotation - finMovement;
 
-    /*
-     * Small natural body sway.
-     */
+    // Gentle body sway.
     const bodySway =
-      swim *
-      0.025 *
-      speed;
+      Math.sin(time * tailFrequency) *
+      (isAngelfish ? 0.012 : 0.025) *
+      (0.3 + activity * 0.7);
 
-    /*
-     * Use the actual X/Z movement vector
-     * to determine where the fish faces.
-     *
-     * +X = right
-     * -X = left
-     * +Z = toward the camera
-     * -Z = away from the camera
-     */
     const velocityX =
       horizontalVelocity ??
-      (
-        direction === 'right'
-          ? 1
-          : -1
-      );
+      (direction === 'right' ? 1 : -1);
 
-    const horizontalSpeed =
-      Math.sqrt(
-        velocityX *
-        velocityX +
-        depthVelocity *
-        depthVelocity,
-      );
+    const horizontalSpeed = Math.hypot(
+      velocityX,
+      depthVelocity,
+    );
 
     if (horizontalSpeed > 0.03) {
-      const targetYaw =
-        Math.atan2(
-          -depthVelocity,
-          velocityX,
-        );
+      const targetYaw = Math.atan2(
+        -depthVelocity,
+        velocityX,
+      );
 
-      /*
-       * Find the shortest rotational path.
-       * Without this, crossing PI can make
-       * the fish spin almost 360 degrees.
-       */
-      const yawDifference =
-        Math.atan2(
-          Math.sin(
-            targetYaw -
-            currentYaw,
-          ),
-          Math.cos(
-            targetYaw -
-            currentYaw,
-          ),
-        );
+      const yawDifference = Math.atan2(
+        Math.sin(targetYaw - currentYaw),
+        Math.cos(targetYaw - currentYaw),
+      );
 
-      /*
-       * Smooth turning.
-       *
-       * Higher visual swimming speed gives
-       * a slightly more responsive turn.
-       */
+      // Angelfish rotate more gracefully.
+      const turnResponsiveness =
+        isAngelfish ? 2.1 : 4.2;
+
       const turnAmount =
-        THREE.MathUtils.clamp(
-          0.055 +
-          speed * 0.025,
-          0.055,
-          0.11,
+        1 - Math.exp(
+          -turnResponsiveness * deltaTime,
         );
 
-      currentYaw +=
-        yawDifference *
-        turnAmount;
+      currentYaw += yawDifference * turnAmount;
+
+      // Subtle lean while changing direction.
+      if (previousTargetYaw !== null) {
+        const headingChange = Math.atan2(
+          Math.sin(targetYaw - previousTargetYaw),
+          Math.cos(targetYaw - previousTargetYaw),
+        );
+
+        const desiredLean = THREE.MathUtils.clamp(
+          -headingChange * (isAngelfish ? 0.08 : 0.12),
+          -0.09,
+          0.09,
+        );
+
+        const leanBlend =
+          1 - Math.exp(-3 * deltaTime);
+
+        turnLean +=
+          (desiredLean - turnLean) * leanBlend;
+      }
+
+      previousTargetYaw = targetYaw;
+    } else {
+      turnLean *= Math.exp(-3 * deltaTime);
     }
 
     model.group.rotation.y =
-      currentYaw +
-      bodySway;
+      currentYaw + bodySway;
+
+    // Very small banking motion during turns.
+    model.group.rotation.x = turnLean;
   };
 
   return {

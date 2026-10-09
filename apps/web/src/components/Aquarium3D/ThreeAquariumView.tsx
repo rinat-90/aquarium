@@ -1103,18 +1103,11 @@ export function ThreeAquariumView({
          * original drawing readable.
          */
         view.update(
-          elapsed *
-          (
-            3.5 +
-            speedRatio * 2
-          ),
-
-          0.55 +
-          speedRatio * 0.45,
-
+          elapsed * (3.5 + speedRatio * 2),
+          0.55 + speedRatio * 0.45,
           fish.direction,
-
           fish.velocity.z,
+          fish.velocity.x,
         );
       }
 
