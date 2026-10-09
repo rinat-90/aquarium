@@ -6,6 +6,8 @@ import {
 
 import * as THREE from 'three';
 
+import './Fish3DPreview.css';
+
 import {
   createFish3DModel,
   type Fish3DModel,
@@ -216,7 +218,7 @@ export function Fish3DPreview({
 
     scene.background =
       new THREE.Color(
-        0xeaf8ff,
+        0x082238,
       );
 
     const camera =
@@ -362,7 +364,7 @@ export function Fish3DPreview({
       const aspect = width / currentHeight;
       // Extra padding leaves room for the fins during rotation and
       // keeps the fish comfortably inside the painting controls.
-      const radius = Math.max(sphere.radius, 0.01) * 1.7;
+      const radius = Math.max(sphere.radius, 0.01) * 1.45;
       const halfHeight = Math.max(radius, radius / aspect);
       const halfWidth = halfHeight * aspect;
 
@@ -1075,422 +1077,107 @@ export function Fish3DPreview({
   }, [species]);
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        width: '100%',
-      }}
-    >
-      {/* Paint / Rotate */}
-      {editable && <div
-          style={{
-            position: 'absolute',
-            top: 12,
-            left: '50%',
-
-            transform:
-              'translateX(-50%)',
-
-            zIndex: 3,
-
-            display: 'flex',
-            gap: 6,
-
-            padding: 5,
-
-            borderRadius: 14,
-
-            background:
-              'rgba(255, 255, 255, 0.92)',
-
-            boxShadow:
-              '0 4px 14px rgba(0, 0, 0, 0.12)',
-          }}
-      >
-          <button
-              type="button"
-              onClick={() =>
-                setMode('paint')
-              }
-              style={{
-                padding:
-                  '8px 14px',
-
-                border: 0,
-                borderRadius: 10,
-
-                background:
-                  mode === 'paint'
-                    ? '#37b6d5'
-                    : 'transparent',
-
-                color:
-                  mode === 'paint'
-                    ? 'white'
-                    : '#17324d',
-
-                fontWeight: 800,
-                cursor: 'pointer',
-              }}
-          >
-              🖌️ Paint
-          </button>
-
-          <button
-              type="button"
-              onClick={() =>
-                setMode('rotate')
-              }
-              style={{
-                padding:
-                  '8px 14px',
-
-                border: 0,
-                borderRadius: 10,
-
-                background:
-                  mode === 'rotate'
-                    ? '#37b6d5'
-                    : 'transparent',
-
-                color:
-                  mode === 'rotate'
-                    ? 'white'
-                    : '#17324d',
-
-                fontWeight: 800,
-                cursor: 'pointer',
-              }}
-          >
-              🔄 Rotate
-          </button>
-      </div>}
-
-      {/* Painting controls */}
-      {editable && mode === 'paint' && (
-        <div
-          style={{
-            position: 'absolute',
-
-            left: 12,
-            right: 12,
-            bottom: 12,
-
-            zIndex: 3,
-
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent:
-              'center',
-
-            flexWrap: 'wrap',
-
-            gap: 10,
-
-            padding: 10,
-
-            borderRadius: 14,
-
-            background:
-              'rgba(255, 255, 255, 0.94)',
-
-            boxShadow:
-              '0 4px 14px rgba(0, 0, 0, 0.12)',
-          }}
-        >
-          {/* Colors */}
-          {PAINT_COLORS.map(
-            (color) => (
-              <button
-                key={color}
-                type="button"
-                aria-label={
-                  `Use ${color}`
-                }
-                onClick={() => {
-                  setBrushColor(
-                    color,
-                  );
-
-                  setEraser(
-                    false,
-                  );
-                }}
-                style={{
-                  width: 28,
-                  height: 28,
-
-                  padding: 0,
-
-                  flexShrink: 0,
-
-                  borderRadius:
-                    '50%',
-
-                  border:
-                    !eraser &&
-                    brushColor ===
-                    color
-                      ? '3px solid #17324d'
-                      : '2px solid rgba(0, 0, 0, 0.15)',
-
-                  background:
-                  color,
-
-                  cursor:
-                    'pointer',
-
-                  boxShadow:
-                    color ===
-                    '#ffffff'
-                      ? 'inset 0 0 0 1px #ddd'
-                      : undefined,
-                }}
-              />
-            ),
-          )}
-
-          {/* Custom color */}
-          <input
-            type="color"
-            value={brushColor}
-            title="Custom color"
-            aria-label="Custom paint color"
-            onChange={(
-              event,
-            ) => {
-              setBrushColor(
-                event.target.value,
-              );
-
-              setEraser(
-                false,
-              );
-            }}
-            style={{
-              width: 32,
-              height: 32,
-
-              padding: 0,
-              border: 0,
-
-              flexShrink: 0,
-
-              background:
-                'transparent',
-
-              cursor:
-                'pointer',
-            }}
-          />
-
-          <div
-            style={{
-              width: 1,
-              height: 30,
-
-              background:
-                'rgba(0, 0, 0, 0.12)',
-            }}
-          />
-
-          {/* Brush sizes */}
-          {BRUSH_SIZES.map(
-            (size) => (
-              <button
-                key={size.value}
-                type="button"
-                onClick={() =>
-                  setBrushSize(
-                    size.value,
-                  )
-                }
-                style={{
-                  minWidth: 34,
-                  height: 34,
-
-                  border:
-                    brushSize ===
-                    size.value
-                      ? '2px solid #37b6d5'
-                      : '1px solid #ccd7df',
-
-                  borderRadius: 9,
-
-                  background:
-                    brushSize ===
-                    size.value
-                      ? '#e7f8fc'
-                      : '#ffffff',
-
-                  color:
-                    '#17324d',
-
-                  fontWeight: 800,
-
-                  cursor:
-                    'pointer',
-                }}
-              >
-                {size.label}
-              </button>
-            ),
-          )}
-
-          <div
-            style={{
-              width: 1,
-              height: 30,
-
-              background:
-                'rgba(0, 0, 0, 0.12)',
-            }}
-          />
-
-          {/* Eraser */}
+    <div className="fish-3d-preview">
+      {editable && (
+        <div className="fish-3d-preview__modes" role="group" aria-label="Fish interaction mode">
           <button
             type="button"
-            onClick={() =>
-              setEraser(
-                (current) =>
-                  !current,
-              )
-            }
-            style={{
-              height: 36,
-
-              padding:
-                '0 12px',
-
-              border:
-                eraser
-                  ? '2px solid #37b6d5'
-                  : '1px solid #ccd7df',
-
-              borderRadius: 9,
-
-              background:
-                eraser
-                  ? '#e7f8fc'
-                  : '#ffffff',
-
-              color:
-                '#17324d',
-
-              fontWeight: 800,
-
-              cursor:
-                'pointer',
-            }}
+            className={`fish-3d-preview__mode ${mode === 'paint' ? 'is-active' : ''}`}
+            aria-pressed={mode === 'paint'}
+            onClick={() => setMode('paint')}
           >
-            🧽 Eraser
+            🖌️ Paint
           </button>
-
-          <div
-            style={{
-              width: 1,
-              height: 30,
-
-              background:
-                'rgba(0, 0, 0, 0.12)',
-            }}
-          />
-
-          {/* Undo */}
           <button
             type="button"
-            disabled={!canUndo}
-            onClick={() =>
-              undoRef.current?.()
-            }
-            style={{
-              height: 36,
-
-              padding:
-                '0 12px',
-
-              border:
-                '1px solid #ccd7df',
-
-              borderRadius: 9,
-
-              background:
-                '#ffffff',
-
-              color:
-                '#17324d',
-
-              fontWeight: 800,
-
-              cursor:
-                canUndo
-                  ? 'pointer'
-                  : 'default',
-
-              opacity:
-                canUndo
-                  ? 1
-                  : 0.4,
-            }}
+            className={`fish-3d-preview__mode ${mode === 'rotate' ? 'is-active' : ''}`}
+            aria-pressed={mode === 'rotate'}
+            onClick={() => setMode('rotate')}
           >
-            ↩️ Undo
-          </button>
-
-          {/* Clear */}
-          <button
-            type="button"
-            onClick={() =>
-              clearRef.current?.()
-            }
-            style={{
-              height: 36,
-
-              padding:
-                '0 12px',
-
-              border:
-                '1px solid #f0b5b5',
-
-              borderRadius: 9,
-
-              background:
-                '#fff5f5',
-
-              color:
-                '#b42318',
-
-              fontWeight: 800,
-
-              cursor:
-                'pointer',
-            }}
-          >
-            🗑️ Clear
+            🔄 Rotate
           </button>
         </div>
       )}
 
-      {/* Three.js */}
       <div
         ref={containerRef}
+        className="fish-3d-preview__canvas"
         style={{
-          width: '100%',
           height,
-
-          overflow: 'hidden',
-
-          borderRadius: 18,
-
-          touchAction: 'none',
-
-          cursor:
-            !editable
-              ? 'default'
-              : mode === 'paint'
-                ? 'crosshair'
-                : 'grab',
+          cursor: !editable ? 'default' : mode === 'paint' ? 'crosshair' : 'grab',
         }}
       />
+
+      {editable && mode === 'paint' && (
+        <div className="fish-3d-preview__tools" aria-label="Fish painting tools">
+          <div className="fish-3d-preview__colors">
+            {PAINT_COLORS.map((color) => (
+              <button
+                key={color}
+                type="button"
+                aria-label={`Use ${color}`}
+                aria-pressed={!eraser && brushColor === color}
+                className={`fish-3d-preview__swatch ${!eraser && brushColor === color ? 'is-active' : ''}`}
+                style={{ backgroundColor: color }}
+                onClick={() => {
+                  setBrushColor(color);
+                  setEraser(false);
+                }}
+              />
+            ))}
+            <input
+              type="color"
+              className="fish-3d-preview__color-input"
+              value={brushColor}
+              title="Custom color"
+              aria-label="Custom paint color"
+              onChange={(event) => {
+                setBrushColor(event.target.value);
+                setEraser(false);
+              }}
+            />
+          </div>
+          <div className="fish-3d-preview__actions">
+            {BRUSH_SIZES.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={`fish-3d-preview__tool ${brushSize === option.value ? 'is-active' : ''}`}
+                aria-pressed={brushSize === option.value}
+                onClick={() => setBrushSize(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              className={`fish-3d-preview__tool ${eraser ? 'is-active' : ''}`}
+              aria-pressed={eraser}
+              onClick={() => setEraser((current) => !current)}
+            >
+              Eraser
+            </button>
+            <button
+              type="button"
+              className="fish-3d-preview__tool"
+              disabled={!canUndo}
+              onClick={() => undoRef.current?.()}
+            >
+              ↶ Undo
+            </button>
+            <button
+              type="button"
+              className="fish-3d-preview__tool fish-3d-preview__tool--danger"
+              onClick={() => clearRef.current?.()}
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+      {editable && mode === 'rotate' && (
+        <p className="fish-3d-preview__hint">Drag the fish to rotate it</p>
+      )}
     </div>
   );
 }

@@ -1,0 +1,81 @@
+.fish-3d-preview {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    border-radius: 18px;
+    background: radial-gradient(ellipse at 50% 35%, #13445d 0%, #08283f 50%, #061b2d 100%);
+    color: #eaf6ff;
+}
+
+.fish-3d-preview__canvas {
+    width: 100%;
+    min-height: 260px;
+    overflow: hidden;
+    touch-action: none;
+}
+
+.fish-3d-preview__modes {
+    position: absolute;
+    z-index: 3;
+    top: 14px;
+    left: 50%;
+    display: flex;
+    gap: 5px;
+    padding: 5px;
+    transform: translateX(-50%);
+    border: 1px solid #24536b;
+    border-radius: 12px;
+    background: rgb(5 26 43 / 90%);
+    box-shadow: 0 6px 20px rgb(0 0 0 / 20%);
+}
+
+.fish-3d-preview__mode,
+.fish-3d-preview__tool {
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: #153b56;
+    color: #d7edfa;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.fish-3d-preview__mode { padding: 9px 15px; white-space: nowrap; }
+.fish-3d-preview__mode.is-active,
+.fish-3d-preview__tool.is-active { background: #277cf0; color: white; }
+.fish-3d-preview__mode:focus-visible,
+.fish-3d-preview__tool:focus-visible,
+.fish-3d-preview__swatch:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+
+.fish-3d-preview__tools {
+    position: absolute;
+    z-index: 3;
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #25516a;
+    border-radius: 14px;
+    background: rgb(6 28 46 / 94%);
+    box-shadow: 0 8px 22px rgb(0 0 0 / 20%);
+}
+
+.fish-3d-preview__colors,
+.fish-3d-preview__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; }
+.fish-3d-preview__swatch { width: 27px; height: 27px; flex: 0 0 auto; padding: 0; border: 2px solid #6a8294; border-radius: 50%; cursor: pointer; }
+.fish-3d-preview__swatch.is-active { outline: 2px solid #6bbcff; outline-offset: 2px; }
+.fish-3d-preview__color-input { width: 30px; height: 30px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.fish-3d-preview__tool { min-height: 32px; padding: 6px 11px; }
+.fish-3d-preview__tool:disabled { opacity: .45; cursor: not-allowed; }
+.fish-3d-preview__tool--danger { color: #ffb5b5; }
+.fish-3d-preview__hint { position: absolute; right: 0; bottom: 10px; left: 0; margin: 0; color: #a9cadd; font-size: 12px; text-align: center; pointer-events: none; }
+
+@media (max-width: 640px) {
+    .fish-3d-preview__modes { top: 8px; }
+    .fish-3d-preview__tools { right: 8px; bottom: 8px; left: 8px; padding: 8px; }
+    .fish-3d-preview__swatch { width: 24px; height: 24px; }
+}
