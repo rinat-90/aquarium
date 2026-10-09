@@ -375,6 +375,24 @@ function App() {
             const created = await aquariumApi.create(name);
             await refreshAquariums(created.id);
           }}
+          onRename={async (id, name) => {
+            console.log('[Aquarium] Renaming:', { id, name });
+
+            const updated = await aquariumApi.update(id, name);
+            console.log('[Aquarium] Updated:', updated);
+
+            await refreshAquariums(id);
+            console.log('[Aquarium] Refreshed after rename');
+          }}
+          onDelete={async (id) => {
+            console.log('[Aquarium] Deleting:', id);
+
+            await aquariumApi.remove(id);
+            console.log('[Aquarium] Deleted successfully');
+
+            await refreshAquariums();
+            console.log('[Aquarium] Refreshed after delete');
+          }}
         />
 
         <button

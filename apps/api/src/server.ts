@@ -77,9 +77,10 @@ async function start() {
   try {
     // Register CORS before all routes, including Better Auth.
     await app.register(cors, {
-      origin:
-        process.env.WEB_URL ?? 'http://localhost:5173',
+      origin: 'http://localhost:5173',
       credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
     });
 
     // Multipart uploads for fish PNG textures.

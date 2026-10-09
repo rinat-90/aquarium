@@ -48,6 +48,7 @@ export type UpdateFishInput = Partial<{
   aquariumId: string | null;
 }>;
 
+// Aquarium API
 export const aquariumApi = {
   list: () =>
     apiFetch<ApiAquarium[]>('/aquariums'),
@@ -62,8 +63,26 @@ export const aquariumApi = {
       method: 'POST',
       body: JSON.stringify({ name }),
     }),
+
+  update: (id: string, name: string) =>
+    apiFetch<ApiAquarium>(
+      `/aquariums/${encodeURIComponent(id)}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ name }),
+      },
+    ),
+
+  remove: (id: string) =>
+    apiFetch<void>(
+      `/aquariums/${encodeURIComponent(id)}`,
+      {
+        method: 'DELETE',
+      },
+    ),
 };
 
+// Fish API
 export const fishApi = {
   list: () =>
     apiFetch<ApiFish[]>('/fish'),
