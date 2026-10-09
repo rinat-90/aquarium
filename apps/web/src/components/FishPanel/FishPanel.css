@@ -1,0 +1,442 @@
+
+.fish-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    isolation: isolate;
+    font-family: inherit;
+}
+
+.fish-panel__backdrop {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: rgba(2, 13, 25, 0.55);
+    cursor: default;
+}
+
+.fish-panel__sidebar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    width: min(420px, 100vw);
+    height: 100dvh;
+    padding: 0;
+    border: 0;
+    border-left: 1px solid #20516d;
+    border-radius: 0;
+    background: #071f33;
+    color: white;
+    box-shadow: -20px 0 70px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    animation: fish-panel-enter 220ms ease-out;
+}
+
+.fish-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    gap: 12px;
+    padding: 26px 24px 22px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fish-panel__heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.fish-panel__heading h2 {
+    margin: 0 0 6px;
+    color: white;
+    font-size: 24px;
+}
+
+.fish-panel__heading p {
+    margin: 0;
+    color: #93b5ca;
+    font-size: 13px;
+}
+
+.fish-panel__back,
+.fish-panel__close {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid #28506a;
+    border-radius: 10px;
+    background: #123750;
+    color: white;
+    font-size: 23px;
+    cursor: pointer;
+}
+
+.fish-panel__body {
+    flex: 1;
+    min-height: 0;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.fish-panel__list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fish-panel__item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #1d4761;
+    border-radius: 14px;
+    background: #0d3049;
+    color: white;
+    text-align: left;
+    cursor: pointer;
+    transition: background 150ms, border-color 150ms;
+}
+
+.fish-panel__item:hover {
+    border-color: #269be4;
+    background: #134361;
+}
+
+.fish-panel__avatar {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 58px;
+    height: 58px;
+    border-radius: 12px;
+    font-size: 28px;
+}
+
+.fish-panel__info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.fish-panel__info strong {
+    overflow: hidden;
+    font-size: 15px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fish-panel__info span {
+    color: #91b4c8;
+    font-size: 12px;
+    text-transform: capitalize;
+}
+
+.fish-panel__arrow {
+    color: #86bddf;
+    font-size: 26px;
+}
+
+.fish-panel__footer {
+    flex-shrink: 0;
+    padding: 20px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fish-panel__primary {
+    width: 100%;
+    padding: 13px 18px;
+    border: 0;
+    border-radius: 12px;
+    background: #168ee1;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.fish-panel__primary:hover {
+    background: #2aa5f4;
+}
+
+.fish-panel__hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 30px 20px;
+    border: 1px solid #20516d;
+    border-radius: 18px;
+    background: #103b59;
+}
+
+.fish-panel__avatar--large {
+    width: 140px;
+    height: 140px;
+    font-size: 75px;
+    border-radius: 22px;
+}
+
+.fish-panel__hero h3 {
+    margin: 10px 0 0;
+    color: white;
+    font-size: 22px;
+}
+
+.fish-panel__hero > span {
+    color: #9bc2d8;
+    font-size: 13px;
+}
+
+.fish-panel__details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 18px 0;
+}
+
+.fish-panel__detail {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    border-radius: 12px;
+    background: #103b59;
+}
+
+.fish-panel__detail span {
+    color: #9bc2d8;
+    font-size: 12px;
+}
+
+.fish-panel__detail strong {
+    color: white;
+    font-size: 14px;
+}
+
+.fish-panel__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    gap: 12px;
+    text-align: center;
+}
+
+.fish-panel__empty > span {
+    font-size: 60px;
+}
+
+.fish-panel__empty h3,
+.fish-panel__empty p {
+    margin: 0;
+}
+
+.fish-panel__empty p {
+    color: #91b4c8;
+}
+
+
+/* Actual fish preview */
+
+.fish-panel__avatar {
+    overflow: hidden;
+}
+
+.fish-panel__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.fish-panel__avatar--large {
+    width: 100%;
+    height: 190px;
+    background: #0b304b;
+}
+
+.fish-panel__avatar--large .fish-panel__image {
+    max-width: 250px;
+    margin: 0 auto;
+}
+
+.fish-panel__avatar--large canvas {
+    max-width: 100%;
+}
+
+/* Profile */
+
+.fish-panel__profile {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding-bottom: 28px;
+}
+
+.fish-panel__created {
+    margin: 0;
+    color: #8eb8d0;
+    font-size: 12px;
+}
+
+.fish-panel__profile .fish-panel__details {
+    margin: 0;
+}
+
+/* Sections */
+
+.fish-panel__section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    border: 1px solid #20516d;
+    border-radius: 16px;
+    background: #0d3049;
+}
+
+.fish-panel__section h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.fish-panel__section > p {
+    margin: 0 0 4px;
+    color: #91b4c8;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.fish-panel__label {
+    color: #a8cadc;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.fish-panel__input {
+    width: 100%;
+    min-height: 44px;
+    padding: 11px 14px;
+    border: 1px solid #32617d;
+    border-radius: 10px;
+    outline: none;
+    background: #071f33;
+    color: white;
+    font: inherit;
+}
+
+.fish-panel__input:focus {
+    border-color: #29a8f5;
+    box-shadow: 0 0 0 3px rgba(41, 168, 245, 0.15);
+}
+
+.fish-panel__primary,
+.fish-panel__secondary,
+.fish-panel__danger {
+    min-height: 44px;
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 11px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 150ms ease;
+}
+
+.fish-panel__secondary {
+    border: 1px solid #32617d;
+    background: #123b56;
+    color: white;
+}
+
+.fish-panel__secondary:hover:not(:disabled) {
+    background: #194e70;
+}
+
+.fish-panel__danger {
+    border: 1px solid #a7475b;
+    background: rgba(153, 47, 70, 0.14);
+    color: #ff9cad;
+}
+
+.fish-panel__danger:hover:not(:disabled) {
+    background: rgba(153, 47, 70, 0.3);
+}
+
+.fish-panel__primary:disabled,
+.fish-panel__secondary:disabled,
+.fish-panel__danger:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* Release confirmation */
+
+.fish-panel__confirm {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 14px;
+    border: 1px solid #a7475b;
+    border-radius: 12px;
+    background: rgba(153, 47, 70, 0.1);
+}
+
+.fish-panel__confirm p {
+    margin: 0;
+    color: #ffbdc8;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.fish-panel__confirm-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.fish-panel__error {
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid #a7475b;
+    border-radius: 10px;
+    background: rgba(153, 47, 70, 0.15);
+    color: #ffb4c2;
+    font-size: 13px;
+}
+
+
+@keyframes fish-panel-enter {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fish-panel__sidebar {
+        animation: none;
+    }
+}

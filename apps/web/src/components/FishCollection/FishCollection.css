@@ -1,15 +1,23 @@
+
 .fish-collection {
     position: fixed;
     inset: 0;
-    z-index: 1200;
+    z-index: 9999;
+    isolation: isolate;
+    pointer-events: auto;
 }
 
 .fish-collection__backdrop {
     position: absolute;
     inset: 0;
+    z-index: 0;
+    display: block;
     width: 100%;
     height: 100%;
-    border: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 0;
     background: rgba(2, 13, 25, 0.55);
     cursor: default;
 }
@@ -19,26 +27,36 @@
     top: 0;
     right: 0;
     bottom: 0;
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    width: min(420px, 100%);
-    border-left: 1px solid rgba(70, 172, 225, 0.25);
+    width: min(420px, 100vw);
+    height: 100dvh;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-left: 1px solid #20516d;
+    border-radius: 0;
     background: #071f33;
-    color: white;
-    box-shadow: -20px 0 70px rgba(0, 0, 0, 0.3);
+    color: #fff;
+    box-shadow: -20px 0 70px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
     animation: fish-collection-enter 220ms ease-out;
 }
 
 .fish-collection__header {
     display: flex;
-    justify-content: space-between;
     align-items: flex-start;
+    justify-content: space-between;
+    flex-shrink: 0;
+    gap: 16px;
     padding: 28px 24px 22px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .fish-collection__header h2 {
     margin: 0 0 6px;
+    color: #fff;
     font-size: 24px;
 }
 
@@ -49,20 +67,25 @@
 }
 
 .fish-collection__close {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
     width: 36px;
     height: 36px;
+    padding: 0;
     border: 1px solid #28506a;
     border-radius: 10px;
     background: #123750;
-    color: white;
+    color: #fff;
     font-size: 24px;
     cursor: pointer;
 }
 
 .fish-collection__body {
     flex: 1;
-    overflow-y: auto;
+    min-height: 0;
     padding: 20px;
+    overflow-y: auto;
 }
 
 .fish-collection__list {
@@ -80,7 +103,7 @@
     border: 1px solid #1d4761;
     border-radius: 14px;
     background: #0d3049;
-    color: white;
+    color: #fff;
     text-align: left;
     cursor: pointer;
     transition: background 150ms, border-color 150ms;
@@ -111,9 +134,10 @@
 
 .fish-collection__info strong {
     overflow: hidden;
+    color: #fff;
+    font-size: 15px;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 15px;
 }
 
 .fish-collection__info span {
@@ -128,6 +152,7 @@
 }
 
 .fish-collection__footer {
+    flex-shrink: 0;
     padding: 20px 24px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -139,7 +164,7 @@
     border: 0;
     border-radius: 12px;
     background: #168ee1;
-    color: white;
+    color: #fff;
     font-weight: 600;
     cursor: pointer;
 }
@@ -149,7 +174,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100%;
+    min-height: 100%;
     gap: 12px;
     text-align: center;
 }
@@ -176,6 +201,7 @@
     from {
         transform: translateX(100%);
     }
+
     to {
         transform: translateX(0);
     }

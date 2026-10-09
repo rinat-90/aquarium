@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router';
 import { AuthScreen } from '../components/Auth/AuthScreen';
 import { AquariumsPage } from '../pages/AquariumsPage/AquariumsPage';
 import { AquariumPage } from '../pages/AquariumPage/AquariumPage';
+import { CreateFishPage } from '../pages/CreateFishPage/CreateFishPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export const router = createBrowserRouter([
@@ -17,6 +18,10 @@ export const router = createBrowserRouter([
   {
     path: '/signup',
     element: <AuthScreen />,
+  },
+  {
+    path: '/fish/create',
+    element: <CreateFishPage />,
   },
   {
     element: <ProtectedRoute />,

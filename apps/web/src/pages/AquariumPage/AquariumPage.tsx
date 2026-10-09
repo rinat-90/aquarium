@@ -10,11 +10,10 @@ import {
   FishDrawingCanvas,
   type FishCreation,
 } from '../../components/FishDrawing/FishDrawingCanvas';
-import { FishProfileCard } from '../../components/FishProfile/FishProfileCard';
 import { ThreeAquariumView } from '../../components/Aquarium3D/ThreeAquariumView';
 import { useAquarium } from '../../hooks/useAquarium';
 import { AquariumHUD } from '../../components/AquariumHUD/AquariumHUD';
-import { FishCollection } from '../../components/FishCollection/FishCollection';
+import { FishPanel } from '../../components/FishPanel/FishPanel';
 
 import './AquariumPage.css';
 
@@ -144,9 +143,6 @@ export function AquariumPage() {
     AQUARIUM_CAPACITY - usedCapacity,
   );
 
-  const selectedFish =
-    fish.find((item) => item.id === selectedFishId) ?? null;
-
   const handleFishCreated = async (creation: FishCreation) => {
     if (!aquarium || busy) return;
 
@@ -220,27 +216,22 @@ export function AquariumPage() {
     }
   };
 
-  const handleRenameFish = async (name: string) => {
-    if (!selectedFishId || busy) return;
+  const handleRenameFish = async (fishId: string, name: string) => {
+    const trimmedName = name.trim();
 
-    setBusy(true);
-    setError(null);
+    if (!trimmedName) return;
 
-    try {
-      const updated = await fishApi.update(selectedFishId, { name });
+    await fishApi.update(fishId, {
+      name: trimmedName,
+    });
 
-      setFish((current) =>
-        current.map((item) =>
-          item.id === updated.id ? { ...item, name: updated.name } : item,
-        ),
-      );
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to rename fish',
-      );
-    } finally {
-      setBusy(false);
-    }
+    setFish((previous) =>
+      previous.map((item) =>
+        item.id === fishId
+          ? { ...item, name: trimmedName }
+          : item,
+      ),
+    );
   };
 
   const handleReleaseFish = async () => {
@@ -291,22 +282,41 @@ export function AquariumPage() {
     setSelectedFishId(null);
   };
 
+  const handleOpenFishList = () => {
+    setSelectedFishId(null);
+    setFishCollectionOpen(true);
+  };
+
+  const handleOpenFishProfile = (fishId: string) => {
+    setSelectedFishId(fishId);
+    setFishCollectionOpen(true);
+  };
+
+  const handleCloseFishPanel = () => {
+    setFishCollectionOpen(false);
+    setSelectedFishId(null);
+  };
+
   return (
     <div className="aquarium-page">
       <AquariumHUD
         name={aquarium?.name ?? 'Aquarium'}
         fishCount={fish.length}
         onBack={() => navigate('/aquariums')}
-        onAddFish={() => setDrawing(true)}
+        onAddFish={() => {
+          if (!aquarium?.id) return;
+
+          navigate(`/fish/create?aquariumId=${encodeURIComponent(aquarium.id)}`);
+        }}
         onEdit={() => {
           // Edit Aquarium is on hold.
         }}
-        onViewFish={() => setFishCollectionOpen(true)}
+        onViewFish={handleOpenFishList}
       />
 
       <ThreeAquariumView
         createdFish={fish}
-        onFishSelect={(selected) => setSelectedFishId(selected.id)}
+        onFishSelect={(selected) => handleOpenFishProfile(selected.id)}
       />
 
       {(aquariumLoading || fishLoading) && (
@@ -364,32 +374,27 @@ export function AquariumPage() {
         ✏️ Draw Fish
       </button>
 
-      {selectedFish && (
-        <>
-          <FishCollection
-            open={fishCollectionOpen}
-            fish={fish}
-            onClose={() => setFishCollectionOpen(false)}
-            onSelectFish={(fishId) => {
-              setFishCollectionOpen(false);
-              setSelectedFishId(fishId);
-            }}
-            onAddFish={() => {
-              setFishCollectionOpen(false);
-              setDrawing(true);
-            }}
-          />
-          <FishProfileCard
-            fish={selectedFish}
-            onRename={handleRenameFish}
-            onRelease={handleReleaseFish}
-            onClose={() => setSelectedFishId(null)}
-            aquariums={aquariums}
-            currentAquariumId={aquarium?.id ?? ''}
-            onMove={handleMoveFish}
-          />
-        </>
-      )}
+      <FishPanel
+        open={fishCollectionOpen}
+        fish={fish}
+        selectedFishId={selectedFishId}
+        onSelectFish={setSelectedFishId}
+        onClose={handleCloseFishPanel}
+        onAddFish={() => {
+          if (!aquarium?.id) return;
+
+          handleCloseFishPanel();
+
+          navigate(
+            `/fish/create?aquariumId=${encodeURIComponent(aquarium.id)}`,
+          );
+        }}
+        onRename={handleRenameFish}
+        onRelease={handleReleaseFish}
+        onMove={handleMoveFish}
+        aquariums={aquariums}
+        currentAquariumId={aquarium?.id ?? ''}
+      />
 
       {drawing && (
         <FishDrawingCanvas

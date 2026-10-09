@@ -1,0 +1,136 @@
+.create-fish-page {
+    min-height: 100dvh;
+    padding: 32px;
+    background:
+            radial-gradient(ellipse at 50% 0%, #104a72 0%, transparent 55%),
+            #061b2b;
+    color: #fff;
+}
+
+.create-fish-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto 60px;
+}
+
+.create-fish-back {
+    padding: 12px 20px;
+    border: 1px solid #295b7b;
+    border-radius: 12px;
+    background: #103752;
+    color: #fff;
+    cursor: pointer;
+}
+
+.create-fish-header h1 {
+    margin: 0 0 8px;
+    font-size: clamp(28px, 4vw, 40px);
+}
+
+.create-fish-header p {
+    margin: 0;
+    color: #9fc1d5;
+}
+
+.create-fish-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.create-fish-card {
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid #245b7d;
+    border-radius: 22px;
+    background: #0b2b42;
+    color: #fff;
+    text-align: left;
+    cursor: pointer;
+    transition:
+            transform 180ms ease,
+            border-color 180ms ease,
+            box-shadow 180ms ease;
+}
+
+.create-fish-card:hover:not(:disabled) {
+    transform: translateY(-5px);
+    border-color: #27a8f5;
+    box-shadow: 0 16px 45px rgba(0, 0, 0, 0.25);
+}
+
+.create-fish-card:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.create-fish-card__art {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    height: 250px;
+    font-size: 90px;
+}
+
+.create-fish-card__art--draw {
+    background: linear-gradient(135deg, #1887bb, #124e87);
+}
+
+.create-fish-card__art--3d {
+    background: linear-gradient(135deg, #136e96, #223b84);
+}
+
+.create-fish-card__content {
+    padding: 28px;
+}
+
+.create-fish-card__content h2 {
+    margin: 0 0 12px;
+    font-size: 24px;
+}
+
+.create-fish-card__content p {
+    min-height: 48px;
+    margin: 0 0 24px;
+    color: #a3c3d7;
+    line-height: 1.5;
+}
+
+.create-fish-card__action {
+    display: inline-block;
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: #168fe0;
+    color: #fff;
+    font-weight: 600;
+}
+
+.create-fish-error {
+    margin-top: 24px;
+    color: #ffb2b2;
+    text-align: center;
+}
+
+@media (max-width: 700px) {
+    .create-fish-page {
+        padding: 20px;
+    }
+
+    .create-fish-header {
+        margin-bottom: 32px;
+    }
+
+    .create-fish-options {
+        grid-template-columns: 1fr;
+    }
+
+    .create-fish-card__art {
+        height: 180px;
+        font-size: 70px;
+    }
+}
