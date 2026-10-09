@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import './AquariumHUD.css';
 
 type AquariumHUDProps = {
@@ -8,6 +7,8 @@ type AquariumHUDProps = {
   onAddFish: () => void;
   onEdit: () => void;
   onViewFish: () => void;
+  onFeed: () => void;
+
 };
 
 export function AquariumHUD({
@@ -17,8 +18,8 @@ export function AquariumHUD({
                               onAddFish,
                               onEdit,
                               onViewFish,
+                              onFeed,
                             }: AquariumHUDProps) {
-  const [feeding, setFeeding] = useState(false);
 
   return (
     <div className="aquarium-hud">
@@ -60,11 +61,10 @@ export function AquariumHUD({
 
         <button
           type="button"
-          onClick={() => setFeeding((current) => !current)}
-          aria-pressed={feeding}
+          onClick={onFeed}
         >
           <span>🫧</span>
-          {feeding ? 'Feeding...' : 'Feed'}
+          Feed Fish
         </button>
 
         <button type="button" onClick={onViewFish}>

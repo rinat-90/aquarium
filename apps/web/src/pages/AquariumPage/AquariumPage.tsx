@@ -19,8 +19,6 @@ import './AquariumPage.css';
 
 const AQUARIUM_CAPACITY = 8;
 
-
-
 async function imageToBlob(image: string): Promise<Blob> {
   const response = await fetch(image);
   return response.blob();
@@ -85,6 +83,12 @@ export function AquariumPage() {
 
   const activeAquariumId = useRef<string | null>(null);
   activeAquariumId.current = aquarium?.id ?? null;
+
+  const [feedSequence, setFeedSequence] = useState(0);
+
+  const handleFeedFish = () => {
+    setFeedSequence((current) => current + 1);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -312,11 +316,15 @@ export function AquariumPage() {
           // Edit Aquarium is on hold.
         }}
         onViewFish={handleOpenFishList}
+        onFeed={handleFeedFish}
       />
 
       <ThreeAquariumView
         createdFish={fish}
-        onFishSelect={(selected) => handleOpenFishProfile(selected.id)}
+        onFishSelect={(selectedFish) => {
+          handleOpenFishProfile(selectedFish.id);
+        }}
+        feedSequence={feedSequence}
       />
 
       {(aquariumLoading || fishLoading) && (

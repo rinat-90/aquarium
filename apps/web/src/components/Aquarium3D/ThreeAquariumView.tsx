@@ -33,6 +33,8 @@ import type {CreatedFish} from "../../types/fish.ts";
 
 type ThreeAquariumViewProps = {
   createdFish: CreatedFish[];
+  /** Increment to drop a handful of pellets from the water surface. */
+  feedSequence?: number;
 
   onFishSelect?: (
     fish: CreatedFish,
@@ -45,6 +47,7 @@ type RenderedFish = {
 
 export function ThreeAquariumView({
                                     createdFish,
+                                    feedSequence = 0,
                                     onFishSelect,
                                   }: ThreeAquariumViewProps) {
   const containerRef =
@@ -75,6 +78,17 @@ export function ThreeAquariumView({
 
   const createdFishRef =
     useRef(createdFish);
+
+  // Stable bridge from the toolbar prop into the existing Three.js scene.
+  const feedFromToolbarRef = useRef<(() => void) | null>(null);
+  const lastFeedSequenceRef = useRef(feedSequence);
+
+  useEffect(() => {
+    if (feedSequence !== lastFeedSequenceRef.current) {
+      lastFeedSequenceRef.current = feedSequence;
+      feedFromToolbarRef.current?.();
+    }
+  }, [feedSequence]);
 
   const foodMeshesRef =
     useRef(
@@ -722,6 +736,31 @@ export function ThreeAquariumView({
     const intersection =
       new THREE.Vector3();
 
+    // Both toolbar feeding and click-to-feed use the same engine and meshes.
+    const spawnFood = (x: number, y: number, z: number) => {
+      const id = crypto.randomUUID();
+      aquarium.addFood({ id, position: { x, y, z } });
+      const pellet = new THREE.Mesh(foodGeometry, foodMaterial);
+      pellet.position.set(x, y, z);
+      scene.add(pellet);
+      foodMeshesRef.current.set(id, pellet);
+    };
+
+    feedFromToolbarRef.current = () => {
+      // Drop a small cluster from the upper water surface.
+      const centerX = (Math.random() - 0.5) * tankWidth * 0.55;
+      for (let i = 0; i < 6; i += 1) {
+        const x = THREE.MathUtils.clamp(
+          centerX + (Math.random() - 0.5) * 2.4,
+          -tankWidth / 2 + 0.5,
+          tankWidth / 2 - 0.5,
+        );
+        const y = tankHeight / 2 - 0.7 - Math.random() * 0.4;
+        const z = (Math.random() - 0.5) * (tankDepth - 1);
+        spawnFood(x, y, z);
+      }
+    };
+
     const handlePointerDown = (
       event: PointerEvent,
     ) => {
@@ -863,39 +902,7 @@ export function ThreeAquariumView({
           1
         );
 
-      const id =
-        crypto.randomUUID();
-
-      aquarium.addFood({
-        id,
-
-        position: {
-          x,
-          y,
-          z,
-        },
-      });
-
-      const pellet =
-        new THREE.Mesh(
-          foodGeometry,
-          foodMaterial,
-        );
-
-      pellet.position.set(
-        x,
-        y,
-        z,
-      );
-
-      scene.add(
-        pellet,
-      );
-
-      foodMeshesRef.current.set(
-        id,
-        pellet,
-      );
+      spawnFood(x, y, z);
     };
 
     renderer.domElement
@@ -1187,6 +1194,7 @@ export function ThreeAquariumView({
      */
     return () => {
       cancelled = true;
+      feedFromToolbarRef.current = null;
 
       cancelAnimationFrame(
         animationFrame,
