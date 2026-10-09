@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
-  aquariumApi,
   fishApi,
   type ApiFish,
 } from './lib/aquarium-api';
@@ -12,8 +11,8 @@ import {
 } from './components/FishDrawing/FishDrawingCanvas';
 import { FishProfileCard } from './components/FishProfile/FishProfileCard';
 import { ThreeAquariumView } from './components/Aquarium3D/ThreeAquariumView';
-import { AquariumControls } from './components/AquariumControls/AquariumControls';
 import { useAquarium } from './hooks/useAquarium';
+import { AquariumHUD } from './components/AquariumHUD/AquariumHUD';
 
 const AQUARIUM_CAPACITY = 8;
 
@@ -92,7 +91,6 @@ function App() {
     aquariums,
     loading: aquariumLoading,
     error: aquariumError,
-    refreshAquariums,
   } = useAquarium(aquariumId);
 
   const [fish, setFish] = useState<CreatedFish[]>([]);
@@ -309,82 +307,22 @@ function App() {
     setSelectedFishId(null);
   };
 
-  const handleSelectAquarium = (id: string) => {
-    navigate(`/aquariums/${id}`);
-  };
-
   return (
     <div className="aquarium-page">
-      <div
-        className="aquarium-topbar"
-        style={{
-          position: 'fixed',
-          top: 20,
-          left: 20,
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          maxWidth: 'calc(100vw - 40px)',
+      <AquariumHUD
+        name={aquarium?.name ?? 'Aquarium'}
+        fishCount={fish.length}
+        onBack={() => navigate('/aquariums')}
+        onAddFish={() => setDrawing(true)}
+        onEdit={() => {
+          if (aquarium) {
+            navigate(`/aquariums/${aquarium.id}/edit`);
+          }
         }}
-      >
-        <button
-          type="button"
-          className="aquarium-back-button"
-          style={{
-            flexShrink: 0,
-            width: 44,
-            height: 44,
-            display: 'grid',
-            placeItems: 'center',
-            borderRadius: 12,
-            border: '1px solid rgba(255,255,255,0.2)',
-            background: 'rgba(6,35,62,0.9)',
-            color: '#fff',
-            fontSize: 22,
-            cursor: 'pointer',
-          }}
-          onClick={() => navigate('/aquariums')}
-          aria-label="Back to My Aquariums"
-          title="My Aquariums"
-        >
-          ←
-        </button>
-
-        <AquariumControls
-          aquarium={aquarium}
-          aquariums={aquariums}
-          disabled={aquariumLoading || busy}
-          showCreateButton={false}
-          onSelect={handleSelectAquarium}
-          onCreate={async (name) => {
-            const created = await aquariumApi.create(name);
-            await refreshAquariums();
-            navigate(`/aquariums/${created.id}`);
-          }}
-          onRename={async (id, name) => {
-            await aquariumApi.update(id, name);
-            await refreshAquariums();
-          }}
-          onDelete={async (id, destinationAquariumId) => {
-            await aquariumApi.remove(id, destinationAquariumId);
-            await refreshAquariums();
-
-            if (id === aquariumId) {
-              navigate(
-                destinationAquariumId
-                  ? `/aquariums/${destinationAquariumId}`
-                  : '/aquariums',
-                { replace: true },
-              );
-            }
-          }}
-          onSetDefault={async (id) => {
-            await aquariumApi.setDefault(id);
-            await refreshAquariums();
-          }}
-        />
-      </div>
+        onViewFish={() => {
+          // Next: open the fish collection panel.
+        }}
+      />
 
       <ThreeAquariumView
         createdFish={fish}
