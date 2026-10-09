@@ -3,34 +3,58 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import type { CreatedFish } from '../../App';
+import type { ApiAquarium } from '../../lib/aquarium-api';
+
 import { Fish3DPreview } from '../Fish3D/Fish3DPreview';
+import { Select } from '../ui/Select';
 
 import './FishProfileCard.css';
 
 type FishProfileCardProps = {
   fish: CreatedFish;
+  aquariums: ApiAquarium[];
+  currentAquariumId: string;
+
   onRename: (name: string) => void;
   onRelease: () => void;
   onClose: () => void;
+
+  onMove: (
+    fishId: string,
+    aquariumId: string,
+  ) => Promise<void>;
 };
 
 export function FishProfileCard({
                                   fish,
+                                  aquariums,
+                                  currentAquariumId,
                                   onRename,
                                   onRelease,
                                   onClose,
+                                  onMove,
                                 }: FishProfileCardProps) {
   const [name, setName] = useState(fish.name);
   const [confirmingRelease, setConfirmingRelease] = useState(false);
 
+  const [destinationId, setDestinationId] = useState('');
+  const [moving, setMoving] = useState(false);
+  const [moveError, setMoveError] = useState<string | null>(null);
+
+  const destinations = aquariums.filter(
+    (aquarium) => aquarium.id !== currentAquariumId,
+  );
+
   useEffect(() => {
     setName(fish.name);
     setConfirmingRelease(false);
-  }, [fish.id, fish.name]);
+    setDestinationId('');
+    setMoveError(null);
+  }, [fish.id, fish.name, currentAquariumId]);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !moving) {
         onClose();
       }
     };
@@ -40,7 +64,7 @@ export function FishProfileCard({
     return () => {
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [onClose]);
+  }, [onClose, moving]);
 
   const handleSave = () => {
     const trimmedName = name.trim();
@@ -50,6 +74,31 @@ export function FishProfileCard({
     }
 
     onRename(trimmedName);
+  };
+
+  const handleMove = async () => {
+    if (
+      moving ||
+      !destinationId ||
+      destinationId === currentAquariumId
+    ) {
+      return;
+    }
+
+    setMoving(true);
+    setMoveError(null);
+
+    try {
+      await onMove(fish.id, destinationId);
+    } catch (error) {
+      setMoveError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to move fish. Please try again.',
+      );
+    } finally {
+      setMoving(false);
+    }
   };
 
   const createdDate = new Date(fish.createdAt);
@@ -67,6 +116,7 @@ export function FishProfileCard({
         className="fish-profile-close"
         aria-label="Close fish profile"
         onClick={onClose}
+        disabled={moving}
       >
         ✕
       </button>
@@ -133,16 +183,68 @@ export function FishProfileCard({
             handleSave();
           }
         }}
+        disabled={moving}
       />
 
       <button
         type="button"
         className="fish-profile-save"
         onClick={handleSave}
-        disabled={isSaveDisabled}
+        disabled={isSaveDisabled || moving}
       >
         Save Name
       </button>
+
+      {destinations.length > 0 && (
+        <>
+          <div className="fish-profile-divider" />
+
+          <div className="fish-profile-move">
+            <div className="fish-profile-section-title">
+              Move to Aquarium
+            </div>
+
+            <p className="fish-profile-section-description">
+              Choose another aquarium for this fish.
+            </p>
+
+            <Select
+              ariaLabel="Destination aquarium"
+              value={destinationId}
+              options={[
+                {
+                  value: '',
+                  label: 'Choose an aquarium',
+                },
+                ...destinations.map((aquarium) => ({
+                  value: aquarium.id,
+                  label: aquarium.name,
+                })),
+              ]}
+              onChange={(value) => {
+                setDestinationId(value);
+                setMoveError(null);
+              }}
+              disabled={moving}
+            />
+
+            {moveError && (
+              <p className="fish-profile-move-error" role="alert">
+                {moveError}
+              </p>
+            )}
+
+            <button
+              type="button"
+              className="fish-profile-move-button"
+              onClick={() => void handleMove()}
+              disabled={!destinationId || moving}
+            >
+              {moving ? 'Moving...' : 'Move Fish →'}
+            </button>
+          </div>
+        </>
+      )}
 
       <div className="fish-profile-divider" />
 
@@ -151,6 +253,7 @@ export function FishProfileCard({
           type="button"
           className="fish-profile-release"
           onClick={() => setConfirmingRelease(true)}
+          disabled={moving}
         >
           🌊 Release Fish
         </button>
@@ -165,6 +268,7 @@ export function FishProfileCard({
               type="button"
               className="fish-profile-confirm-button fish-profile-keep"
               onClick={() => setConfirmingRelease(false)}
+              disabled={moving}
             >
               Keep
             </button>
@@ -173,6 +277,7 @@ export function FishProfileCard({
               type="button"
               className="fish-profile-confirm-button fish-profile-confirm-release"
               onClick={onRelease}
+              disabled={moving}
             >
               Release
             </button>

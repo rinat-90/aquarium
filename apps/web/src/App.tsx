@@ -352,6 +352,32 @@ function App() {
     }
   };
 
+  const handleMoveFish = async (
+    fishId: string,
+    destinationAquariumId: string,
+  ) => {
+    if (!aquarium) {
+      throw new Error('No aquarium selected.');
+    }
+
+    if (destinationAquariumId === aquarium.id) {
+      return;
+    }
+
+    // Persist the move in PostgreSQL first.
+    await fishApi.update(fishId, {
+      aquariumId: destinationAquariumId,
+    });
+
+    // Only update the UI after the API succeeds.
+    setFish((previous) =>
+      previous.filter((fish) => fish.id !== fishId),
+    );
+
+    // Close the profile for the moved fish.
+    setSelectedFishId(null);
+  };
+
   return (
     <div className="aquarium-page">
       <div
@@ -491,6 +517,9 @@ function App() {
           onRename={handleRenameFish}
           onRelease={handleReleaseFish}
           onClose={() => setSelectedFishId(null)}
+          aquariums={aquariums}
+          currentAquariumId={aquarium.id}
+          onMove={handleMoveFish}
         />
       )}
 

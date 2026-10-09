@@ -236,6 +236,70 @@
     background: #c74747;
 }
 
+
+/* Move Fish */
+
+.fish-profile-move {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fish-profile-section-title {
+    color: #17324d;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.fish-profile-section-description {
+    margin: 0;
+    color: #688397;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.fish-profile-move .ui-select {
+    width: 100%;
+}
+
+.fish-profile-move-button {
+    width: 100%;
+    padding: 11px 16px;
+
+    border: 0;
+    border-radius: 12px;
+
+    background: #176b99;
+    color: white;
+
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+
+    transition: background 160ms ease, opacity 160ms ease;
+}
+
+.fish-profile-move-button:hover:not(:disabled) {
+    background: #12577e;
+}
+
+.fish-profile-move-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.fish-profile-move-error {
+    margin: 0;
+    color: #c44747;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.fish-profile-card button:disabled {
+    cursor: not-allowed;
+}
+
+
 @media (max-width: 480px) {
     .fish-profile-card {
         top: 12px;
