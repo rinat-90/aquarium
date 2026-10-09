@@ -1,4 +1,3 @@
-
 import { useState, type FormEvent } from 'react';
 
 import { Button } from '../ui/Button';
@@ -13,6 +12,7 @@ type AquariumControlsProps = {
   aquarium: ApiAquarium | null;
   aquariums: ApiAquarium[];
   disabled?: boolean;
+  showCreateButton?: boolean;
   onSelect: (id: string) => void;
   onCreate: (name: string) => Promise<void>;
   onRename: (id: string, name: string) => Promise<void>;
@@ -29,6 +29,7 @@ export function AquariumControls({
                                    aquarium,
                                    aquariums,
                                    disabled = false,
+                                   showCreateButton,
                                    onSelect,
                                    onCreate,
                                    onRename,
@@ -200,13 +201,15 @@ export function AquariumControls({
           disabled={disabled || saving}
         />
 
-        <Button
-          variant="secondary"
-          disabled={disabled || saving}
-          onClick={() => openDialog('create')}
-        >
-          + Aquarium
-        </Button>
+        {showCreateButton && (
+          <Button
+            variant="secondary"
+            disabled={disabled || saving}
+            onClick={() => openDialog('create')}
+          >
+            + Aquarium
+          </Button>
+        )}
 
         <button
           type="button"
@@ -379,84 +382,84 @@ export function AquariumControls({
         open={dialog === 'delete'}
         title="Delete Aquarium?"
         description={`You're about to delete "${aquarium?.name ?? 'this aquarium'}".`}
-        onClose={closeDialog}
-        footer={
-          <>
-            <Button
-              variant="ghost"
-              disabled={saving}
-              onClick={closeDialog}
-            >
-              Cancel
-            </Button>
+onClose={closeDialog}
+footer={
+<>
+  <Button
+    variant="ghost"
+    disabled={saving}
+    onClick={closeDialog}
+  >
+    Cancel
+  </Button>
 
-            <Button
-              variant="danger"
-              disabled={!canDelete}
-              onClick={() => void handleDelete()}
-            >
-              {saving
-                ? 'Deleting...'
-                : hasFish
-                  ? 'Move & Delete'
-                  : 'Delete Aquarium'}
-            </Button>
-          </>
-        }
-      >
-        {otherAquariums.length === 0 ? (
-          <p className="aquarium-delete-warning">
-            You cannot delete your last aquarium.
-            Create another aquarium first.
-          </p>
-        ) : hasFish ? (
-          <div className="aquarium-delete-transfer">
-            <div className="aquarium-delete-fish-count">
-              🐠 {fishCount} fish in this aquarium
-            </div>
+  <Button
+    variant="danger"
+    disabled={!canDelete}
+    onClick={() => void handleDelete()}
+  >
+    {saving
+      ? 'Deleting...'
+      : hasFish
+        ? 'Move & Delete'
+        : 'Delete Aquarium'}
+  </Button>
+</>
+}
+>
+{otherAquariums.length === 0 ? (
+  <p className="aquarium-delete-warning">
+    You cannot delete your last aquarium.
+    Create another aquarium first.
+  </p>
+) : hasFish ? (
+  <div className="aquarium-delete-transfer">
+    <div className="aquarium-delete-fish-count">
+      🐠 {fishCount} fish in this aquarium
+    </div>
 
-            <p className="aquarium-delete-description">
-              Your fish will be moved safely to another
-              aquarium before this one is deleted.
-            </p>
+    <p className="aquarium-delete-description">
+      Your fish will be moved safely to another
+      aquarium before this one is deleted.
+    </p>
 
-            <label className="aquarium-delete-label">
-              Move fish to
-            </label>
+    <label className="aquarium-delete-label">
+      Move fish to
+    </label>
 
-            <Select
-              ariaLabel="Destination aquarium for fish"
-              value={destinationAquariumId}
-              options={otherAquariums.map((item) => ({
-                value: item.id,
-                label: item.name,
-              }))}
-              onChange={(value) => {
-                setDeleteDestinationId(value);
-                setError(null);
-              }}
-              disabled={saving || disabled}
-            />
-          </div>
-        ) : (
-          <p className="aquarium-delete-warning">
-            This aquarium is empty and can be safely deleted.
-          </p>
-        )}
+    <Select
+      ariaLabel="Destination aquarium for fish"
+      value={destinationAquariumId}
+      options={otherAquariums.map((item) => ({
+        value: item.id,
+        label: item.name,
+      }))}
+      onChange={(value) => {
+        setDeleteDestinationId(value);
+        setError(null);
+      }}
+      disabled={saving || disabled}
+    />
+  </div>
+) : (
+  <p className="aquarium-delete-warning">
+    This aquarium is empty and can be safely deleted.
+  </p>
+)}
 
-        {aquarium?.isDefault && otherAquariums.length > 0 && (
-          <p className="aquarium-delete-default-note">
-            ★ This is your default aquarium. Another aquarium
-            will automatically become the default.
-          </p>
-        )}
+{aquarium?.isDefault && otherAquariums.length > 0 && (
+  <p className="aquarium-delete-default-note">
+    ★ This is your default aquarium. Another aquarium
+    will automatically become the default.
+  </p>
+)}
 
-        {error && (
-          <p className="aquarium-form-error" role="alert">
-            {error}
-          </p>
-        )}
-      </Modal>
-    </>
-  );
+{error && (
+  <p className="aquarium-form-error" role="alert">
+    {error}
+  </p>
+)}
+</Modal>
+</>
+);
 }

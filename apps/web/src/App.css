@@ -182,3 +182,34 @@
     border-right-color: var(--border);
   }
 }
+
+
+.aquarium-topbar {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aquarium-back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  background: rgba(6, 35, 62, 0.85);
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+
+.aquarium-back-button:hover {
+  background: rgba(16, 75, 115, 0.95);
+}

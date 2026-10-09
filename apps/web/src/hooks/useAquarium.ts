@@ -1,83 +1,47 @@
 
 import { useCallback, useEffect, useState } from 'react';
-
 import {
   aquariumApi,
   type ApiAquarium,
 } from '../lib/aquarium-api';
 
-export function useAquarium() {
+export function useAquarium(aquariumId?: string) {
   const [aquariums, setAquariums] = useState<ApiAquarium[]>([]);
-  const [aquarium, setAquarium] = useState<ApiAquarium | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refreshAquariums = useCallback(
-    async (preferredAquariumId?: string) => {
-      setError(null);
+  const aquarium =
+    aquariums.find((item) => item.id === aquariumId) ?? null;
 
-      try {
-        const items = await aquariumApi.list();
+  const refreshAquariums = useCallback(async () => {
+    setError(null);
 
-        setAquariums(items);
-
-        setAquarium((current) =>
-          items.find((item) => item.id === preferredAquariumId) ??
-          items.find((item) => item.id === current?.id) ??
-          items.find((item) => item.isDefault) ??
-          items[0] ??
-          null,
-        );
-
-        return items;
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Failed to load aquariums',
-        );
-        throw err;
-      }
-    },
-    [],
-  );
-
-  const selectAquarium = useCallback(
-    (aquariumId: string) => {
-      const selected = aquariums.find(
-        (item) => item.id === aquariumId,
+    try {
+      const items = await aquariumApi.list();
+      setAquariums(items);
+      return items;
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to load aquariums',
       );
-
-      if (!selected) {
-        return;
-      }
-
-      setAquarium(selected);
-    },
-    [aquariums],
-  );
+      throw err;
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
 
     async function initialize() {
       setLoading(true);
+      setError(null);
 
       try {
         const items = await aquariumApi.list();
 
-        if (cancelled) return;
-
-        setAquariums(items);
-
-        setAquarium(
-          items.find((item) => item.isDefault) ??
-          items[0] ??
-          null,
-        );
-
-        if (items.length === 0) {
-          setError('No aquarium found for this account');
+        if (!cancelled) {
+          setAquariums(items);
         }
       } catch (err) {
         if (!cancelled) {
@@ -105,8 +69,11 @@ export function useAquarium() {
     aquarium,
     aquariums,
     loading,
-    error,
-    selectAquarium,
+    error:
+      error ??
+      (!loading && aquariumId && !aquarium
+        ? 'Aquarium not found'
+        : null),
     refreshAquariums,
   };
 }

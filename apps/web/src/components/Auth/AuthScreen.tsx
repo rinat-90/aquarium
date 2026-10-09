@@ -23,7 +23,7 @@ export function AuthScreen() {
   }
 
   if (session) {
-    return <Navigate to="/aquarium" replace />;
+    return <Navigate to="/aquariums" replace />;
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -48,7 +48,7 @@ export function AuthScreen() {
         return;
       }
 
-      navigate('/aquarium', { replace: true });
+      navigate('/aquariums', { replace: true });
     } catch {
       setError('Unable to connect to the server. Please try again.');
     } finally {

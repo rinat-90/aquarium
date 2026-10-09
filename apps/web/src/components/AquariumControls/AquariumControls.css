@@ -1,12 +1,12 @@
 
 .aquarium-controls {
-    position: fixed;
-    top: 16px;
-    left: 16px;
-    z-index: 100;
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 10px;
+    flex-shrink: 0;
+    top: auto;
+    left: auto;
+    margin: 0;
 }
 
 .aquarium-settings-button {

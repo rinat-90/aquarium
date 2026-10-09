@@ -1,7 +1,5 @@
-
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router';
-import { authClient } from './lib/auth-client';
+import { useNavigate, useParams } from 'react-router';
 import {
   aquariumApi,
   fishApi,
@@ -87,15 +85,15 @@ async function mapApiFish(item: ApiFish): Promise<CreatedFish> {
 
 function App() {
   const navigate = useNavigate();
+  const { id: aquariumId } = useParams<{ id: string }>();
 
   const {
     aquarium,
     aquariums,
     loading: aquariumLoading,
     error: aquariumError,
-    selectAquarium,
     refreshAquariums,
-  } = useAquarium();
+  } = useAquarium(aquariumId);
 
   const [fish, setFish] = useState<CreatedFish[]>([]);
   const [drawing, setDrawing] = useState(false);
@@ -166,17 +164,6 @@ function App() {
 
   const selectedFish =
     fish.find((item) => item.id === selectedFishId) ?? null;
-
-  const handleSignOut = async () => {
-    const { error: signOutError } = await authClient.signOut({});
-
-    if (signOutError) {
-      setError(signOutError.message ?? 'Failed to sign out');
-      return;
-    }
-
-    navigate('/login', { replace: true });
-  };
 
   const handleFishCreated = async (creation: FishCreation) => {
     if (!aquarium || busy) return;
@@ -296,26 +283,6 @@ function App() {
     }
   };
 
-  const handleCreateAquarium = async () => {
-    const name = window.prompt('Name your new aquarium:')?.trim();
-
-    if (!name || busy) return;
-
-    setBusy(true);
-    setError(null);
-
-    try {
-      const created = await aquariumApi.create(name);
-      await refreshAquariums(created.id);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to create aquarium',
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const handleMoveFish = async (
     fishId: string,
     destinationAquariumId: string,
@@ -342,82 +309,82 @@ function App() {
     setSelectedFishId(null);
   };
 
+  const handleSelectAquarium = (id: string) => {
+    navigate(`/aquariums/${id}`);
+  };
+
   return (
     <div className="aquarium-page">
       <div
+        className="aquarium-topbar"
         style={{
           position: 'fixed',
           top: 20,
           left: 20,
-          zIndex: 100,
+          zIndex: 1000,
           display: 'flex',
-          gap: 10,
           alignItems: 'center',
-          flexWrap: 'wrap',
+          gap: 10,
+          maxWidth: 'calc(100vw - 40px)',
         }}
       >
+        <button
+          type="button"
+          className="aquarium-back-button"
+          style={{
+            flexShrink: 0,
+            width: 44,
+            height: 44,
+            display: 'grid',
+            placeItems: 'center',
+            borderRadius: 12,
+            border: '1px solid rgba(255,255,255,0.2)',
+            background: 'rgba(6,35,62,0.9)',
+            color: '#fff',
+            fontSize: 22,
+            cursor: 'pointer',
+          }}
+          onClick={() => navigate('/aquariums')}
+          aria-label="Back to My Aquariums"
+          title="My Aquariums"
+        >
+          ←
+        </button>
+
         <AquariumControls
           aquarium={aquarium}
           aquariums={aquariums}
           disabled={aquariumLoading || busy}
-          onSelect={selectAquarium}
+          showCreateButton={false}
+          onSelect={handleSelectAquarium}
           onCreate={async (name) => {
             const created = await aquariumApi.create(name);
-            await refreshAquariums(created.id);
+            await refreshAquariums();
+            navigate(`/aquariums/${created.id}`);
           }}
           onRename={async (id, name) => {
-            console.log('[Aquarium] Renaming:', { id, name });
-
-            const updated = await aquariumApi.update(id, name);
-            console.log('[Aquarium] Updated:', updated);
-
-            await refreshAquariums(id);
-            console.log('[Aquarium] Refreshed after rename');
+            await aquariumApi.update(id, name);
+            await refreshAquariums();
           }}
           onDelete={async (id, destinationAquariumId) => {
-            console.log('Deleting aquarium:', {
-              id,
-              destinationAquariumId,
-            });
-
             await aquariumApi.remove(id, destinationAquariumId);
             await refreshAquariums();
+
+            if (id === aquariumId) {
+              navigate(
+                destinationAquariumId
+                  ? `/aquariums/${destinationAquariumId}`
+                  : '/aquariums',
+                { replace: true },
+              );
+            }
           }}
           onSetDefault={async (id) => {
             await aquariumApi.setDefault(id);
-            await refreshAquariums(id);
+            await refreshAquariums();
           }}
         />
-
-        <button
-          type="button"
-          onClick={() => void handleCreateAquarium()}
-          disabled={busy}
-        >
-          + Aquarium
-        </button>
       </div>
-
-      <button
-        type="button"
-        onClick={() => void handleSignOut()}
-        style={{
-          position: 'fixed',
-          top: 20,
-          right: 20,
-          zIndex: 100,
-          padding: '10px 18px',
-          borderRadius: 20,
-          background: 'white',
-          color: '#064b78',
-          border: 'none',
-          fontWeight: 700,
-          cursor: 'pointer',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-        }}
-      >
-        Sign Out
-      </button>
 
       <ThreeAquariumView
         createdFish={fish}
