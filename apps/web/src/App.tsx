@@ -296,42 +296,6 @@ function App() {
     }
   };
 
-  const handleReleaseAllFish = async () => {
-    if (fish.length === 0 || busy) return;
-
-    const confirmed = window.confirm(
-      `Release all ${fish.length} fish? This can't be undone.`,
-    );
-
-    if (!confirmed) return;
-
-    setBusy(true);
-    setError(null);
-
-    try {
-      const results = await Promise.allSettled(
-        fish.map((item) => fishApi.remove(item.id)),
-      );
-
-      const removedIds = new Set(
-        fish
-          .filter((_, index) => results[index]?.status === 'fulfilled')
-          .map((item) => item.id),
-      );
-
-      setFish((current) =>
-        current.filter((item) => !removedIds.has(item.id)),
-      );
-      setSelectedFishId(null);
-
-      if (results.some((result) => result.status === 'rejected')) {
-        setError('Some fish could not be released. Please try again.');
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const handleCreateAquarium = async () => {
     const name = window.prompt('Name your new aquarium:')?.trim();
 
@@ -525,30 +489,6 @@ function App() {
           currentAquariumId={aquarium.id}
           onMove={handleMoveFish}
         />
-      )}
-
-      {fish.length > 0 && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void handleReleaseAllFish()}
-          style={{
-            position: 'fixed',
-            bottom: 30,
-            right: 30,
-            zIndex: 10,
-            padding: '12px 18px',
-            border: '2px solid rgba(255,255,255,0.8)',
-            borderRadius: 30,
-            background: 'rgba(255,255,255,0.9)',
-            color: '#c44747',
-            fontSize: 15,
-            fontWeight: 800,
-            cursor: 'pointer',
-          }}
-        >
-          🌊 Release All
-        </button>
       )}
 
       {drawing && (
