@@ -19,7 +19,7 @@ import { useAquarium } from './hooks/useAquarium';
 
 const AQUARIUM_CAPACITY = 8;
 
-export type DrawnFish = {
+type DrawnFish = {
   id: string;
   type: 'drawn';
   image: string;
@@ -28,7 +28,7 @@ export type DrawnFish = {
   createdAt: string;
 };
 
-export type ThreeDFish = {
+type ThreeDFish = {
   id: string;
   type: '3d';
   model: 'basic' | 'angelfish';
@@ -486,7 +486,7 @@ function App() {
           onRelease={handleReleaseFish}
           onClose={() => setSelectedFishId(null)}
           aquariums={aquariums}
-          currentAquariumId={aquarium.id}
+          currentAquariumId={aquarium?.id ?? ''}
           onMove={handleMoveFish}
         />
       )}

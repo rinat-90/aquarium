@@ -6,7 +6,7 @@ import {
 } from 'react';
 import './ui.css';
 
-export type SelectOption = {
+type SelectOption = {
   value: string;
   label: string;
 };
