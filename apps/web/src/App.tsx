@@ -1,27 +1,19 @@
-import {
-  useState,
-  useEffect
-} from 'react';
+
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { authClient } from './lib/auth-client';
-
 import {
-  loadFish,
-  saveFish,
-} from './storage/fishStorage';
+  aquariumApi,
+  fishApi,
+  type ApiFish,
+} from './lib/aquarium-api';
 
 import {
   FishDrawingCanvas,
   type FishCreation,
 } from './components/FishDrawing/FishDrawingCanvas';
-import {
-  FishProfileCard,
-} from './components/FishProfile/FishProfileCard';
-
-import {
-  ThreeAquariumView,
-} from './components/Aquarium3D/ThreeAquariumView';
-
+import { FishProfileCard } from './components/FishProfile/FishProfileCard';
+import { ThreeAquariumView } from './components/Aquarium3D/ThreeAquariumView';
 import { useAquarium } from './hooks/useAquarium';
 
 const AQUARIUM_CAPACITY = 8;
@@ -47,198 +39,363 @@ export type ThreeDFish = {
   createdAt: string;
 };
 
-export type CreatedFish =
-  | DrawnFish
-  | ThreeDFish;
+export type CreatedFish = DrawnFish | ThreeDFish;
+
+async function imageToBlob(image: string): Promise<Blob> {
+  const response = await fetch(image);
+  return response.blob();
+}
+
+async function mapApiFish(item: ApiFish): Promise<CreatedFish> {
+  let texture: string | undefined;
+
+  if (item.paintKey) {
+    const blob = await fishApi.getTexture(item.id);
+    texture = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Failed to read texture'));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  if (item.species === 'drawn') {
+    return {
+      id: item.id,
+      type: 'drawn',
+      image: texture ?? '',
+      size: item.size,
+      name: item.name,
+      createdAt: item.createdAt,
+    };
+  }
+
+  return {
+    id: item.id,
+    type: '3d',
+    model: item.species === 'angelfish' ? 'angelfish' : 'basic',
+    bodyColor: item.bodyColor,
+    finColor: item.finColor,
+    paintImage: texture,
+    size: item.size,
+    name: item.name,
+    createdAt: item.createdAt,
+  };
+}
 
 function App() {
-  const [drawing, setDrawing] =
-    useState(false);
-
-  const [fish, setFish] =
-    useState<CreatedFish[]>(
-      () => loadFish(),
-    );
-
-  const [
-    selectedFishId,
-    setSelectedFishId,
-  ] = useState<string | null>(
-    null,
-  );
-
-  const usedCapacity =
-    fish.reduce(
-      (total, item) =>
-        total +
-        item.size * item.size,
-      0,
-    );
-
-  const remainingCapacity =
-    Math.max(
-      0,
-      AQUARIUM_CAPACITY -
-      usedCapacity,
-    );
-
-  const selectedFish =
-    fish.find(
-      (item) =>
-        item.id ===
-        selectedFishId,
-    ) ?? null;
-
   const navigate = useNavigate();
 
-  const handleSignOut = async () => {
-    const { error } = await authClient.signOut({});
+  const {
+    aquarium,
+    aquariums,
+    loading: aquariumLoading,
+    error: aquariumError,
+    selectAquarium,
+    refreshAquariums,
+  } = useAquarium();
 
-    if (error) {
-      console.error('Failed to sign out:', error.message);
+  const [fish, setFish] = useState<CreatedFish[]>([]);
+  const [drawing, setDrawing] = useState(false);
+  const [selectedFishId, setSelectedFishId] = useState<string | null>(null);
+  const [fishLoading, setFishLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const activeAquariumId = useRef<string | null>(null);
+  activeAquariumId.current = aquarium?.id ?? null;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setFish([]);
+    setSelectedFishId(null);
+    setDrawing(false);
+    setError(null);
+
+    if (!aquarium) {
+      setFishLoading(false);
+      return;
+    }
+
+    const aquariumId = aquarium.id;
+    setFishLoading(true);
+
+    async function load() {
+      try {
+        const items = await fishApi.list();
+        const matching = items.filter(
+          (item) => item.aquariumId === aquariumId,
+        );
+        const mapped = await Promise.all(matching.map(mapApiFish));
+
+        if (!cancelled) {
+          setFish(mapped);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error ? err.message : 'Failed to load fish',
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setFishLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [aquarium?.id]);
+
+  const usedCapacity = fish.reduce(
+    (total, item) => total + item.size * item.size,
+    0,
+  );
+
+  const remainingCapacity = Math.max(
+    0,
+    AQUARIUM_CAPACITY - usedCapacity,
+  );
+
+  const selectedFish =
+    fish.find((item) => item.id === selectedFishId) ?? null;
+
+  const handleSignOut = async () => {
+    const { error: signOutError } = await authClient.signOut({});
+
+    if (signOutError) {
+      setError(signOutError.message ?? 'Failed to sign out');
       return;
     }
 
     navigate('/login', { replace: true });
   };
 
-  const handleFishCreated = (creation: FishCreation) => {
-    const creationCost = creation.size * creation.size;
+  const handleFishCreated = async (creation: FishCreation) => {
+    if (!aquarium || busy) return;
 
-    setFish((current) => {
-      const currentCapacity = current.reduce(
-        (total, item) => total + item.size * item.size,
-        0,
-      );
+    const aquariumId = aquarium.id;
+    const cost = creation.size * creation.size;
 
-      if (
-        currentCapacity + creationCost >
-        AQUARIUM_CAPACITY + 0.0001
-      ) {
-        return current;
+    if (usedCapacity + cost > AQUARIUM_CAPACITY + 0.0001) {
+      setError('Not enough space in this aquarium');
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+
+    let createdId: string | null = null;
+
+    try {
+      const created = await fishApi.create({
+        name: `Fish ${fish.length + 1}`,
+        species:
+          creation.type === 'drawn'
+            ? 'drawn'
+            : creation.model === 'angelfish'
+              ? 'angelfish'
+              : 'classic',
+        bodyColor:
+          creation.type === 'drawn' ? '#4F9CF9' : creation.bodyColor,
+        finColor:
+          creation.type === 'drawn' ? '#3B82F6' : creation.finColor,
+        size: creation.size,
+        aquariumId,
+      });
+
+      createdId = created.id;
+
+      const image =
+        creation.type === 'drawn'
+          ? creation.image
+          : creation.paintImage;
+
+      let saved = created;
+
+      if (image) {
+        saved = await fishApi.uploadTexture(
+          created.id,
+          await imageToBlob(image),
+        );
       }
 
-      const baseFish = {
-        id: crypto.randomUUID(),
-        name: `Fish ${current.length + 1}`,
-        createdAt: new Date().toISOString(),
-        size: creation.size,
-      };
+      const mapped = await mapApiFish(saved);
 
-      const newFish: CreatedFish =
-        creation.type === 'drawn'
-          ? {
-            ...baseFish,
-            type: 'drawn',
-            image: creation.image,
-          }
-          : {
-            ...baseFish,
-            type: '3d',
+      if (activeAquariumId.current === aquariumId) {
+        setFish((current) => [...current, mapped]);
+        setDrawing(false);
+      }
+    } catch (err) {
+      // If texture upload fails, avoid leaving an incomplete fish.
+      if (createdId) {
+        try {
+          await fishApi.remove(createdId);
+        } catch {
+          // Preserve the original error.
+        }
+      }
 
-            // Convert preview species to saved model type
-            model:
-              creation.model === 'angelfish'
-                ? 'angelfish'
-                : 'basic',
-
-            bodyColor: creation.bodyColor,
-            finColor: creation.finColor,
-            paintImage: creation.paintImage,
-          };
-
-      const next: CreatedFish[] = [
-        ...current,
-        newFish,
-      ];
-
-      saveFish(next);
-
-      return next;
-    });
-
-    setDrawing(false);
+      setError(
+        err instanceof Error ? err.message : 'Failed to create fish',
+      );
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleRenameFish = (
-    name: string,
-  ) => {
-    if (!selectedFishId) {
-      return;
-    }
+  const handleRenameFish = async (name: string) => {
+    if (!selectedFishId || busy) return;
 
-    setFish((current) => {
-      const next =
+    setBusy(true);
+    setError(null);
+
+    try {
+      const updated = await fishApi.update(selectedFishId, { name });
+
+      setFish((current) =>
         current.map((item) =>
-          item.id ===
-          selectedFishId
-            ? {
-              ...item,
-              name,
-            }
-            : item,
-        );
-
-      saveFish(next);
-
-      return next;
-    });
+          item.id === updated.id ? { ...item, name: updated.name } : item,
+        ),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to rename fish',
+      );
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleReleaseFish = () => {
-    if (!selectedFishId) {
-      return;
+  const handleReleaseFish = async () => {
+    if (!selectedFishId || busy) return;
+
+    setBusy(true);
+    setError(null);
+
+    try {
+      await fishApi.remove(selectedFishId);
+
+      setFish((current) =>
+        current.filter((item) => item.id !== selectedFishId),
+      );
+      setSelectedFishId(null);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to release fish',
+      );
+    } finally {
+      setBusy(false);
     }
-
-    setFish((current) => {
-      const next =
-        current.filter(
-          (item) =>
-            item.id !==
-            selectedFishId,
-        );
-
-      saveFish(next);
-
-      return next;
-    });
-
-    setSelectedFishId(null);
   };
 
-  const handleReleaseAllFish = () => {
-    if (fish.length === 0) {
-      return;
-    }
+  const handleReleaseAllFish = async () => {
+    if (fish.length === 0 || busy) return;
 
-    const confirmed =
-      window.confirm(
-        `Release all ${fish.length} fish from the aquarium? This can't be undone.`,
+    const confirmed = window.confirm(
+      `Release all ${fish.length} fish? This can't be undone.`,
+    );
+
+    if (!confirmed) return;
+
+    setBusy(true);
+    setError(null);
+
+    try {
+      const results = await Promise.allSettled(
+        fish.map((item) => fishApi.remove(item.id)),
       );
 
-    if (!confirmed) {
-      return;
+      const removedIds = new Set(
+        fish
+          .filter((_, index) => results[index]?.status === 'fulfilled')
+          .map((item) => item.id),
+      );
+
+      setFish((current) =>
+        current.filter((item) => !removedIds.has(item.id)),
+      );
+      setSelectedFishId(null);
+
+      if (results.some((result) => result.status === 'rejected')) {
+        setError('Some fish could not be released. Please try again.');
+      }
+    } finally {
+      setBusy(false);
     }
-
-    setFish([]);
-    saveFish([]);
-
-    setSelectedFishId(null);
   };
 
-  const { aquarium } = useAquarium();
+  const handleCreateAquarium = async () => {
+    const name = window.prompt('Name your new aquarium:')?.trim();
 
-  useEffect(() => {
-    if (aquarium) {
-      console.log('Loaded aquarium:', aquarium);
+    if (!name || busy) return;
+
+    setBusy(true);
+    setError(null);
+
+    try {
+      const created = await aquariumApi.create(name);
+      await refreshAquariums(created.id);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to create aquarium',
+      );
+    } finally {
+      setBusy(false);
     }
-  }, [aquarium]);
+  };
 
   return (
     <div className="aquarium-page">
+      <div
+        style={{
+          position: 'fixed',
+          top: 20,
+          left: 20,
+          zIndex: 100,
+          display: 'flex',
+          gap: 10,
+          alignItems: 'center',
+          flexWrap: 'wrap',
+        }}
+      >
+        <select
+          aria-label="Select aquarium"
+          value={aquarium?.id ?? ''}
+          disabled={aquariumLoading || busy}
+          onChange={(event) => selectAquarium(event.target.value)}
+          style={{
+            padding: '10px 14px',
+            borderRadius: 20,
+            border: 'none',
+            fontWeight: 700,
+          }}
+        >
+          {aquariums.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+
+        <button
+          type="button"
+          onClick={() => void handleCreateAquarium()}
+          disabled={busy}
+        >
+          + Aquarium
+        </button>
+      </div>
+
       <button
         type="button"
-        onClick={handleSignOut}
+        onClick={() => void handleSignOut()}
         style={{
           position: 'fixed',
           top: 20,
@@ -256,40 +413,61 @@ function App() {
       >
         Sign Out
       </button>
+
       <ThreeAquariumView
         createdFish={fish}
-        onFishSelect={(
-          selectedFish,
-        ) => {
-          setSelectedFishId(
-            selectedFish.id,
-          );
-        }}
+        onFishSelect={(selected) => setSelectedFishId(selected.id)}
       />
 
+      {(aquariumLoading || fishLoading) && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 80,
+            left: 20,
+            zIndex: 100,
+            background: 'white',
+            padding: 12,
+            borderRadius: 12,
+          }}
+        >
+          Loading aquarium...
+        </div>
+      )}
+
+      {(error || aquariumError) && (
+        <div
+          role="alert"
+          style={{
+            position: 'fixed',
+            top: 80,
+            right: 20,
+            zIndex: 100,
+            background: '#fff1f1',
+            color: '#a32626',
+            padding: 12,
+            borderRadius: 12,
+            maxWidth: 320,
+          }}
+        >
+          {error || aquariumError}
+        </div>
+      )}
+
       <button
-        onClick={() =>
-          setDrawing(true)
-        }
+        type="button"
+        disabled={!aquarium || busy || fishLoading}
+        onClick={() => setDrawing(true)}
         style={{
           position: 'fixed',
-
           bottom: 30,
           left: '50%',
-
-          transform:
-            'translateX(-50%)',
-
+          transform: 'translateX(-50%)',
           zIndex: 10,
-
-          padding:
-            '14px 24px',
-
+          padding: '14px 24px',
           borderRadius: 30,
           border: 0,
-
           fontSize: 18,
-
           cursor: 'pointer',
         }}
       >
@@ -299,57 +477,30 @@ function App() {
       {selectedFish && (
         <FishProfileCard
           fish={selectedFish}
-          onRename={
-            handleRenameFish
-          }
-          onRelease={
-            handleReleaseFish
-          }
-          onClose={() =>
-            setSelectedFishId(
-              null,
-            )
-          }
+          onRename={handleRenameFish}
+          onRelease={handleReleaseFish}
+          onClose={() => setSelectedFishId(null)}
         />
       )}
 
       {fish.length > 0 && (
         <button
           type="button"
-          onClick={
-            handleReleaseAllFish
-          }
+          disabled={busy}
+          onClick={() => void handleReleaseAllFish()}
           style={{
             position: 'fixed',
-
             bottom: 30,
             right: 30,
-
             zIndex: 10,
-
-            padding:
-              '12px 18px',
-
-            border:
-              '2px solid rgba(255, 255, 255, 0.8)',
-
+            padding: '12px 18px',
+            border: '2px solid rgba(255,255,255,0.8)',
             borderRadius: 30,
-
-            background:
-              'rgba(255, 255, 255, 0.9)',
-
+            background: 'rgba(255,255,255,0.9)',
             color: '#c44747',
-
             fontSize: 15,
             fontWeight: 800,
-
             cursor: 'pointer',
-
-            boxShadow:
-              '0 6px 20px rgba(0, 0, 0, 0.15)',
-
-            backdropFilter:
-              'blur(10px)',
           }}
         >
           🌊 Release All
@@ -358,15 +509,9 @@ function App() {
 
       {drawing && (
         <FishDrawingCanvas
-          remainingCapacity={
-            remainingCapacity
-          }
-          onDone={
-            handleFishCreated
-          }
-          onCancel={() =>
-            setDrawing(false)
-          }
+          remainingCapacity={remainingCapacity}
+          onDone={handleFishCreated}
+          onCancel={() => setDrawing(false)}
         />
       )}
     </div>
