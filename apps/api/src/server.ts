@@ -1,6 +1,7 @@
 
 import 'dotenv/config';
 
+import cors from '@fastify/cors';
 import Fastify from 'fastify';
 import multipart from '@fastify/multipart';
 import { prisma } from '@aquarium/database';
@@ -95,6 +96,11 @@ async function start() {
         fileSize: 5 * 1024 * 1024,
         files: 1,
       },
+    });
+
+    await app.register(cors, {
+      origin: process.env.WEB_URL ?? 'http://localhost:5173',
+      credentials: true,
     });
 
     // Aquarium routes

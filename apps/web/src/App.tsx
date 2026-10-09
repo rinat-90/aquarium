@@ -1,6 +1,8 @@
 import {
   useState,
 } from 'react';
+import { useNavigate } from 'react-router';
+import { authClient } from './lib/auth-client';
 
 import {
   loadFish,
@@ -83,6 +85,19 @@ function App() {
         item.id ===
         selectedFishId,
     ) ?? null;
+
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    const { error } = await authClient.signOut({});
+
+    if (error) {
+      console.error('Failed to sign out:', error.message);
+      return;
+    }
+
+    navigate('/login', { replace: true });
+  };
 
   const handleFishCreated = (creation: FishCreation) => {
     const creationCost = creation.size * creation.size;
@@ -209,7 +224,27 @@ function App() {
   };
 
   return (
-    <>
+    <div className="aquarium-page">
+      <button
+        type="button"
+        onClick={handleSignOut}
+        style={{
+          position: 'fixed',
+          top: 20,
+          right: 20,
+          zIndex: 100,
+          padding: '10px 18px',
+          borderRadius: 20,
+          background: 'white',
+          color: '#064b78',
+          border: 'none',
+          fontWeight: 700,
+          cursor: 'pointer',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+        }}
+      >
+        Sign Out
+      </button>
       <ThreeAquariumView
         createdFish={fish}
         onFishSelect={(
@@ -323,7 +358,7 @@ function App() {
           }
         />
       )}
-    </>
+    </div>
   );
 }
 
