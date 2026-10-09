@@ -4,6 +4,8 @@ import type {
   Vector3,
 } from '@aquarium/types';
 
+export type FishSpecies = 'basic' | 'angelfish';
+
 export type AquariumOptions = {
   width: number;
   height: number;
@@ -48,6 +50,8 @@ export class Aquarium {
       FishActivity
     >();
 
+  private species = new Map<string, FishSpecies>();
+
   private elapsedTime = 0;
 
   private foodSeekProgress =
@@ -76,6 +80,7 @@ export class Aquarium {
   createFish(
     id: string,
     size = 1,
+    species: FishSpecies = 'basic',
   ): Fish {
     const speed =
       0.7 +
@@ -140,6 +145,7 @@ export class Aquarium {
 
   removeFish(id: string) {
     this.fish.delete(id);
+    this.species.delete(id);
 
     this.personalities.delete(
       id,
@@ -1361,8 +1367,8 @@ export class Aquarium {
 
         nextIdleAt:
           this.elapsedTime +
-          8 +
-          Math.random() * 12,
+          (this.species.get(fish.id) === 'angelfish' ? 6 : 10) +
+          Math.random() * 10,
       };
 
       this.activities.set(
@@ -1393,8 +1399,8 @@ export class Aquarium {
       activity.nextIdleAt
     ) {
       const idleDuration =
-        1.8 +
-        Math.random() * 3;
+        (this.species.get(fish.id) === 'angelfish' ? 2.5 : 1.2) +
+        Math.random() * 2.5;
 
       activity.idleUntil =
         this.elapsedTime +
@@ -1402,8 +1408,8 @@ export class Aquarium {
 
       activity.nextIdleAt =
         activity.idleUntil +
-        8 +
-        Math.random() * 12;
+        (this.species.get(fish.id) === 'angelfish' ? 7 : 11) +
+        Math.random() * 10;
 
       return true;
     }
@@ -1442,41 +1448,38 @@ export class Aquarium {
         seed + offset,
       );
 
+    const angelfish = this.species.get(fish.id) === 'angelfish';
+
     const personality: FishPersonality = {
       /*
        * Relaxed cruiser -> energetic cruiser.
        */
       cruiseSpeed:
-        0.82 +
-        random(11) * 0.3,
+        (angelfish ? 0.68 : 0.9) + random(11) * (angelfish ? 0.18 : 0.3),
 
       /*
        * Wide lazy turns -> responsive turns.
        */
       turnResponsiveness:
-        0.85 +
-        random(23) * 0.4,
+        (angelfish ? 0.52 : 0.95) + random(23) * (angelfish ? 0.18 : 0.35),
 
       /*
        * How much the fish explores vertically.
        */
       verticalRange:
-        0.65 +
-        random(37) * 0.6,
+        (angelfish ? 0.35 : 0.75) + random(37) * (angelfish ? 0.3 : 0.55),
 
       /*
        * How much the fish explores tank depth.
        */
       depthRange:
-        0.65 +
-        random(51) * 0.6,
+        (angelfish ? 0.5 : 0.75) + random(51) * (angelfish ? 0.35 : 0.55),
 
       /*
        * How strongly it speeds up for food.
        */
       foodExcitement:
-        1.15 +
-        random(67) * 0.35,
+        (angelfish ? 1.35 : 1.2) + random(67) * 0.3,
     };
 
     this.personalities.set(
