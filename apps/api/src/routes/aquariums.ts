@@ -1,11 +1,21 @@
 
 import type { FastifyInstance } from 'fastify';
+import type { ZodTypeProvider } from 'fastify-type-provider-zod';
+
 import { prisma } from '@aquarium/database';
 import { getAuthenticatedUser } from '../lib/get-authenticated-user.js';
 
+import {
+  aquariumIdParamsSchema,
+  createAquariumSchema,
+  updateAquariumSchema,
+} from '../schemas/aquarium.schema.js';
+
 export async function aquariumRoutes(app: FastifyInstance) {
+  const api = app.withTypeProvider<ZodTypeProvider>();
+
   // List aquariums belonging to the signed-in parent.
-  app.get('/aquariums', async (request, reply) => {
+  api.get('/aquariums', async (request, reply) => {
     const user = await getAuthenticatedUser(request);
 
     if (!user) {
@@ -15,15 +25,26 @@ export async function aquariumRoutes(app: FastifyInstance) {
     }
 
     return prisma.aquarium.findMany({
-      where: { ownerId: user.id },
-      include: { fish: true },
-      orderBy: { createdAt: 'asc' },
+      where: {
+        ownerId: user.id,
+      },
+      include: {
+        fish: true,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
     });
   });
 
-  // Get one aquarium, but only if the parent owns it.
-  app.get<{ Params: { id: string } }>(
+  // Get one aquarium, only if the parent owns it.
+  api.get(
     '/aquariums/:id',
+    {
+      schema: {
+        params: aquariumIdParamsSchema,
+      },
+    },
     async (request, reply) => {
       const user = await getAuthenticatedUser(request);
 
@@ -38,7 +59,9 @@ export async function aquariumRoutes(app: FastifyInstance) {
           id: request.params.id,
           ownerId: user.id,
         },
-        include: { fish: true },
+        include: {
+          fish: true,
+        },
       });
 
       if (!aquarium) {
@@ -51,69 +74,12 @@ export async function aquariumRoutes(app: FastifyInstance) {
     },
   );
 
-
   // Create an aquarium for the signed-in parent.
-  app.post<{
-    Body: {
-      name?: string;
-    };
-  }>('/aquariums', {
-    schema: {
-      body: {
-        type: 'object',
-        additionalProperties: false,
-        properties: {
-          name: {
-            type: 'string',
-            minLength: 1,
-            maxLength: 100,
-          },
-        },
-      },
-    },
-  }, async (request, reply) => {
-    const user = await getAuthenticatedUser(request);
-
-    if (!user) {
-      return reply.code(401).send({
-        error: 'Unauthorized',
-      });
-    }
-
-    const name = request.body.name?.trim() || 'My Aquarium';
-
-    const aquarium = await prisma.aquarium.create({
-      data: {
-        name,
-        ownerId: user.id,
-      },
-    });
-
-    return reply.code(201).send(aquarium);
-  });
-
-
-  // Rename an aquarium
-  app.patch<{
-    Params: { id: string };
-    Body: { name: string };
-  }>(
-    '/aquariums/:id',
+  api.post(
+    '/aquariums',
     {
       schema: {
-        body: {
-          type: 'object',
-          required: ['name'],
-          additionalProperties: false,
-          properties: {
-            name: {
-              type: 'string',
-              minLength: 1,
-              maxLength: 100,
-              pattern: '\\S',
-            },
-          },
-        },
+        body: createAquariumSchema,
       },
     },
     async (request, reply) => {
@@ -125,14 +91,44 @@ export async function aquariumRoutes(app: FastifyInstance) {
         });
       }
 
-      const name = request.body.name.trim();
+      const aquarium = await prisma.aquarium.create({
+        data: {
+          name: request.body.name ?? 'My Aquarium',
+          ownerId: user.id,
+        },
+      });
 
+      return reply.code(201).send(aquarium);
+    },
+  );
+
+  // Rename an aquarium.
+  api.patch(
+    '/aquariums/:id',
+    {
+      schema: {
+        params: aquariumIdParamsSchema,
+        body: updateAquariumSchema,
+      },
+    },
+    async (request, reply) => {
+      const user = await getAuthenticatedUser(request);
+
+      if (!user) {
+        return reply.code(401).send({
+          error: 'Unauthorized',
+        });
+      }
+
+      // Only update aquariums belonging to this user.
       const result = await prisma.aquarium.updateMany({
         where: {
           id: request.params.id,
           ownerId: user.id,
         },
-        data: { name },
+        data: {
+          name: request.body.name,
+        },
       });
 
       if (result.count === 0) {
@@ -141,20 +137,23 @@ export async function aquariumRoutes(app: FastifyInstance) {
         });
       }
 
-      const aquarium = await prisma.aquarium.findFirst({
+      return prisma.aquarium.findFirst({
         where: {
           id: request.params.id,
           ownerId: user.id,
         },
       });
-
-      return reply.send(aquarium);
     },
   );
 
-  // Delete an aquarium
-  app.delete<{ Params: { id: string } }>(
+  // Delete an aquarium.
+  api.delete(
     '/aquariums/:id',
+    {
+      schema: {
+        params: aquariumIdParamsSchema,
+      },
+    },
     async (request, reply) => {
       const user = await getAuthenticatedUser(request);
 
@@ -180,6 +179,4 @@ export async function aquariumRoutes(app: FastifyInstance) {
       return reply.code(204).send();
     },
   );
-
-
 }

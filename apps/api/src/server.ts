@@ -2,9 +2,17 @@
 import 'dotenv/config';
 
 import cors from '@fastify/cors';
-import Fastify from 'fastify';
 import multipart from '@fastify/multipart';
+import Fastify from 'fastify';
+
+import {
+  hasZodFastifySchemaValidationErrors,
+  serializerCompiler,
+  validatorCompiler,
+} from 'fastify-type-provider-zod';
+
 import { prisma } from '@aquarium/database';
+
 import { auth } from './lib/auth.js';
 import { aquariumRoutes } from './routes/aquariums.js';
 import { fishRoutes } from './routes/fish.js';
@@ -14,29 +22,98 @@ const app = Fastify({
   logger: true,
 });
 
+// Zod request validation and response serialization.
+app.setValidatorCompiler(validatorCompiler);
+app.setSerializerCompiler(serializerCompiler);
+
+// Consistent API error responses.
+
+app.setErrorHandler((error, request, reply) => {
+  if (hasZodFastifySchemaValidationErrors(error)) {
+    return reply.code(400).send({
+      error: 'Validation failed',
+      details: error.validation.map((issue) => ({
+        path: issue.instancePath,
+        message: issue.message,
+      })),
+    });
+  }
+
+  // Safely extract properties from unknown errors.
+  const statusCode =
+    error !== null &&
+    typeof error === 'object' &&
+    'statusCode' in error &&
+    typeof error.statusCode === 'number' &&
+    error.statusCode >= 400 &&
+    error.statusCode <= 599
+      ? error.statusCode
+      : 500;
+
+  const message =
+    error instanceof Error
+      ? error.message
+      : 'Unexpected error';
+
+  if (statusCode >= 500) {
+    request.log.error(error);
+  } else {
+    request.log.warn(
+      { err: error },
+      'Request failed',
+    );
+  }
+
+  return reply.code(statusCode).send({
+    error:
+      statusCode >= 500
+        ? 'Internal server error'
+        : message,
+  });
+});
+
+
 async function start() {
   try {
+    // Register CORS before all routes, including Better Auth.
+    await app.register(cors, {
+      origin:
+        process.env.WEB_URL ?? 'http://localhost:5173',
+      credentials: true,
+    });
 
-    // Better Auth routes
+    // Multipart uploads for fish PNG textures.
+    await app.register(multipart, {
+      limits: {
+        fileSize: 5 * 1024 * 1024,
+        files: 1,
+      },
+    });
+
+    // Better Auth routes.
+    // Better Auth handles its own request validation.
     app.route({
       method: ['GET', 'POST'],
       url: '/api/auth/*',
 
-      // Preserve the raw JSON body for Better Auth.
-      // Fastify normally parses JSON before the route handler.
       handler: async (request, reply) => {
         const baseURL =
-          process.env.BETTER_AUTH_URL ?? 'http://localhost:3001';
+          process.env.BETTER_AUTH_URL ??
+          'http://localhost:3001';
 
         const url = new URL(request.url, baseURL);
 
         const headers = new Headers();
 
-        for (const [key, value] of Object.entries(request.headers)) {
+        for (const [key, value] of Object.entries(
+          request.headers,
+        )) {
           if (value !== undefined) {
             headers.set(
               key,
-              Array.isArray(value) ? value.join(', ') : value,
+              Array.isArray(value)
+                ? value.join(', ')
+                : value,
             );
           }
         }
@@ -63,7 +140,8 @@ async function start() {
 
         reply.code(response.status);
 
-        // Preserve headers, including multiple Set-Cookie values.
+        // Forward response headers except Set-Cookie,
+        // which must preserve multiple values.
         for (const [key, value] of response.headers) {
           if (key !== 'set-cookie') {
             reply.header(key, value);
@@ -76,11 +154,13 @@ async function start() {
           reply.header('set-cookie', cookies);
         }
 
-        return reply.send(Buffer.from(await response.arrayBuffer()));
+        return reply.send(
+          Buffer.from(await response.arrayBuffer()),
+        );
       },
     });
 
-    // Health check
+    // Database health check.
     app.get('/health', async () => {
       await prisma.$queryRaw`SELECT 1`;
 
@@ -91,24 +171,12 @@ async function start() {
       };
     });
 
-    await app.register(multipart, {
-      limits: {
-        fileSize: 5 * 1024 * 1024,
-        files: 1,
-      },
-    });
-
-    await app.register(cors, {
-      origin: process.env.WEB_URL ?? 'http://localhost:5173',
-      credentials: true,
-    });
-
-    // Aquarium routes
+    // Application routes.
     await app.register(aquariumRoutes);
     await app.register(fishRoutes);
     await app.register(fishTextureRoutes);
 
-    // Start server
+    // Start API server.
     await app.listen({
       port: Number(process.env.PORT ?? 3001),
       host: process.env.HOST ?? '127.0.0.1',
@@ -118,14 +186,28 @@ async function start() {
   } catch (error) {
     app.log.error(error);
     process.exitCode = 1;
-    await app.close();
-    await prisma.$disconnect();
+
+    await shutdown();
   }
 }
 
+let shuttingDown = false;
+
 async function shutdown() {
-  await app.close();
-  await prisma.$disconnect();
+  if (shuttingDown) {
+    return;
+  }
+
+  shuttingDown = true;
+
+  try {
+    await app.close();
+  } catch (error) {
+    app.log.error(error, 'Failed to close Fastify');
+    process.exitCode = 1;
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
 process.once('SIGINT', () => {
