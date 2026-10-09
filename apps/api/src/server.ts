@@ -76,8 +76,11 @@ app.setErrorHandler((error, request, reply) => {
 async function start() {
   try {
     // Register CORS before all routes, including Better Auth.
+    const webOrigin =
+      process.env.WEB_URL ?? 'http://localhost:5173';
+
     await app.register(cors, {
-      origin: 'http://localhost:5173',
+      origin: webOrigin,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
