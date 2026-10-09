@@ -1,10 +1,15 @@
 
 import { apiFetch } from './api-client';
 
+const API_URL =
+  import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
+
+export type FishSpecies = 'classic' | 'angelfish';
+
 export type ApiFish = {
   id: string;
   name: string;
-  species: string;
+  species: FishSpecies;
   bodyColor: string;
   finColor: string;
   paintKey: string | null;
@@ -26,6 +31,23 @@ export type ApiAquarium = {
   fish: ApiFish[];
 };
 
+export type CreateFishInput = {
+  name: string;
+  species: FishSpecies;
+  bodyColor: string;
+  finColor: string;
+  size: number;
+  aquariumId?: string;
+};
+
+export type UpdateFishInput = Partial<{
+  name: string;
+  bodyColor: string;
+  finColor: string;
+  size: number;
+  aquariumId: string | null;
+}>;
+
 export const aquariumApi = {
   list: () =>
     apiFetch<ApiAquarium[]>('/aquariums'),
@@ -46,29 +68,18 @@ export const fishApi = {
   list: () =>
     apiFetch<ApiFish[]>('/fish'),
 
-  create: (data: {
-    name: string;
-    species: 'classic' | 'angelfish';
-    bodyColor: string;
-    finColor: string;
-    size: number;
-    aquariumId?: string;
-  }) =>
+  get: (id: string) =>
+    apiFetch<ApiFish>(
+      `/fish/${encodeURIComponent(id)}`,
+    ),
+
+  create: (data: CreateFishInput) =>
     apiFetch<ApiFish>('/fish', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  update: (
-    id: string,
-    data: Partial<{
-      name: string;
-      bodyColor: string;
-      finColor: string;
-      size: number;
-      aquariumId: string | null;
-    }>,
-  ) =>
+  update: (id: string, data: UpdateFishInput) =>
     apiFetch<ApiFish>(
       `/fish/${encodeURIComponent(id)}`,
       {
@@ -80,6 +91,44 @@ export const fishApi = {
   remove: (id: string) =>
     apiFetch<void>(
       `/fish/${encodeURIComponent(id)}`,
-      { method: 'DELETE' },
+      {
+        method: 'DELETE',
+      },
     ),
+
+  uploadTexture: (id: string, image: Blob) => {
+    const formData = new FormData();
+
+    formData.append(
+      'texture',
+      image,
+      'fish.png',
+    );
+
+    return apiFetch<ApiFish>(
+      `/fish/${encodeURIComponent(id)}/texture`,
+      {
+        method: 'POST',
+        body: formData,
+      },
+    );
+  },
+
+  getTexture: async (id: string): Promise<Blob> => {
+    const response = await fetch(
+      `${API_URL}/fish/${encodeURIComponent(id)}/texture`,
+      {
+        method: 'GET',
+        credentials: 'include',
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to load fish texture (${response.status})`,
+      );
+    }
+
+    return response.blob();
+  },
 };
