@@ -14,6 +14,7 @@ import {
 } from './components/FishDrawing/FishDrawingCanvas';
 import { FishProfileCard } from './components/FishProfile/FishProfileCard';
 import { ThreeAquariumView } from './components/Aquarium3D/ThreeAquariumView';
+import { AquariumControls } from './components/AquariumControls/AquariumControls';
 import { useAquarium } from './hooks/useAquarium';
 
 const AQUARIUM_CAPACITY = 8;
@@ -365,24 +366,16 @@ function App() {
           flexWrap: 'wrap',
         }}
       >
-        <select
-          aria-label="Select aquarium"
-          value={aquarium?.id ?? ''}
+        <AquariumControls
+          aquarium={aquarium}
+          aquariums={aquariums}
           disabled={aquariumLoading || busy}
-          onChange={(event) => selectAquarium(event.target.value)}
-          style={{
-            padding: '10px 14px',
-            borderRadius: 20,
-            border: 'none',
-            fontWeight: 700,
+          onSelect={selectAquarium}
+          onCreate={async (name) => {
+            const created = await aquariumApi.create(name);
+            await refreshAquariums(created.id);
           }}
-        >
-          {aquariums.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name}
-            </option>
-          ))}
-        </select>
+        />
 
         <button
           type="button"

@@ -1,0 +1,300 @@
+
+.ui-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 10px 18px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+            transform 160ms ease,
+            background 160ms ease,
+            box-shadow 160ms ease;
+}
+
+.ui-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.ui-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ui-button--primary {
+    background: #43c5f1;
+    color: #063954;
+    box-shadow: 0 4px 15px rgba(0, 118, 183, 0.2);
+}
+
+.ui-button--primary:hover:not(:disabled) {
+    background: #70d8fa;
+}
+
+.ui-button--secondary {
+    background: #fff;
+    color: #075b8d;
+    box-shadow: 0 4px 15px rgba(0, 32, 67, 0.12);
+}
+
+.ui-button--danger {
+    background: #fff0f0;
+    color: #c44747;
+}
+
+.ui-button--ghost {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.ui-button:focus-visible,
+.ui-select-trigger:focus-visible,
+.ui-icon-button:focus-visible,
+.ui-input:focus-visible {
+    outline: 3px solid #85e5ff;
+    outline-offset: 3px;
+}
+
+/* Select */
+
+.ui-select {
+    position: relative;
+    width: min(230px, 55vw);
+    font-family: inherit;
+}
+
+.ui-select-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    background: rgba(5, 52, 96, 0.85);
+    color: #fff;
+    box-shadow: 0 5px 20px rgba(0, 36, 80, 0.18);
+    backdrop-filter: blur(16px);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.ui-select-icon {
+    font-size: 17px;
+}
+
+.ui-select-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.ui-select-chevron {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    color: #a6e8ff;
+    transition: transform 180ms ease;
+    transform: rotate(0deg);
+}
+
+.ui-select-chevron.is-open {
+    transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ui-select-chevron {
+        transition: none;
+    }
+}
+
+.ui-select-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 200;
+    width: 100%;
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 16px;
+    background: rgba(5, 48, 88, 0.96);
+    box-shadow: 0 14px 35px rgba(0, 21, 53, 0.3);
+    backdrop-filter: blur(18px);
+}
+
+.ui-select-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.ui-select-option:hover,
+.ui-select-option.is-active {
+    background: rgba(99, 206, 255, 0.2);
+}
+
+.ui-select-option[aria-selected="true"] {
+    color: #8be5ff;
+    font-weight: 700;
+}
+
+/* Modal */
+
+.ui-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 22, 47, 0.58);
+    backdrop-filter: blur(7px);
+    animation: ui-fade-in 180ms ease-out;
+}
+
+.ui-modal {
+    width: min(100%, 440px);
+    overflow: hidden;
+    border: 1px solid rgba(151, 222, 255, 0.25);
+    border-radius: 24px;
+    background: linear-gradient(155deg, #0c5284, #062d51);
+    color: #fff;
+    box-shadow: 0 25px 75px rgba(0, 14, 38, 0.4);
+    animation: ui-modal-in 200ms ease-out;
+}
+
+.ui-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 26px 26px 12px;
+}
+
+.ui-modal-header h2 {
+    margin: 0 0 7px;
+    font-size: 23px;
+    font-weight: 800;
+}
+
+.ui-modal-header p {
+    margin: 0;
+    color: #b8dff3;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.ui-icon-button {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.ui-modal-body {
+    padding: 18px 26px;
+}
+
+.ui-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 10px 26px 26px;
+}
+
+.ui-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 15px;
+    border: 2px solid transparent;
+    border-radius: 13px;
+    background: #fff;
+    color: #123b54;
+    font: inherit;
+    font-size: 15px;
+}
+
+.ui-input::placeholder {
+    color: #829aaa;
+}
+
+.ui-input:focus {
+    border-color: #57cfff;
+    outline: none;
+}
+
+@keyframes ui-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes ui-modal-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ui-modal,
+    .ui-modal-backdrop {
+        animation: none;
+    }
+
+    .ui-button {
+        transition: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .ui-modal-header {
+        padding: 22px 20px 10px;
+    }
+
+    .ui-modal-body {
+        padding: 16px 20px;
+    }
+
+    .ui-modal-footer {
+        padding: 10px 20px 22px;
+    }
+
+    .ui-modal-footer .ui-button {
+        flex: 1;
+    }
+}
