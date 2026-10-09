@@ -78,6 +78,8 @@ export function Fish3DPreview({
   const containerRef =
     useRef<HTMLDivElement>(null);
 
+  const fitCameraRef = useRef<(() => void) | null>(null);
+
   const fishRef =
     useRef<Fish3DModel | null>(
       null,
@@ -195,9 +197,7 @@ export function Fish3DPreview({
   }, [finColor]);
 
   useEffect(() => {
-    fishRef.current?.group.scale.setScalar(
-      size,
-    );
+    fishRef.current?.group.scale.setScalar(size);
   }, [size]);
 
   /*
@@ -220,11 +220,13 @@ export function Fish3DPreview({
       );
 
     const camera =
-      new THREE.PerspectiveCamera(
-        40,
-        1,
+      new THREE.OrthographicCamera(
+        -4,
+        4,
+        4,
+        -4,
         0.1,
-        100,
+        200,
       );
 
     camera.position.set(
@@ -254,6 +256,13 @@ export function Fish3DPreview({
 
     renderer.toneMappingExposure =
       1.1;
+
+    // Keep the CSS display size independent of the Retina drawing buffer.
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    renderer.domElement.style.maxWidth = '100%';
+    renderer.domElement.style.maxHeight = '100%';
 
     container.appendChild(
       renderer.domElement,
@@ -337,6 +346,40 @@ export function Fish3DPreview({
     scene.add(
       fish.group,
     );
+
+    // Orthographic framing: reliably fits the full silhouette on
+    // narrow screens, including the tall angelfish dorsal/anal fins.
+    const fitCamera = () => {
+      const width = container.clientWidth;
+      const currentHeight = container.clientHeight;
+      if (width <= 0 || currentHeight <= 0) return;
+
+      fish.group.updateWorldMatrix(true, true);
+      const bounds = new THREE.Box3().setFromObject(fish.group);
+      if (bounds.isEmpty()) return;
+
+      const sphere = bounds.getBoundingSphere(new THREE.Sphere());
+      const aspect = width / currentHeight;
+      // Extra padding leaves room for the fins during rotation and
+      // keeps the fish comfortably inside the painting controls.
+      const radius = Math.max(sphere.radius, 0.01) * 1.7;
+      const halfHeight = Math.max(radius, radius / aspect);
+      const halfWidth = halfHeight * aspect;
+
+      camera.left = -halfWidth;
+      camera.right = halfWidth;
+      camera.top = halfHeight;
+      camera.bottom = -halfHeight;
+      camera.position.set(
+        sphere.center.x,
+        sphere.center.y,
+        sphere.center.z + Math.max(12, sphere.radius * 5),
+      );
+      camera.lookAt(sphere.center);
+      camera.updateProjectionMatrix();
+    };
+
+    fitCameraRef.current = fitCamera;
 
     /*
      * Painting / raycasting
@@ -926,12 +969,7 @@ export function Fish3DPreview({
         false,
       );
 
-      camera.aspect =
-        width /
-        currentHeight;
-
-      camera
-        .updateProjectionMatrix();
+      fitCamera();
     };
 
     const resizeObserver =
@@ -997,6 +1035,7 @@ export function Fish3DPreview({
       );
 
       resizeObserver.disconnect();
+      fitCameraRef.current = null;
 
       renderer.domElement
         .removeEventListener(
@@ -1044,87 +1083,87 @@ export function Fish3DPreview({
     >
       {/* Paint / Rotate */}
       {editable && <div
-        style={{
-          position: 'absolute',
-          top: 12,
-          left: '50%',
+          style={{
+            position: 'absolute',
+            top: 12,
+            left: '50%',
 
-          transform:
-            'translateX(-50%)',
+            transform:
+              'translateX(-50%)',
 
-          zIndex: 3,
+            zIndex: 3,
 
-          display: 'flex',
-          gap: 6,
+            display: 'flex',
+            gap: 6,
 
-          padding: 5,
+            padding: 5,
 
-          borderRadius: 14,
+            borderRadius: 14,
 
-          background:
-            'rgba(255, 255, 255, 0.92)',
+            background:
+              'rgba(255, 255, 255, 0.92)',
 
-          boxShadow:
-            '0 4px 14px rgba(0, 0, 0, 0.12)',
-        }}
+            boxShadow:
+              '0 4px 14px rgba(0, 0, 0, 0.12)',
+          }}
       >
-        <button
-          type="button"
-          onClick={() =>
-            setMode('paint')
-          }
-          style={{
-            padding:
-              '8px 14px',
+          <button
+              type="button"
+              onClick={() =>
+                setMode('paint')
+              }
+              style={{
+                padding:
+                  '8px 14px',
 
-            border: 0,
-            borderRadius: 10,
+                border: 0,
+                borderRadius: 10,
 
-            background:
-              mode === 'paint'
-                ? '#37b6d5'
-                : 'transparent',
+                background:
+                  mode === 'paint'
+                    ? '#37b6d5'
+                    : 'transparent',
 
-            color:
-              mode === 'paint'
-                ? 'white'
-                : '#17324d',
+                color:
+                  mode === 'paint'
+                    ? 'white'
+                    : '#17324d',
 
-            fontWeight: 800,
-            cursor: 'pointer',
-          }}
-        >
-          🖌️ Paint
-        </button>
+                fontWeight: 800,
+                cursor: 'pointer',
+              }}
+          >
+              🖌️ Paint
+          </button>
 
-        <button
-          type="button"
-          onClick={() =>
-            setMode('rotate')
-          }
-          style={{
-            padding:
-              '8px 14px',
+          <button
+              type="button"
+              onClick={() =>
+                setMode('rotate')
+              }
+              style={{
+                padding:
+                  '8px 14px',
 
-            border: 0,
-            borderRadius: 10,
+                border: 0,
+                borderRadius: 10,
 
-            background:
-              mode === 'rotate'
-                ? '#37b6d5'
-                : 'transparent',
+                background:
+                  mode === 'rotate'
+                    ? '#37b6d5'
+                    : 'transparent',
 
-            color:
-              mode === 'rotate'
-                ? 'white'
-                : '#17324d',
+                color:
+                  mode === 'rotate'
+                    ? 'white'
+                    : '#17324d',
 
-            fontWeight: 800,
-            cursor: 'pointer',
-          }}
-        >
-          🔄 Rotate
-        </button>
+                fontWeight: 800,
+                cursor: 'pointer',
+              }}
+          >
+              🔄 Rotate
+          </button>
       </div>}
 
       {/* Painting controls */}
