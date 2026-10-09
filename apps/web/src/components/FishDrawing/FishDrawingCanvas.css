@@ -1,0 +1,37 @@
+.fish-editor { width: 100%; min-width: 0; color: #eef8ff; }
+.fish-editor * { box-sizing: border-box; }
+.fish-editor__workspace { display: grid; grid-template-columns: minmax(0, 1fr) 300px; min-height: 610px; overflow: hidden; border: 1px solid #21516e; border-radius: 18px; background: #061c2d; }
+.fish-editor__stage { min-width: 0; min-height: 580px; position: relative; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 45%, #103752 0%, #071e30 72%); overflow: hidden; }
+.fish-editor__canvas-wrap { position: relative; width: min(94%, 850px); aspect-ratio: 3 / 2; border: 1px solid #2d6482; border-radius: 15px; background: #f8fbfd; overflow: hidden; }
+.fish-editor__guide { position: absolute; inset: 14% 10%; display: flex; align-items: center; justify-content: center; color: #8da5b5; opacity: .26; pointer-events: none; }
+.fish-editor__canvas { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; touch-action: none; }
+.fish-editor__3d-stage { width: 100%; min-width: 0; height: 100%; min-height: 580px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+.fish-editor__sidebar { min-width: 0; display: flex; flex-direction: column; gap: 22px; padding: 24px 20px; border-left: 1px solid #204b69; background: linear-gradient(180deg, #102f48, #09243a); }
+.fish-editor__section { display: flex; flex-direction: column; gap: 12px; }
+.fish-editor__section h2 { margin: 0; color: #f4f9ff; font-size: 14px; font-weight: 700; }
+.fish-editor__palette { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.fish-editor__swatch { width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.fish-editor__swatch.is-selected { outline: 2px solid #70cfff; outline-offset: 3px; }
+.fish-editor__color-input { width: 34px; height: 34px; padding: 0; border: 1px solid #4c7490; border-radius: 50%; background: transparent; cursor: pointer; }
+.fish-editor__segmented { display: flex; gap: 5px; padding: 4px; border-radius: 12px; background: #071f32; }
+.fish-editor__segmented button { flex: 1; min-width: 0; padding: 10px 5px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: #b7d0e2; font-size: 12px; font-weight: 600; cursor: pointer; }
+.fish-editor__segmented button.is-active, .fish-editor__tool-grid button.is-active { background: #194a73; border-color: #327bb6; color: #fff; }
+.fish-editor__tool-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+.fish-editor__tool-grid button { padding: 10px 12px; border: 1px solid #315c78; border-radius: 10px; background: #123852; color: #eaf6ff; cursor: pointer; }
+.fish-editor__tool-grid button:disabled { opacity: .4; cursor: not-allowed; }
+.fish-editor__hint { margin: 0; color: #a8c5d9; font-size: 12px; line-height: 1.5; }
+.fish-editor__capacity { margin-top: auto; }
+.fish-editor__size-header, .fish-editor__range-labels { display: flex; justify-content: space-between; align-items: center; }
+.fish-editor__size-header span { color: #8bd1ff; font-size: 12px; font-weight: 700; }
+.fish-editor__capacity input[type='range'] { width: 100%; accent-color: #2d85f8; }
+.fish-editor__range-labels { color: #95b7cc; font-size: 11px; }
+.fish-editor__capacity-ok, .fish-editor__capacity-full { margin: 0; font-size: 12px; line-height: 1.5; }
+.fish-editor__capacity-ok { color: #74e1c2; }
+.fish-editor__capacity-full { color: #ffb4b4; }
+.fish-editor__actions { display: flex; gap: 8px; }
+.fish-editor__actions button { min-height: 44px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+.fish-editor__cancel { padding: 0 14px; border: 1px solid #315c78; color: #d4e8f5; background: #11354e; }
+.fish-editor__save { flex: 1; border: 0; color: white; background: #2c7df3; }
+.fish-editor__save:disabled { background: #54738c; cursor: not-allowed; }
+@media (max-width: 850px) { .fish-editor__workspace { grid-template-columns: minmax(0, 1fr); } .fish-editor__stage { min-height: 360px; padding: 16px; } .fish-editor__3d-stage { min-height: 390px; } .fish-editor__sidebar { border-left: 0; border-top: 1px solid #204b69; } }
+@media (max-width: 500px) { .fish-editor__stage { min-height: 260px; padding: 10px; } .fish-editor__sidebar { padding: 18px 14px; } .fish-editor__3d-stage { min-height: 320px; } }

@@ -1,0 +1,11 @@
+.draw-fish-page, .customize-fish-page { min-height: 100dvh; padding: 28px 24px 60px; color: #f3f9ff; background: radial-gradient(ellipse at 50% 0%, #12476b, #061b2b 65%); }
+.draw-fish-page__header, .customize-fish-page__header { max-width: 1200px; margin: 0 auto 24px; display: flex; align-items: center; gap: 24px; }
+.draw-fish-page__header h1, .customize-fish-page__header h1 { margin: 0 0 5px; font-size: clamp(24px, 3vw, 34px); color: #f3f9ff; }
+.draw-fish-page__header p, .customize-fish-page__header p { margin: 0; color: #a9c7d9; }
+.draw-fish-page__back, .customize-fish-page__back { flex-shrink: 0; padding: 11px 17px; border: 1px solid #2d607e; border-radius: 11px; color: #f3f9ff; background: #103750; cursor: pointer; }
+.draw-fish-page__content, .customize-fish-page__content { max-width: 1200px; margin: 0 auto; border: 0; background: transparent; overflow: visible; }
+.draw-fish-page__empty, .customize-fish-page__empty { max-width: 480px; margin: 90px auto; text-align: center; color: #d3e7f5; }
+.draw-fish-page__error, .customize-fish-page__error { max-width: 1200px; margin: 0 auto 16px; padding: 12px 16px; border-radius: 10px; color: #fecaca; background: #4a1827; }
+.draw-fish-page__content, .customize-fish-page__editor { position: relative; }
+.draw-fish-page__saving, .customize-fish-page__saving { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; border-radius: 18px; color: white; background: #031522d9; }
+@media (max-width: 650px) { .draw-fish-page, .customize-fish-page { padding: 18px 12px 36px; } .draw-fish-page__header, .customize-fish-page__header { gap: 12px; align-items: flex-start; } }
