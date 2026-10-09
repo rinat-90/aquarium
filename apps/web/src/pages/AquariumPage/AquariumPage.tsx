@@ -5,6 +5,7 @@ import {
   type ApiFish,
 } from '../../lib/aquarium-api';
 
+import type {CreatedFish} from "../../types/fish.ts";
 import {
   FishDrawingCanvas,
   type FishCreation,
@@ -13,8 +14,9 @@ import { FishProfileCard } from '../../components/FishProfile/FishProfileCard';
 import { ThreeAquariumView } from '../../components/Aquarium3D/ThreeAquariumView';
 import { useAquarium } from '../../hooks/useAquarium';
 import { AquariumHUD } from '../../components/AquariumHUD/AquariumHUD';
+import { FishCollection } from '../../components/FishCollection/FishCollection';
+
 import './AquariumPage.css';
-import type {CreatedFish} from "../../types/fish.ts";
 
 const AQUARIUM_CAPACITY = 8;
 
@@ -80,6 +82,7 @@ export function AquariumPage() {
   const [fishLoading, setFishLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fishCollectionOpen, setFishCollectionOpen] = useState(false);
 
   const activeAquariumId = useRef<string | null>(null);
   activeAquariumId.current = aquarium?.id ?? null;
@@ -296,13 +299,9 @@ export function AquariumPage() {
         onBack={() => navigate('/aquariums')}
         onAddFish={() => setDrawing(true)}
         onEdit={() => {
-          if (aquarium) {
-            navigate(`/aquariums/${aquarium.id}/edit`);
-          }
+          // Edit Aquarium is on hold.
         }}
-        onViewFish={() => {
-          // Next: open the fish collection panel.
-        }}
+        onViewFish={() => setFishCollectionOpen(true)}
       />
 
       <ThreeAquariumView
@@ -366,15 +365,30 @@ export function AquariumPage() {
       </button>
 
       {selectedFish && (
-        <FishProfileCard
-          fish={selectedFish}
-          onRename={handleRenameFish}
-          onRelease={handleReleaseFish}
-          onClose={() => setSelectedFishId(null)}
-          aquariums={aquariums}
-          currentAquariumId={aquarium?.id ?? ''}
-          onMove={handleMoveFish}
-        />
+        <>
+          <FishCollection
+            open={fishCollectionOpen}
+            fish={fish}
+            onClose={() => setFishCollectionOpen(false)}
+            onSelectFish={(fishId) => {
+              setFishCollectionOpen(false);
+              setSelectedFishId(fishId);
+            }}
+            onAddFish={() => {
+              setFishCollectionOpen(false);
+              setDrawing(true);
+            }}
+          />
+          <FishProfileCard
+            fish={selectedFish}
+            onRename={handleRenameFish}
+            onRelease={handleReleaseFish}
+            onClose={() => setSelectedFishId(null)}
+            aquariums={aquariums}
+            currentAquariumId={aquarium?.id ?? ''}
+            onMove={handleMoveFish}
+          />
+        </>
       )}
 
       {drawing && (

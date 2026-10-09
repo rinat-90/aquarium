@@ -1,0 +1,188 @@
+.fish-collection {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+}
+
+.fish-collection__backdrop {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: rgba(2, 13, 25, 0.55);
+    cursor: default;
+}
+
+.fish-collection__panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    width: min(420px, 100%);
+    border-left: 1px solid rgba(70, 172, 225, 0.25);
+    background: #071f33;
+    color: white;
+    box-shadow: -20px 0 70px rgba(0, 0, 0, 0.3);
+    animation: fish-collection-enter 220ms ease-out;
+}
+
+.fish-collection__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 28px 24px 22px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fish-collection__header h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+}
+
+.fish-collection__header p {
+    margin: 0;
+    color: #93b5ca;
+    font-size: 13px;
+}
+
+.fish-collection__close {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #28506a;
+    border-radius: 10px;
+    background: #123750;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.fish-collection__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.fish-collection__list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fish-collection__item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #1d4761;
+    border-radius: 14px;
+    background: #0d3049;
+    color: white;
+    text-align: left;
+    cursor: pointer;
+    transition: background 150ms, border-color 150ms;
+}
+
+.fish-collection__item:hover {
+    border-color: #269be4;
+    background: #134361;
+}
+
+.fish-collection__avatar {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 58px;
+    height: 58px;
+    border-radius: 12px;
+    font-size: 28px;
+}
+
+.fish-collection__info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.fish-collection__info strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15px;
+}
+
+.fish-collection__info span {
+    color: #91b4c8;
+    font-size: 12px;
+    text-transform: capitalize;
+}
+
+.fish-collection__arrow {
+    color: #86bddf;
+    font-size: 26px;
+}
+
+.fish-collection__footer {
+    padding: 20px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fish-collection__footer button,
+.fish-collection__empty button {
+    width: 100%;
+    padding: 13px 18px;
+    border: 0;
+    border-radius: 12px;
+    background: #168ee1;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.fish-collection__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    text-align: center;
+}
+
+.fish-collection__empty > span {
+    font-size: 60px;
+}
+
+.fish-collection__empty h3,
+.fish-collection__empty p {
+    margin: 0;
+}
+
+.fish-collection__empty p {
+    color: #91b4c8;
+    line-height: 1.5;
+}
+
+.fish-collection__empty button {
+    margin-top: 12px;
+}
+
+@keyframes fish-collection-enter {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fish-collection__panel {
+        animation: none;
+    }
+}
