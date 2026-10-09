@@ -159,9 +159,12 @@ export function FishProfileCard({
             }}
           >
             <Fish3DPreview
+              key={`${fish.id}-${fish.model}`}
+              species={fish.model === 'angelfish' ? 'angelfish' : 'classic'}
               bodyColor={fish.bodyColor}
               finColor={fish.finColor}
               paintImage={fish.paintImage}
+              size={fish.size}
               height={150}
               editable={false}
             />
