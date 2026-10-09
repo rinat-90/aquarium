@@ -2,597 +2,286 @@ import * as THREE from 'three';
 
 export type Fish3DModel = {
   group: THREE.Group;
-
-  /**
-   * Expose the body because the painting
-   * system raycasts against it.
-   */
   body: THREE.Mesh;
-
-  /**
-   * Canvas + texture used by the
-   * painting system.
-   */
   paintCanvas: HTMLCanvasElement;
   paintTexture: THREE.CanvasTexture;
-
   tail: THREE.Mesh;
   leftFin: THREE.Mesh;
   rightFin: THREE.Mesh;
-
-  setBodyColor: (
-    color: string,
-  ) => void;
-
-  setFinColor: (
-    color: string,
-  ) => void;
-
-  /**
-   * Restore a previously saved painted
-   * PNG onto the fish.
-   */
-  setPaintImage: (
-    image?: string,
-  ) => void;
-
+  setBodyColor: (color: string) => void;
+  setFinColor: (color: string) => void;
+  setPaintImage: (image?: string) => void;
   dispose: () => void;
 };
 
 export function createFish3DModel(): Fish3DModel {
-  const group =
-    new THREE.Group();
-
-  /**
-   * Paint layer
-   *
-   * The canvas starts transparent so
-   * the solid body color remains visible
-   * underneath.
-   */
-  const paintCanvas =
-    document.createElement(
-      'canvas',
-    );
-
+  const group = new THREE.Group();
+  const paintCanvas = document.createElement('canvas');
   paintCanvas.width = 1024;
   paintCanvas.height = 512;
+  const paintContext = paintCanvas.getContext('2d');
+  if (!paintContext) throw new Error('Could not create fish paint canvas.');
 
-  const paintContext =
-    paintCanvas.getContext(
-      '2d',
-    );
+  const paintTexture = new THREE.CanvasTexture(paintCanvas);
+  paintTexture.colorSpace = THREE.SRGBColorSpace;
+  paintTexture.wrapS = THREE.ClampToEdgeWrapping;
+  paintTexture.wrapT = THREE.ClampToEdgeWrapping;
 
-  if (!paintContext) {
-    throw new Error(
-      'Could not create fish paint canvas.',
-    );
-  }
-
-  paintContext.clearRect(
-    0,
-    0,
-    paintCanvas.width,
-    paintCanvas.height,
-  );
-
-  const paintTexture =
-    new THREE.CanvasTexture(
-      paintCanvas,
-    );
-
-  paintTexture.colorSpace =
-    THREE.SRGBColorSpace;
-
-  paintTexture.wrapS =
-    THREE.ClampToEdgeWrapping;
-
-  paintTexture.wrapT =
-    THREE.ClampToEdgeWrapping;
-
-  /**
-   * Used to protect asynchronous image
-   * loading.
-   *
-   * A fish could be removed while its
-   * saved texture is still loading.
-   */
   let disposed = false;
   let paintLoadVersion = 0;
 
-  /**
-   * Materials
-   */
-  const bodyMaterial =
-    new THREE.MeshStandardMaterial({
-      color: 0xff8a3d,
-      roughness: 0.65,
-      metalness: 0,
+  const bodyMaterial = new THREE.MeshStandardMaterial({
+    color: 0xff8a3d,
+    roughness: 0.67,
+    metalness: 0,
+    emissive: 0xff8a3d,
+    emissiveIntensity: 0.12,
+  });
+  const finMaterial = new THREE.MeshStandardMaterial({
+    color: 0xffb347,
+    roughness: 0.64,
+    metalness: 0,
+    side: THREE.DoubleSide,
+    emissive: 0xffb347,
+    emissiveIntensity: 0.12,
+  });
+  const whiteMaterial = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: 0.34,
+  });
+  const pupilMaterial = new THREE.MeshStandardMaterial({
+    color: 0x111827,
+    roughness: 0.25,
+  });
+  const mouthMaterial = new THREE.MeshStandardMaterial({
+    color: 0x9b4a2b,
+    roughness: 0.8,
+  });
 
-      emissive: 0xff8a3d,
-      emissiveIntensity: 0.18,
-    });
-
-  const finMaterial =
-    new THREE.MeshStandardMaterial({
-      color: 0xffb347,
-      roughness: 0.7,
-      metalness: 0,
-      side: THREE.DoubleSide,
-
-      emissive: 0xffb347,
-      emissiveIntensity: 0.16,
-    });
-
-  const whiteMaterial =
-    new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      roughness: 0.4,
-    });
-
-  const pupilMaterial =
-    new THREE.MeshStandardMaterial({
-      color: 0x111827,
-      roughness: 0.5,
-    });
-
-  /**
-   * Body
-   *
-   * Fish faces +X.
-   */
-  const bodyGeometry =
-    new THREE.SphereGeometry(
-      1,
-      40,
-      28,
+  // Preserve sphere UVs so the existing painting system keeps working.
+  // Deform the vertices instead of replacing the mesh with custom UVs.
+  const bodyGeometry = new THREE.SphereGeometry(1, 48, 32);
+  const positions = bodyGeometry.getAttribute('position');
+  for (let i = 0; i < positions.count; i += 1) {
+    const nx = positions.getX(i);
+    const ny = positions.getY(i);
+    const nz = positions.getZ(i);
+    const rear = THREE.MathUtils.smoothstep(-nx, 0.0, 1.0);
+    const front = THREE.MathUtils.smoothstep(nx, 0.15, 1.0);
+    const taper = 1 - rear * 0.38;
+    const headRoundness = 1 - front * 0.07;
+    positions.setXYZ(
+      i,
+      nx * 1.58,
+      ny * 0.89 * taper * headRoundness,
+      nz * 0.72 * taper * headRoundness,
     );
+  }
+  positions.needsUpdate = true;
+  bodyGeometry.computeVertexNormals();
+  bodyGeometry.computeBoundingSphere();
 
-  bodyGeometry.scale(
-    1.55,
-    0.9,
-    0.72,
-  );
-
-  const body =
-    new THREE.Mesh(
-      bodyGeometry,
-      bodyMaterial,
-    );
-
-  body.name =
-    'fish-paintable-body';
-
+  const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+  body.name = 'fish-paintable-body';
   group.add(body);
 
-  /**
-   * Transparent painting layer.
-   *
-   * This is a second copy of the body
-   * sitting just above the solid body.
-   */
-  const paintGeometry =
-    bodyGeometry.clone();
-
-  paintGeometry.scale(
-    1.003,
-    1.003,
-    1.003,
-  );
-
-  const paintMaterial =
-    new THREE.MeshBasicMaterial({
-      map: paintTexture,
-      transparent: true,
-      depthWrite: false,
-      side: THREE.FrontSide,
-    });
-
-  const paintBody =
-    new THREE.Mesh(
-      paintGeometry,
-      paintMaterial,
-    );
-
-  paintBody.name =
-    'fish-paint-layer';
-
+  const paintGeometry = bodyGeometry.clone();
+  paintGeometry.scale(1.004, 1.004, 1.004);
+  const paintMaterial = new THREE.MeshBasicMaterial({
+    map: paintTexture,
+    transparent: true,
+    depthWrite: false,
+    side: THREE.FrontSide,
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
+  });
+  const paintBody = new THREE.Mesh(paintGeometry, paintMaterial);
+  paintBody.name = 'fish-paint-layer';
   group.add(paintBody);
 
-  /**
-   * Tail
-   */
-  const tailShape =
-    new THREE.Shape();
+  // A shallow extrusion gives the fins thickness when viewed at an angle.
+  const makeFin = (shape: THREE.Shape, depth = 0.045) => {
+    const geometry = new THREE.ExtrudeGeometry(shape, {
+      depth,
+      bevelEnabled: true,
+      bevelThickness: 0.018,
+      bevelSize: 0.018,
+      bevelSegments: 2,
+      curveSegments: 14,
+      steps: 1,
+    });
+    geometry.translate(0, 0, -depth / 2);
+    return new THREE.Mesh(geometry, finMaterial);
+  };
 
-  tailShape.moveTo(
-    0.15,
-    0,
-  );
-
-  tailShape.bezierCurveTo(
-    -0.25,
-    0.25,
-    -0.75,
-    0.9,
-    -1.15,
-    1.0,
-  );
-
-  tailShape.quadraticCurveTo(
-    -0.88,
-    0.25,
-    -0.78,
-    0,
-  );
-
-  tailShape.quadraticCurveTo(
-    -0.88,
-    -0.25,
-    -1.15,
-    -1.0,
-  );
-
-  tailShape.bezierCurveTo(
-    -0.75,
-    -0.9,
-    -0.25,
-    -0.25,
-    0.15,
-    0,
-  );
-
-  const tailGeometry =
-    new THREE.ShapeGeometry(
-      tailShape,
-    );
-
-  const tail =
-    new THREE.Mesh(
-      tailGeometry,
-      finMaterial,
-    );
-
-  tail.position.set(
-    -1.48,
-    0,
-    0,
-  );
-
+  // Tail: rounded fan with a modest center notch, attached at a narrow peduncle.
+  const tailShape = new THREE.Shape();
+  tailShape.moveTo(0.06, 0);
+  tailShape.bezierCurveTo(-0.25, 0.18, -0.58, 0.68, -0.98, 0.78);
+  tailShape.quadraticCurveTo(-0.85, 0.28, -0.77, 0);
+  tailShape.quadraticCurveTo(-0.85, -0.28, -0.98, -0.78);
+  tailShape.bezierCurveTo(-0.58, -0.68, -0.25, -0.18, 0.06, 0);
+  const tail = makeFin(tailShape, 0.055);
+  tail.position.set(-1.45, 0, 0);
   group.add(tail);
 
-  /**
-   * Dorsal / top fin
-   */
-  const dorsalShape =
-    new THREE.Shape();
-
-  dorsalShape.moveTo(
-    -0.65,
-    0,
-  );
-
-  dorsalShape.bezierCurveTo(
-    -0.35,
-    0.45,
-    -0.05,
-    0.95,
-    0.2,
-    1.05,
-  );
-
-  dorsalShape.bezierCurveTo(
-    0.35,
-    0.65,
-    0.55,
-    0.25,
-    0.72,
-    0,
-  );
-
-  dorsalShape.lineTo(
-    -0.65,
-    0,
-  );
-
-  const dorsalGeometry =
-    new THREE.ShapeGeometry(
-      dorsalShape,
-    );
-
-  const dorsalFin =
-    new THREE.Mesh(
-      dorsalGeometry,
-      finMaterial,
-    );
-
-  dorsalFin.position.set(
-    -0.15,
-    0.72,
-    0,
-  );
-
+  // Rounded dorsal fin with a root tucked into the back.
+  const dorsalShape = new THREE.Shape();
+  dorsalShape.moveTo(-0.85, -0.18);
+  dorsalShape.bezierCurveTo(-0.92, 0.14, -0.78, 0.48, -0.56, 0.65);
+  dorsalShape.bezierCurveTo(-0.42, 0.70, -0.33, 0.52, -0.19, 0.34);
+  dorsalShape.bezierCurveTo(0.02, 0.12, 0.28, -0.04, 0.52, -0.20);
+  dorsalShape.quadraticCurveTo(-0.12, -0.30, -0.85, -0.18);
+  const dorsalFin = makeFin(dorsalShape, 0.04);
+  dorsalFin.position.set(-0.20, 0.56, 0);
   group.add(dorsalFin);
 
-  /**
-   * Side fins
-   */
-  const leftFinGeometry =
-    new THREE.ConeGeometry(
-      0.32,
-      0.75,
-      24,
-    );
+  // Smaller anal fin swept toward the tail.
+  const analShape = new THREE.Shape();
+  analShape.moveTo(-0.55, 0.16);
+  analShape.bezierCurveTo(-0.62, -0.08, -0.57, -0.35, -0.38, -0.50);
+  analShape.bezierCurveTo(-0.24, -0.48, -0.16, -0.24, -0.02, -0.10);
+  analShape.quadraticCurveTo(0.12, 0.04, 0.28, 0.16);
+  analShape.quadraticCurveTo(-0.12, 0.08, -0.55, 0.16);
+  const analFin = makeFin(analShape, 0.035);
+  analFin.position.set(-0.70, -0.52, 0);
+  group.add(analFin);
 
-  const rightFinGeometry =
-    leftFinGeometry.clone();
+  // Pectoral fins: curve outward from the body so they read as fins
+  // both from the side and when looking directly at the fish's face.
+  // Keep the root near the body and fan the outer edge along +/-Z.
+  const sideShape = new THREE.Shape();
+  sideShape.moveTo(0.08, 0.04);
+  sideShape.bezierCurveTo(-0.12, 0.12, -0.36, 0.02, -0.62, -0.16);
+  sideShape.bezierCurveTo(-0.76, -0.28, -0.68, -0.40, -0.49, -0.39);
+  sideShape.bezierCurveTo(-0.26, -0.36, -0.04, -0.16, 0.08, 0.04);
 
-  const leftFin =
-    new THREE.Mesh(
-      leftFinGeometry,
-      finMaterial,
-    );
+  const createPectoralFin = (side: 1 | -1) => {
+    const fin = makeFin(sideShape, 0.035);
+    fin.scale.setScalar(0.75);
 
-  leftFin.position.set(
-    0,
-    -0.18,
-    0.62,
-  );
+    // A flat XY fin is edge-on from the front. Bend its tip outward
+    // while leaving the attachment point almost unchanged.
+    const vertices = fin.geometry.getAttribute('position');
+    for (let i = 0; i < vertices.count; i += 1) {
+      const x = vertices.getX(i);
+      const reach = THREE.MathUtils.clamp((0.08 - x) / 0.8, 0, 1);
+      vertices.setZ(i, vertices.getZ(i) + side * 0.68 * reach);
+    }
+    vertices.needsUpdate = true;
+    fin.geometry.computeVertexNormals();
+    fin.geometry.computeBoundingSphere();
 
-  leftFin.rotation.x =
-    Math.PI / 2.8;
+    // A slightly exposed root keeps the fins connected to the body.
+    fin.position.set(0.54, -0.13, side * 0.67);
+    fin.rotation.z = 0.18;
+    group.add(fin);
+    return fin;
+  };
 
-  leftFin.rotation.z =
-    -Math.PI / 2.5;
+  const leftFin = createPectoralFin(1);
+  const rightFin = createPectoralFin(-1);
 
-  group.add(leftFin);
-
-  const rightFin =
-    new THREE.Mesh(
-      rightFinGeometry,
-      finMaterial,
-    );
-
-  rightFin.position.set(
-    0,
-    -0.18,
-    -0.62,
-  );
-
-  rightFin.rotation.x =
-    -Math.PI / 2.8;
-
-  rightFin.rotation.z =
-    -Math.PI / 2.5;
-
-  group.add(rightFin);
-
-  /**
-   * Eyes
-   */
-  const eyeGeometry =
-    new THREE.SphereGeometry(
-      0.2,
-      24,
-      16,
-    );
-
-  const pupilGeometry =
-    new THREE.SphereGeometry(
-      0.09,
-      20,
-      14,
-    );
-
-  const createEye = (
-    z: number,
-  ) => {
-    const eye =
-      new THREE.Mesh(
-        eyeGeometry,
-        whiteMaterial,
-      );
-
-    eye.position.set(
-      1.05,
-      0.28,
-      z,
-    );
-
+  const eyeGeometry = new THREE.SphereGeometry(0.155, 24, 18);
+  const pupilGeometry = new THREE.SphereGeometry(0.077, 20, 16);
+  for (const side of [-1, 1]) {
+    const eye = new THREE.Mesh(eyeGeometry, whiteMaterial);
+    eye.position.set(1.03, 0.23, side * 0.43);
     group.add(eye);
-
-    const pupil =
-      new THREE.Mesh(
-        pupilGeometry,
-        pupilMaterial,
-      );
-
-    pupil.position.set(
-      1.18,
-      0.3,
-      z > 0
-        ? z + 0.12
-        : z - 0.12,
-    );
-
+    const pupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+    pupil.position.set(1.095, 0.24, side * 0.55);
     group.add(pupil);
-  };
+  }
 
-  createEye(0.58);
-  createEye(-0.58);
+  // One small mouth across the front of the snout, rather than
+  // separate smiles on the two cheeks.
+  // Find the deformed body's front surface so the line follows it.
+  const getSnoutX = (y: number, z: number) => {
+    let low = 0;
+    let high = 1;
 
-  /**
-   * Slight default angle so the
-   * creator preview feels 3D.
-   */
-  group.rotation.y =
-    -0.18;
+    for (let i = 0; i < 24; i += 1) {
+      const nx = (low + high) / 2;
+      const front = THREE.MathUtils.smoothstep(nx, 0.15, 1);
+      const roundness = 1 - front * 0.07;
+      const ry = 0.89 * roundness;
+      const rz = 0.72 * roundness;
+      const radius = nx * nx + (y / ry) ** 2 + (z / rz) ** 2;
 
-  /**
-   * Customization
-   */
-  const setBodyColor = (
-    color: string,
-  ) => {
-    bodyMaterial.color.set(
-      color,
-    );
-
-    bodyMaterial.emissive.set(
-      color,
-    );
-  };
-
-  const setFinColor = (
-    color: string,
-  ) => {
-    finMaterial.color.set(
-      color,
-    );
-
-    finMaterial.emissive.set(
-      color,
-    );
-  };
-
-  /**
-   * Restore a saved paint image.
-   *
-   * paintImage is a PNG data URL created
-   * from paintCanvas.toDataURL().
-   */
-  const setPaintImage = (
-    image?: string,
-  ) => {
-    /**
-     * Invalidate any image load that may
-     * already be in progress.
-     */
-    const loadVersion =
-      ++paintLoadVersion;
-
-    paintContext.clearRect(
-      0,
-      0,
-      paintCanvas.width,
-      paintCanvas.height,
-    );
-
-    /**
-     * No saved painting means the
-     * transparent layer stays empty.
-     */
-    if (!image) {
-      paintTexture.needsUpdate =
-        true;
-
-      return;
+      if (radius > 1) high = nx;
+      else low = nx;
     }
 
-    const source =
-      new Image();
+    return ((low + high) / 2) * 1.58 + 0.012;
+  };
 
+  const mouthPoints = [
+    { y: -0.24, z: -0.105 },
+    { y: -0.255, z: 0 },
+    { y: -0.24, z: 0.105 },
+  ].map(({ y, z }) => new THREE.Vector3(getSnoutX(y, z), y, z));
+
+  const mouthCurve = new THREE.QuadraticBezierCurve3(
+    mouthPoints[0],
+    mouthPoints[1],
+    mouthPoints[2],
+  );
+  const mouthGeometry = new THREE.TubeGeometry(mouthCurve, 20, 0.009, 6, false);
+  const mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+  mouth.name = 'fish-mouth';
+  group.add(mouth);
+
+  group.rotation.y = -0.18;
+
+  const setBodyColor = (color: string) => {
+    bodyMaterial.color.set(color);
+    bodyMaterial.emissive.set(color);
+  };
+  const setFinColor = (color: string) => {
+    finMaterial.color.set(color);
+    finMaterial.emissive.set(color);
+  };
+  const setPaintImage = (image?: string) => {
+    const loadVersion = ++paintLoadVersion;
+    paintContext.clearRect(0, 0, paintCanvas.width, paintCanvas.height);
+    paintTexture.needsUpdate = true;
+    if (!image) return;
+    const source = new Image();
     source.onload = () => {
-      /**
-       * Ignore stale loads.
-       *
-       * This can happen if another paint
-       * image is set or the model is
-       * destroyed before loading finishes.
-       */
-      if (
-        disposed ||
-        loadVersion !==
-        paintLoadVersion
-      ) {
-        return;
-      }
-
-      paintContext.clearRect(
-        0,
-        0,
-        paintCanvas.width,
-        paintCanvas.height,
-      );
-
-      paintContext.drawImage(
-        source,
-        0,
-        0,
-        paintCanvas.width,
-        paintCanvas.height,
-      );
-
-      paintTexture.needsUpdate =
-        true;
+      if (disposed || loadVersion !== paintLoadVersion) return;
+      paintContext.clearRect(0, 0, paintCanvas.width, paintCanvas.height);
+      paintContext.drawImage(source, 0, 0, paintCanvas.width, paintCanvas.height);
+      paintTexture.needsUpdate = true;
     };
-
     source.onerror = () => {
-      if (
-        disposed ||
-        loadVersion !==
-        paintLoadVersion
-      ) {
-        return;
+      if (!disposed && loadVersion === paintLoadVersion) {
+        console.error('Failed to load fish paint image.');
       }
-
-      console.error(
-        'Failed to load fish paint image.',
-      );
     };
-
     source.src = image;
   };
 
-  /**
-   * Cleanup
-   */
   const dispose = () => {
+    if (disposed) return;
     disposed = true;
-
-    /**
-     * Invalidate any pending paint image
-     * load.
-     */
     paintLoadVersion += 1;
-
-    bodyGeometry.dispose();
-    paintGeometry.dispose();
-
-    tailGeometry.dispose();
-    dorsalGeometry.dispose();
-
-    leftFinGeometry.dispose();
-    rightFinGeometry.dispose();
-
-    eyeGeometry.dispose();
-    pupilGeometry.dispose();
-
+    const geometries = new Set<THREE.BufferGeometry>();
+    group.traverse((object) => {
+      if (object instanceof THREE.Mesh) geometries.add(object.geometry);
+    });
+    geometries.forEach((geometry) => geometry.dispose());
     paintTexture.dispose();
-
     bodyMaterial.dispose();
     paintMaterial.dispose();
-
     finMaterial.dispose();
     whiteMaterial.dispose();
     pupilMaterial.dispose();
+    mouthMaterial.dispose();
   };
 
   return {
-    group,
-    body,
-
-    paintCanvas,
-    paintTexture,
-
-    tail,
-    leftFin,
-    rightFin,
-
-    setBodyColor,
-    setFinColor,
-    setPaintImage,
-
-    dispose,
+    group, body, paintCanvas, paintTexture,
+    tail, leftFin, rightFin,
+    setBodyColor, setFinColor, setPaintImage, dispose,
   };
 }
