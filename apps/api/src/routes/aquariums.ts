@@ -4,6 +4,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 
 import { prisma } from '@aquarium/database';
 import { getAuthenticatedUser } from '../lib/get-authenticated-user.js';
+import { ensureDefaultAquarium } from '../services/aquarium.service.js';
 
 import {
   aquariumIdParamsSchema,
@@ -15,6 +16,7 @@ export async function aquariumRoutes(app: FastifyInstance) {
   const api = app.withTypeProvider<ZodTypeProvider>();
 
   // List aquariums belonging to the signed-in parent.
+  // Automatically create a default aquarium if none exists.
   api.get('/aquariums', async (request, reply) => {
     const user = await getAuthenticatedUser(request);
 
@@ -23,6 +25,8 @@ export async function aquariumRoutes(app: FastifyInstance) {
         error: 'Unauthorized',
       });
     }
+
+    await ensureDefaultAquarium(user.id);
 
     return prisma.aquarium.findMany({
       where: {
@@ -74,7 +78,7 @@ export async function aquariumRoutes(app: FastifyInstance) {
     },
   );
 
-  // Create an aquarium for the signed-in parent.
+  // Create an additional aquarium for the signed-in parent.
   api.post(
     '/aquariums',
     {
