@@ -17,6 +17,22 @@ build/
 .env
 .env.local
 .env.*.local
+!.env.example
+
+/storage/
+cookies.txt
+
+# Generated Prisma client
+packages/database/src/generated/
+
+# Temporary Better Auth schema
+apps/api/auth-schema.prisma
+
+# Generated tooling directories
+packages/database/.agents/
+packages/database/.claude/
+packages/database/.windsurf/
+packages/database/skills-lock.json
 
 # Logs
 *.log
