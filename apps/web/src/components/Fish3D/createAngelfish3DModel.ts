@@ -533,9 +533,9 @@ export function createAngelfish3DModel(): Fish3DModel {
     ],
     [
       new THREE.Vector3(-1.18, 0.76, 0),
-      new THREE.Vector3(-1.42, 1.46, 0),
-      new THREE.Vector3(-1.3, 2.23, 0),
-      new THREE.Vector3(-0.43, 1.58, 0),
+      new THREE.Vector3(-1.34, 1.52, 0),
+      new THREE.Vector3(-1.16, 2.16, 0),
+      new THREE.Vector3(-0.34, 1.72, 0),
       new THREE.Vector3(0.67, 0.62, 0),
     ],
   );
@@ -567,9 +567,9 @@ export function createAngelfish3DModel(): Fish3DModel {
     ],
     [
       new THREE.Vector3(-1.18, -0.76, 0),
-      new THREE.Vector3(-1.42, -1.42, 0),
-      new THREE.Vector3(-1.28, -2.16, 0),
-      new THREE.Vector3(-0.43, -1.56, 0),
+      new THREE.Vector3(-1.34, -1.50, 0),
+      new THREE.Vector3(-1.14, -2.09, 0),
+      new THREE.Vector3(-0.34, -1.68, 0),
       new THREE.Vector3(0.68, -0.6, 0),
     ],
   );
@@ -600,11 +600,11 @@ export function createAngelfish3DModel(): Fish3DModel {
       new THREE.Vector3(-1.08, -0.08, 0),
     ],
     [
-      new THREE.Vector3(-1.89, 0.52, 0),
-      new THREE.Vector3(-1.83, 0.28, 0),
-      new THREE.Vector3(-1.77, 0, 0),
-      new THREE.Vector3(-1.83, -0.28, 0),
-      new THREE.Vector3(-1.89, -0.52, 0),
+      new THREE.Vector3(-1.84, 0.46, 0),
+      new THREE.Vector3(-1.82, 0.27, 0),
+      new THREE.Vector3(-1.79, 0, 0),
+      new THREE.Vector3(-1.82, -0.27, 0),
+      new THREE.Vector3(-1.84, -0.46, 0),
     ],
     24,
     8,
@@ -630,68 +630,29 @@ export function createAngelfish3DModel(): Fish3DModel {
   // your existing animation can move them.
   // --------------------------------------------------
 
+  // Broad, softly swept pectoral fins. Their roots sit on the
+  // outside of the body, so they remain visible in side view.
   const sideFinShape = new THREE.Shape();
-
-  sideFinShape.moveTo(0, 0);
-  sideFinShape.bezierCurveTo(
-    -0.12,
-    -0.08,
-    -0.19,
-    -0.23,
-    -0.29,
-    -0.38,
-  );
-
-  sideFinShape.bezierCurveTo(
-    -0.05,
-    -0.29,
-    0.09,
-    -0.12,
-    0,
-    0,
-  );
+  sideFinShape.moveTo(0.06, 0.04);
+  sideFinShape.bezierCurveTo(-0.14, 0.08, -0.35, -0.04, -0.53, -0.22);
+  sideFinShape.bezierCurveTo(-0.60, -0.32, -0.53, -0.39, -0.40, -0.37);
+  sideFinShape.bezierCurveTo(-0.20, -0.33, -0.03, -0.12, 0.06, 0.04);
 
   const leftFinGeometry = trackGeometry(
-    new THREE.ShapeGeometry(
-      sideFinShape,
-      24,
-    ),
+    new THREE.ShapeGeometry(sideFinShape, 24),
   );
+  const rightFinGeometry = trackGeometry(leftFinGeometry.clone());
 
-  const rightFinGeometry = trackGeometry(
-    leftFinGeometry.clone(),
-  );
-
-  const leftFin = new THREE.Mesh(
-    leftFinGeometry,
-    finMaterial,
-  );
-
-  leftFin.position.set(
-    -0.18,
-    -0.18,
-    0.345,
-  );
-
-  leftFin.rotation.y = -0.28;
-  leftFin.rotation.z = -0.12;
-
+  const leftFin = new THREE.Mesh(leftFinGeometry, finMaterial);
+  leftFin.position.set(0.30, -0.16, 0.37);
+  leftFin.rotation.y = -0.16;
+  leftFin.rotation.z = -0.08;
   group.add(leftFin);
 
-  const rightFin = new THREE.Mesh(
-    rightFinGeometry,
-    finMaterial,
-  );
-
-  rightFin.position.set(
-    -0.18,
-    -0.18,
-    -0.345,
-  );
-
-  rightFin.rotation.y = Math.PI + 0.28;
-  rightFin.rotation.z = -0.12;
-
+  const rightFin = new THREE.Mesh(rightFinGeometry, finMaterial);
+  rightFin.position.set(0.30, -0.16, -0.37);
+  rightFin.rotation.y = 0.16;
+  rightFin.rotation.z = -0.08;
   group.add(rightFin);
 
   // --------------------------------------------------
@@ -966,3 +927,4 @@ export function createAngelfish3DModel(): Fish3DModel {
     dispose,
   };
 }
+
