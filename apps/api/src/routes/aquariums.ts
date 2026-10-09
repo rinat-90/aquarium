@@ -183,4 +183,88 @@ export async function aquariumRoutes(app: FastifyInstance) {
       return reply.code(204).send();
     },
   );
+
+
+  // Set the signed-in user's default aquarium.
+  api.patch(
+    '/aquariums/:id/default',
+    {
+      schema: {
+        params: aquariumIdParamsSchema,
+      },
+    },
+    async (request, reply) => {
+      const user = await getAuthenticatedUser(request);
+
+      if (!user) {
+        return reply.code(401).send({
+          error: 'Unauthorized',
+        });
+      }
+
+      const { id } = request.params;
+
+      try {
+        const aquarium = await prisma.$transaction(async (tx) => {
+          // Serialize default changes for this user.
+          await tx.$queryRaw`
+            SELECT id
+            FROM "User"
+            WHERE id = ${user.id}
+            FOR UPDATE
+          `;
+
+          const target = await tx.aquarium.findFirst({
+            where: {
+              id,
+              ownerId: user.id,
+            },
+          });
+
+          if (!target) {
+            return null;
+          }
+
+          // No changes needed if this is already the default.
+          if (target.isDefault) {
+            return target;
+          }
+
+          // Clear the previous default first to satisfy
+          // the partial unique index.
+          await tx.aquarium.updateMany({
+            where: {
+              ownerId: user.id,
+              isDefault: true,
+            },
+            data: {
+              isDefault: false,
+            },
+          });
+
+          return tx.aquarium.update({
+            where: { id: target.id },
+            data: {
+              isDefault: true,
+            },
+          });
+        });
+
+        if (!aquarium) {
+          return reply.code(404).send({
+            error: 'Aquarium not found',
+          });
+        }
+
+        return aquarium;
+      } catch (error) {
+        request.log.error(error, 'Failed to set default aquarium');
+
+        return reply.code(500).send({
+          error: 'Failed to set default aquarium',
+        });
+      }
+    },
+  );
+
 }

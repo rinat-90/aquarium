@@ -419,6 +419,10 @@ function App() {
             await refreshAquariums();
             console.log('[Aquarium] Refreshed after delete');
           }}
+          onSetDefault={async (id) => {
+            await aquariumApi.setDefault(id);
+            await refreshAquariums(id);
+          }}
         />
 
         <button

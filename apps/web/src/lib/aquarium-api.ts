@@ -80,6 +80,14 @@ export const aquariumApi = {
         method: 'DELETE',
       },
     ),
+
+  setDefault: (id: string) =>
+    apiFetch<ApiAquarium>(
+      `/aquariums/${encodeURIComponent(id)}/default`,
+      {
+        method: 'PATCH',
+      },
+    ),
 };
 
 // Fish API

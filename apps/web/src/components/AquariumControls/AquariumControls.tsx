@@ -1,9 +1,12 @@
 
 import { useState, type FormEvent } from 'react';
+
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { Select } from '../ui/Select';
+
 import type { ApiAquarium } from '../../lib/aquarium-api';
+
 import './AquariumControls.css';
 
 type AquariumControlsProps = {
@@ -14,6 +17,7 @@ type AquariumControlsProps = {
   onCreate: (name: string) => Promise<void>;
   onRename: (id: string, name: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onSetDefault: (id: string) => Promise<void>;
 };
 
 type Dialog = 'create' | 'rename' | 'delete' | null;
@@ -26,6 +30,7 @@ export function AquariumControls({
                                    onCreate,
                                    onRename,
                                    onDelete,
+                                   onSetDefault,
                                  }: AquariumControlsProps) {
   const [dialog, setDialog] = useState<Dialog>(null);
   const [name, setName] = useState('');
@@ -33,6 +38,8 @@ export function AquariumControls({
   const [error, setError] = useState<string | null>(null);
 
   function openDialog(next: Dialog) {
+    if (saving) return;
+
     setName(next === 'rename' ? aquarium?.name ?? '' : '');
     setError(null);
     setDialog(next);
@@ -40,12 +47,13 @@ export function AquariumControls({
 
   function closeDialog() {
     if (saving) return;
+
     setDialog(null);
     setName('');
     setError(null);
   }
 
-  async function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (saving || disabled) return;
@@ -85,6 +93,7 @@ export function AquariumControls({
 
     try {
       await onDelete(aquarium.id);
+
       setDialog(null);
       setName('');
     } catch (err) {
@@ -92,6 +101,30 @@ export function AquariumControls({
         err instanceof Error
           ? err.message
           : 'Failed to delete aquarium',
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSetDefault() {
+    if (!aquarium || aquarium.isDefault || saving || disabled) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      await onSetDefault(aquarium.id);
+
+      setDialog(null);
+      setName('');
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to set default aquarium',
       );
     } finally {
       setSaving(false);
@@ -140,11 +173,12 @@ export function AquariumControls({
             aria-hidden="true"
           >
             <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" />
-            <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.88 1.88-.06-.06A1.7 1.7 0 0 0 16 18.4a1.7 1.7 0 0 0-1 .58 1.7 1.7 0 0 0-.4 1.1V21h-2.6v-.92A1.7 1.7 0 0 0 10.6 18.4a1.7 1.7 0 0 0-1.88.34l-.06.06-1.88-1.88.06-.06A1.7 1.7 0 0 0 6.4 15a1.7 1.7 0 0 0-1.48-1H4v-2.6h.92A1.7 1.7 0 0 0 6.4 10a1.7 1.7 0 0 0-.34-1.88L6 8.06l1.88-1.88.06.06A1.7 1.7 0 0 0 10 6.4a1.7 1.7 0 0 0 1-1.48V4h2.6v.92A1.7 1.7 0 0 0 15 6.4a1.7 1.7 0 0 0 1.88-.34l.06-.06 1.88 1.88-.06.06A1.7 1.7 0 0 0 18.4 10a1.7 1.7 0 0 0 1.48 1H21v2.6h-.92A1.7 1.7 0 0 0 19.4 15Z" />
+            <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.88 1.88-.06-.06A1.7 1.7 0 0 0 16 18.4a1.7 1.7 0 0 0-1 .58 1.7 1.7 0 0 0-.4 1.1V21h-2.6v-.92A1.7 1.7 0 0 0 10.6 18.4a1.7 1.7 0 0 0-1.88.34l-.06-.06-1.88-1.88.06-.06A1.7 1.7 0 0 0 10 6.4a1.7 1.7 0 0 0 1-1.48V4h2.6v.92A1.7 1.7 0 0 0 15 6.4a1.7 1.7 0 0 0 1.88-.34l.06-.06 1.88 1.88-.06.06A1.7 1.7 0 0 0 18.4 10a1.7 1.7 0 0 0 1.48 1H21v2.6h-.92A1.7 1.7 0 0 0 19.4 15Z" />
           </svg>
         </button>
       </div>
 
+      {/* Create Aquarium */}
       <Modal
         open={dialog === 'create'}
         title="Create an aquarium"
@@ -152,9 +186,14 @@ export function AquariumControls({
         onClose={closeDialog}
         footer={
           <>
-            <Button variant="ghost" disabled={saving} onClick={closeDialog}>
+            <Button
+              variant="ghost"
+              disabled={saving}
+              onClick={closeDialog}
+            >
               Cancel
             </Button>
+
             <Button
               type="submit"
               form="aquarium-create-form"
@@ -178,24 +217,39 @@ export function AquariumControls({
             placeholder="e.g. Coral Paradise"
             required
           />
-          {error && <p className="aquarium-form-error">{error}</p>}
+
+          {error && (
+            <p className="aquarium-form-error" role="alert">
+              {error}
+            </p>
+          )}
         </form>
       </Modal>
 
+      {/* Aquarium Settings */}
       <Modal
         open={dialog === 'rename'}
-        title="Rename aquarium"
-        description="Choose a new name for your aquarium."
+        title="Aquarium Settings"
+        description={`Manage ${aquarium?.name ?? 'your aquarium'}.`}
         onClose={closeDialog}
         footer={
           <>
-            <Button variant="ghost" disabled={saving} onClick={closeDialog}>
+            <Button
+              variant="ghost"
+              disabled={saving}
+              onClick={closeDialog}
+            >
               Cancel
             </Button>
+
             <Button
               type="submit"
               form="aquarium-rename-form"
-              disabled={saving || !name.trim()}
+              disabled={
+                saving ||
+                !name.trim() ||
+                name.trim() === aquarium?.name
+              }
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </Button>
@@ -206,7 +260,15 @@ export function AquariumControls({
           id="aquarium-rename-form"
           onSubmit={(event) => void handleSubmit(event)}
         >
+          <label
+            className="aquarium-settings-label"
+            htmlFor="aquarium-rename-input"
+          >
+            Aquarium Name
+          </label>
+
           <input
+            id="aquarium-rename-input"
             className="ui-input"
             autoFocus
             value={name}
@@ -214,19 +276,51 @@ export function AquariumControls({
             onChange={(event) => setName(event.target.value)}
             required
           />
-          {error && <p className="aquarium-form-error">{error}</p>}
         </form>
 
+        {/* Default Aquarium */}
+        <div className="aquarium-default-section">
+          <div className="aquarium-default-info">
+            <strong>Default Aquarium</strong>
+
+            <p>
+              This aquarium will open automatically when you return.
+            </p>
+          </div>
+
+          {aquarium?.isDefault ? (
+            <span className="aquarium-default-badge">
+              ★ Current Default
+            </span>
+          ) : (
+            <Button
+              variant="secondary"
+              disabled={saving || disabled}
+              onClick={() => void handleSetDefault()}
+            >
+              {saving ? 'Saving...' : 'Set as Default'}
+            </Button>
+          )}
+        </div>
+
+        {error && (
+          <p className="aquarium-form-error" role="alert">
+            {error}
+          </p>
+        )}
+
+        {/* Delete Aquarium */}
         <button
           type="button"
           className="aquarium-delete-link"
-          disabled={saving}
+          disabled={saving || disabled}
           onClick={() => openDialog('delete')}
         >
           Delete this aquarium
         </button>
       </Modal>
 
+      {/* Delete Confirmation */}
       <Modal
         open={dialog === 'delete'}
         title="Delete aquarium?"
@@ -234,12 +328,17 @@ export function AquariumControls({
         onClose={closeDialog}
         footer={
           <>
-            <Button variant="ghost" disabled={saving} onClick={closeDialog}>
+            <Button
+              variant="ghost"
+              disabled={saving}
+              onClick={closeDialog}
+            >
               Cancel
             </Button>
+
             <Button
               variant="danger"
-              disabled={saving}
+              disabled={saving || disabled}
               onClick={() => void handleDelete()}
             >
               {saving ? 'Deleting...' : 'Delete Aquarium'}
@@ -251,7 +350,12 @@ export function AquariumControls({
           This aquarium will be permanently removed.
           Its fish will become unassigned rather than being deleted.
         </p>
-        {error && <p className="aquarium-form-error">{error}</p>}
+
+        {error && (
+          <p className="aquarium-form-error" role="alert">
+            {error}
+          </p>
+        )}
       </Modal>
     </>
   );
