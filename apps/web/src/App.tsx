@@ -1,5 +1,6 @@
 import {
   useState,
+  useEffect
 } from 'react';
 import { useNavigate } from 'react-router';
 import { authClient } from './lib/auth-client';
@@ -20,6 +21,8 @@ import {
 import {
   ThreeAquariumView,
 } from './components/Aquarium3D/ThreeAquariumView';
+
+import { useAquarium } from './hooks/useAquarium';
 
 const AQUARIUM_CAPACITY = 8;
 
@@ -222,6 +225,14 @@ function App() {
 
     setSelectedFishId(null);
   };
+
+  const { aquarium } = useAquarium();
+
+  useEffect(() => {
+    if (aquarium) {
+      console.log('Loaded aquarium:', aquarium);
+    }
+  }, [aquarium]);
 
   return (
     <div className="aquarium-page">
