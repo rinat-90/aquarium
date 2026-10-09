@@ -16,7 +16,10 @@ type AquariumControlsProps = {
   onSelect: (id: string) => void;
   onCreate: (name: string) => Promise<void>;
   onRename: (id: string, name: string) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
+  onDelete: (
+    id: string,
+    destinationAquariumId?: string,
+  ) => Promise<void>;
   onSetDefault: (id: string) => Promise<void>;
 };
 
@@ -36,12 +39,48 @@ export function AquariumControls({
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteDestinationId, setDeleteDestinationId] = useState('');
+
+  const otherAquariums = aquariums.filter(
+    (item) => item.id !== aquarium?.id,
+  );
+
+  const fishCount = aquarium?.fish.length ?? 0;
+  const hasFish = fishCount > 0;
+
+  // Always resolve a valid destination aquarium.
+  // If the selected ID is empty or invalid, use the first
+  // available aquarium.
+  const destinationAquariumId =
+    otherAquariums.some(
+      (item) => item.id === deleteDestinationId,
+    )
+      ? deleteDestinationId
+      : otherAquariums[0]?.id ?? '';
+
+  const canDelete =
+    !!aquarium &&
+    !saving &&
+    !disabled &&
+    otherAquariums.length > 0 &&
+    (!hasFish || !!destinationAquariumId);
 
   function openDialog(next: Dialog) {
     if (saving) return;
 
     setName(next === 'rename' ? aquarium?.name ?? '' : '');
     setError(null);
+
+    if (next === 'delete') {
+      const destination = aquariums.find(
+        (item) => item.id !== aquarium?.id,
+      );
+
+      setDeleteDestinationId(destination?.id ?? '');
+    } else {
+      setDeleteDestinationId('');
+    }
+
     setDialog(next);
   }
 
@@ -50,6 +89,7 @@ export function AquariumControls({
 
     setDialog(null);
     setName('');
+    setDeleteDestinationId('');
     setError(null);
   }
 
@@ -88,14 +128,28 @@ export function AquariumControls({
   async function handleDelete() {
     if (!aquarium || saving || disabled) return;
 
+    if (otherAquariums.length === 0) {
+      setError('You cannot delete your last aquarium.');
+      return;
+    }
+
+    if (hasFish && !destinationAquariumId) {
+      setError('Please choose where to move your fish.');
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
     try {
-      await onDelete(aquarium.id);
+      await onDelete(
+        aquarium.id,
+        hasFish ? destinationAquariumId : undefined,
+      );
 
       setDialog(null);
       setName('');
+      setDeleteDestinationId('');
     } catch (err) {
       setError(
         err instanceof Error
@@ -133,6 +187,7 @@ export function AquariumControls({
 
   return (
     <>
+      {/* Main Aquarium Controls */}
       <div className="aquarium-controls">
         <Select
           ariaLabel="Select aquarium"
@@ -178,7 +233,7 @@ export function AquariumControls({
         </button>
       </div>
 
-      {/* Create Aquarium */}
+      {/* Create Aquarium Modal */}
       <Modal
         open={dialog === 'create'}
         title="Create an aquarium"
@@ -226,7 +281,7 @@ export function AquariumControls({
         </form>
       </Modal>
 
-      {/* Aquarium Settings */}
+      {/* Aquarium Settings Modal */}
       <Modal
         open={dialog === 'rename'}
         title="Aquarium Settings"
@@ -309,7 +364,6 @@ export function AquariumControls({
           </p>
         )}
 
-        {/* Delete Aquarium */}
         <button
           type="button"
           className="aquarium-delete-link"
@@ -320,11 +374,11 @@ export function AquariumControls({
         </button>
       </Modal>
 
-      {/* Delete Confirmation */}
+      {/* Delete Aquarium Modal */}
       <Modal
         open={dialog === 'delete'}
-        title="Delete aquarium?"
-        description={`Are you sure you want to delete "${aquarium?.name ?? 'this aquarium'}"?`}
+        title="Delete Aquarium?"
+        description={`You're about to delete "${aquarium?.name ?? 'this aquarium'}".`}
         onClose={closeDialog}
         footer={
           <>
@@ -338,18 +392,64 @@ export function AquariumControls({
 
             <Button
               variant="danger"
-              disabled={saving || disabled}
+              disabled={!canDelete}
               onClick={() => void handleDelete()}
             >
-              {saving ? 'Deleting...' : 'Delete Aquarium'}
+              {saving
+                ? 'Deleting...'
+                : hasFish
+                  ? 'Move & Delete'
+                  : 'Delete Aquarium'}
             </Button>
           </>
         }
       >
-        <p className="aquarium-delete-warning">
-          This aquarium will be permanently removed.
-          Its fish will become unassigned rather than being deleted.
-        </p>
+        {otherAquariums.length === 0 ? (
+          <p className="aquarium-delete-warning">
+            You cannot delete your last aquarium.
+            Create another aquarium first.
+          </p>
+        ) : hasFish ? (
+          <div className="aquarium-delete-transfer">
+            <div className="aquarium-delete-fish-count">
+              🐠 {fishCount} fish in this aquarium
+            </div>
+
+            <p className="aquarium-delete-description">
+              Your fish will be moved safely to another
+              aquarium before this one is deleted.
+            </p>
+
+            <label className="aquarium-delete-label">
+              Move fish to
+            </label>
+
+            <Select
+              ariaLabel="Destination aquarium for fish"
+              value={destinationAquariumId}
+              options={otherAquariums.map((item) => ({
+                value: item.id,
+                label: item.name,
+              }))}
+              onChange={(value) => {
+                setDeleteDestinationId(value);
+                setError(null);
+              }}
+              disabled={saving || disabled}
+            />
+          </div>
+        ) : (
+          <p className="aquarium-delete-warning">
+            This aquarium is empty and can be safely deleted.
+          </p>
+        )}
+
+        {aquarium?.isDefault && otherAquariums.length > 0 && (
+          <p className="aquarium-delete-default-note">
+            ★ This is your default aquarium. Another aquarium
+            will automatically become the default.
+          </p>
+        )}
 
         {error && (
           <p className="aquarium-form-error" role="alert">

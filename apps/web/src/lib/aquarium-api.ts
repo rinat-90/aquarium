@@ -73,13 +73,28 @@ export const aquariumApi = {
       },
     ),
 
-  remove: (id: string) =>
-    apiFetch<void>(
+  // Safely delete an aquarium.
+  // If it contains fish, provide a destination aquarium.
+  remove: (id: string, destinationAquariumId?: string) => {
+    console.log('DELETE request:', {
+      id,
+      destinationAquariumId,
+    });
+
+    return apiFetch<void>(
       `/aquariums/${encodeURIComponent(id)}`,
       {
         method: 'DELETE',
+        ...(destinationAquariumId
+          ? {
+            body: JSON.stringify({
+              destinationAquariumId,
+            }),
+          }
+          : {}),
       },
-    ),
+    );
+  },
 
   setDefault: (id: string) =>
     apiFetch<ApiAquarium>(
@@ -115,6 +130,7 @@ export const fishApi = {
       },
     ),
 
+  // Delete an individual fish, not an aquarium.
   remove: (id: string) =>
     apiFetch<void>(
       `/fish/${encodeURIComponent(id)}`,

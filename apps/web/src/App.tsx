@@ -410,14 +410,14 @@ function App() {
             await refreshAquariums(id);
             console.log('[Aquarium] Refreshed after rename');
           }}
-          onDelete={async (id) => {
-            console.log('[Aquarium] Deleting:', id);
+          onDelete={async (id, destinationAquariumId) => {
+            console.log('Deleting aquarium:', {
+              id,
+              destinationAquariumId,
+            });
 
-            await aquariumApi.remove(id);
-            console.log('[Aquarium] Deleted successfully');
-
+            await aquariumApi.remove(id, destinationAquariumId);
             await refreshAquariums();
-            console.log('[Aquarium] Refreshed after delete');
           }}
           onSetDefault={async (id) => {
             await aquariumApi.setDefault(id);
