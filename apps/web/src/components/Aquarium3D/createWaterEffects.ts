@@ -17,11 +17,14 @@ export type WaterEffects = {
   destroy: () => void;
 };
 
+export type WaterQuality = 'low' | 'high';
+
 export function createWaterEffects(
   scene: THREE.Scene,
   _tankWidth: number,
   _tankHeight: number,
   _tankDepth: number,
+  quality: WaterQuality = 'high',
 ): WaterEffects {
   /*
    * SCREEN-SPACE WATER OVERLAY
@@ -31,6 +34,59 @@ export function createWaterEffects(
    * to clip space, guaranteeing that the effect occupies
    * the top of the rendered canvas.
    */
+  // Cheaper surface pattern for devices with limited GPU capacity.
+  // The original high-quality Worley shader remains unchanged below.
+  const lowQualityFragmentShader = `
+varying vec2 vUv;
+
+uniform float uTime;
+uniform float uAspect;
+
+void main() {
+  float fromTop = 1.0 - vUv.y;
+  float surfaceMask =
+    1.0 - smoothstep(0.004, 0.158, fromTop);
+
+  if (surfaceMask <= 0.001) {
+    discard;
+  }
+
+  float depth = clamp(fromTop / 0.158, 0.0, 1.0);
+  vec2 uv = vec2((vUv.x - 0.5) * uAspect, depth);
+  float t = uTime * 0.16;
+
+  float waveA = sin(
+    uv.x * 24.0 +
+    sin(uv.y * 9.0 + t) * 1.8 +
+    t * 0.7
+  );
+
+  float waveB = sin(
+    uv.x * 15.0 - uv.y * 13.0 - t * 0.5
+  );
+
+  float highlight = smoothstep(
+    0.55, 0.95, waveA * waveB
+  );
+
+  float centerGlow = exp(
+    -pow((vUv.x - 0.52) / 0.30, 2.0)
+  );
+
+  float alpha = surfaceMask * (
+    0.07 + highlight * 0.28 + centerGlow * 0.08
+  );
+
+  vec3 color = mix(
+    vec3(0.00, 0.48, 0.92),
+    vec3(0.20, 0.88, 1.00),
+    clamp(highlight + centerGlow * 0.2, 0.0, 1.0)
+  );
+
+  gl_FragColor = vec4(color, clamp(alpha, 0.0, 0.88));
+}
+`;
+
   const geometry =
     new THREE.PlaneGeometry(
       2,
@@ -81,7 +137,9 @@ void main() {
 }
 `,
 
-      fragmentShader: `
+      fragmentShader: quality === 'low'
+        ? lowQualityFragmentShader
+        : `
 varying vec2 vUv;
 
 uniform float uTime;
