@@ -4,7 +4,7 @@ import type {
   Vector3,
 } from '@aquarium/types';
 
-export type FishSpecies = 'basic' | 'angelfish';
+export type FishSpecies = 'basic' | 'angelfish' | 'guppy';
 
 export type AquariumOptions = {
   width: number;
@@ -80,7 +80,7 @@ export class Aquarium {
   createFish(
     id: string,
     size = 1,
-    _species: FishSpecies = 'basic',
+    species: FishSpecies = 'basic',
   ): Fish {
     const speed =
       0.7 +
@@ -139,6 +139,7 @@ export class Aquarium {
     };
 
     this.addFish(fish);
+    this.species.set(id, species);
 
     return fish;
   }
@@ -1356,6 +1357,10 @@ export class Aquarium {
   private updateActivity(
     fish: Fish,
   ): boolean {
+    const species = this.species.get(fish.id);
+    const isAngelfish = species === 'angelfish';
+    const isGuppy = species === 'guppy';
+
     let activity =
       this.activities.get(
         fish.id,
@@ -1367,7 +1372,7 @@ export class Aquarium {
 
         nextIdleAt:
           this.elapsedTime +
-          (this.species.get(fish.id) === 'angelfish' ? 6 : 10) +
+          (isAngelfish ? 6 : isGuppy ? 5 : 10) +
           Math.random() * 10,
       };
 
@@ -1399,8 +1404,8 @@ export class Aquarium {
       activity.nextIdleAt
     ) {
       const idleDuration =
-        (this.species.get(fish.id) === 'angelfish' ? 2.5 : 1.2) +
-        Math.random() * 2.5;
+        (isAngelfish ? 2.5 : isGuppy ? 0.7 : 1.2) +
+        Math.random() * (isGuppy ? 1.2 : 2.5);
 
       activity.idleUntil =
         this.elapsedTime +
@@ -1408,7 +1413,7 @@ export class Aquarium {
 
       activity.nextIdleAt =
         activity.idleUntil +
-        (this.species.get(fish.id) === 'angelfish' ? 7 : 11) +
+        (isAngelfish ? 7 : isGuppy ? 5 : 11) +
         Math.random() * 10;
 
       return true;
@@ -1448,38 +1453,50 @@ export class Aquarium {
         seed + offset,
       );
 
-    const angelfish = this.species.get(fish.id) === 'angelfish';
+    const species = this.species.get(fish.id);
+    const angelfish = species === 'angelfish';
+    const guppy = species === 'guppy';
 
     const personality: FishPersonality = {
-      /*
-       * Relaxed cruiser -> energetic cruiser.
-       */
+      // Guppies cruise actively, but aren't constantly sprinting.
       cruiseSpeed:
-        (angelfish ? 0.68 : 0.9) + random(11) * (angelfish ? 0.18 : 0.3),
+        angelfish
+          ? 0.68 + random(11) * 0.18
+          : guppy
+            ? 1.02 + random(11) * 0.28
+            : 0.9 + random(11) * 0.3,
 
-      /*
-       * Wide lazy turns -> responsive turns.
-       */
+      // Guppies turn quickly and explore smaller areas.
       turnResponsiveness:
-        (angelfish ? 0.52 : 0.95) + random(23) * (angelfish ? 0.18 : 0.35),
+        angelfish
+          ? 0.52 + random(23) * 0.18
+          : guppy
+            ? 1.15 + random(23) * 0.35
+            : 0.95 + random(23) * 0.35,
 
-      /*
-       * How much the fish explores vertically.
-       */
+      // Moderate vertical exploration.
       verticalRange:
-        (angelfish ? 0.35 : 0.75) + random(37) * (angelfish ? 0.3 : 0.55),
+        angelfish
+          ? 0.35 + random(37) * 0.3
+          : guppy
+            ? 0.65 + random(37) * 0.35
+            : 0.75 + random(37) * 0.55,
 
-      /*
-       * How much the fish explores tank depth.
-       */
+      // Guppies explore foreground and background.
       depthRange:
-        (angelfish ? 0.5 : 0.75) + random(51) * (angelfish ? 0.35 : 0.55),
+        angelfish
+          ? 0.5 + random(51) * 0.35
+          : guppy
+            ? 0.85 + random(51) * 0.35
+            : 0.75 + random(51) * 0.55,
 
-      /*
-       * How strongly it speeds up for food.
-       */
+      // Slightly more excitement when food appears.
       foodExcitement:
-        (angelfish ? 1.35 : 1.2) + random(67) * 0.3,
+        angelfish
+          ? 1.35 + random(67) * 0.3
+          : guppy
+            ? 1.5 + random(67) * 0.3
+            : 1.2 + random(67) * 0.3,
     };
 
     this.personalities.set(

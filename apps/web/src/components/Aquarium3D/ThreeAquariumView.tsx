@@ -161,11 +161,20 @@ export function ThreeAquariumView({
      * Add the fish to this exact
      * simulation instance.
      */
-    const fish =
-      aquarium.createFish(
-        created.id,
-        created.size,
-      );
+    const species =
+      created.type === '3d'
+        ? created.model === 'angelfish'
+          ? 'angelfish'
+          : created.model === 'guppy'
+            ? 'guppy'
+            : 'basic'
+        : 'basic';
+
+    const fish = aquarium.createFish(
+      created.id,
+      created.size,
+      species,
+    );
 
     try {
       /*
