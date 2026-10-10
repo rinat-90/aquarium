@@ -599,7 +599,7 @@ export function ThreeAquariumView({
     const highPixelRatio = Math.min(window.devicePixelRatio || 1, 1.25);
     const lowPixelRatio = Math.min(
       window.devicePixelRatio || 1,
-      0.65,
+      0.45,
     );
 
     renderer.setPixelRatio(

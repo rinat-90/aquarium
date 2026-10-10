@@ -593,11 +593,8 @@ void main() {
     if (nextQuality === currentQuality) return;
 
     currentQuality = nextQuality;
-
     surface.material = nextQuality === 'low' ? lowMaterial : material;
-
-    // Temporarily disable water surface on low-end devices
-    surface.visible = nextQuality === 'high';
+    surface.visible = true;
   };
 
   const surface =
