@@ -958,6 +958,31 @@ export function ThreeAquariumView({
     const clock =
       new THREE.Clock();
 
+    // Development-only overlay: no React re-renders and no production DOM.
+    const fpsOverlay = import.meta.env.DEV || import.meta.env.PROD
+      ? document.createElement('div')
+      : null;
+
+    if (fpsOverlay) {
+      Object.assign(fpsOverlay.style, {
+        position: 'absolute',
+        bottom: '24px',
+        left: '16px',
+        zIndex: '100',
+        padding: '8px 10px',
+        borderRadius: '8px',
+        background: 'rgba(0, 18, 30, 0.78)',
+        color: '#d8faff',
+        font: '12px/1.6 monospace',
+        pointerEvents: 'none',
+        whiteSpace: 'pre',
+      });
+      fpsOverlay.textContent = 'FPS: --\nQuality: high\nPixel ratio: --';
+      container.appendChild(fpsOverlay);
+    }
+
+    let fpsFrames = 0;
+    let fpsElapsed = 0;
     let animationFrame = 0;
     let currentQuality = graphicsQuality.getQuality();
 
@@ -971,17 +996,28 @@ export function ThreeAquariumView({
           animate,
         );
 
-      const deltaTime =
-        Math.min(
-          clock.getDelta(),
-          0.05,
-        );
+      const rawDeltaTime = clock.getDelta();
+      const deltaTime = Math.min(rawDeltaTime, 0.05);
 
       const elapsed =
         clock.elapsedTime;
 
-      // Adapt water shader quality based on measured FPS.
-      const quality = graphicsQuality.update(deltaTime);
+      // Use the real frame interval for performance measurements.
+      const quality = graphicsQuality.update(rawDeltaTime);
+
+      if (fpsOverlay && rawDeltaTime > 0 && rawDeltaTime <= 0.25) {
+        fpsFrames += 1;
+        fpsElapsed += rawDeltaTime;
+
+        // Update the overlay once per second, not every frame.
+        if (fpsElapsed >= 1) {
+          const fps = Math.round(fpsFrames / fpsElapsed);
+          fpsOverlay.textContent =
+            `FPS: ${fps}\nQuality: ${quality}\nPixel ratio: ${renderer.getPixelRatio().toFixed(2)}`;
+          fpsFrames = 0;
+          fpsElapsed = 0;
+        }
+      }
 
       if (quality !== currentQuality) {
         currentQuality = quality;
@@ -1298,6 +1334,7 @@ export function ThreeAquariumView({
 
       renderer.dispose();
 
+      fpsOverlay?.remove();
       renderer.domElement.remove();
     };
   }, []);
