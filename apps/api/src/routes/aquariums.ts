@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { prisma } from '@aquarium/database';
 import { getAuthenticatedUser } from '../lib/get-authenticated-user.js';
+import { notifyAquariumChanged } from '../realtime/socket.js';
 import { ensureDefaultAquarium } from '../services/aquarium.service.js';
 
 import {
@@ -112,6 +113,8 @@ export async function aquariumRoutes(app: FastifyInstance) {
         },
       });
 
+      // No clients are subscribed to a newly created aquarium yet.
+      // The aquarium list can be refreshed separately when needed.
       return reply.code(201).send(aquarium);
     },
   );
@@ -150,12 +153,16 @@ export async function aquariumRoutes(app: FastifyInstance) {
         });
       }
 
-      return prisma.aquarium.findFirst({
+      const updatedAquarium = await prisma.aquarium.findFirst({
         where: {
           id: request.params.id,
           ownerId: user.id,
         },
       });
+
+      notifyAquariumChanged(request.params.id);
+
+      return updatedAquarium;
     },
   );
 
@@ -194,10 +201,10 @@ export async function aquariumRoutes(app: FastifyInstance) {
       const result = await prisma.$transaction(async (tx) => {
         // Serialize aquarium changes for this owner.
         await tx.$queryRaw`
-          SELECT id
-          FROM "User"
-          WHERE id = ${user.id}
-          FOR UPDATE
+            SELECT id
+            FROM "User"
+            WHERE id = ${user.id}
+                FOR UPDATE
         `;
 
         const aquariums = await tx.aquarium.findMany({
@@ -297,6 +304,7 @@ export async function aquariumRoutes(app: FastifyInstance) {
 
         return {
           status: 204 as const,
+          destinationAquariumId: destinationId,
         };
       });
 
@@ -305,6 +313,15 @@ export async function aquariumRoutes(app: FastifyInstance) {
           error: result.error,
         });
       }
+
+      // The transaction has committed at this point.
+      // Refresh the destination display after fish transfer.
+      if (result.destinationAquariumId) {
+        notifyAquariumChanged(result.destinationAquariumId);
+      }
+
+      // Notify any remaining clients viewing the deleted aquarium.
+      notifyAquariumChanged(aquariumId);
 
       return reply.code(204).send();
     },
@@ -334,10 +351,10 @@ export async function aquariumRoutes(app: FastifyInstance) {
           async (tx) => {
             // Serialize default changes for this owner.
             await tx.$queryRaw`
-              SELECT id
-              FROM "User"
-              WHERE id = ${user.id}
-              FOR UPDATE
+                SELECT id
+                FROM "User"
+                WHERE id = ${user.id}
+                    FOR UPDATE
             `;
 
             const target = await tx.aquarium.findFirst({
@@ -383,6 +400,8 @@ export async function aquariumRoutes(app: FastifyInstance) {
             error: 'Aquarium not found',
           });
         }
+
+        notifyAquariumChanged(aquarium.id);
 
         return aquarium;
       } catch (error) {

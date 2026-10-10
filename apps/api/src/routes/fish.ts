@@ -4,6 +4,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 
 import { prisma } from '@aquarium/database';
 import { getAuthenticatedUser } from '../lib/get-authenticated-user.js';
+import { notifyAquariumChanged } from '../realtime/socket.js';
 
 import {
   fishIdParamsSchema,
@@ -90,6 +91,11 @@ export async function fishRoutes(app: FastifyInstance) {
         },
       });
 
+      // Notify connected displays after saving.
+      if (fish.aquariumId) {
+        notifyAquariumChanged(fish.aquariumId);
+      }
+
       return reply.code(201).send(fish);
     },
   );
@@ -128,7 +134,7 @@ export async function fishRoutes(app: FastifyInstance) {
     },
   );
 
-  // Update a fish.
+  // Update or move a fish.
   api.patch(
     '/fish/:id',
     {
@@ -174,6 +180,23 @@ export async function fishRoutes(app: FastifyInstance) {
         }
       }
 
+      // Capture the original aquarium before updating.
+      const previousFish = await prisma.fish.findFirst({
+        where: {
+          id: request.params.id,
+          ownerId: user.id,
+        },
+        select: {
+          aquariumId: true,
+        },
+      });
+
+      if (!previousFish) {
+        return reply.code(404).send({
+          error: 'Fish not found',
+        });
+      }
+
       const result = await prisma.fish.updateMany({
         where: {
           id: request.params.id,
@@ -195,12 +218,26 @@ export async function fishRoutes(app: FastifyInstance) {
         });
       }
 
-      return prisma.fish.findFirst({
+      const updatedFish = await prisma.fish.findFirst({
         where: {
           id: request.params.id,
           ownerId: user.id,
         },
       });
+
+      // Notify both aquariums if the fish was moved.
+      const affectedAquariums = new Set([
+        previousFish.aquariumId,
+        updatedFish?.aquariumId,
+      ]);
+
+      for (const id of affectedAquariums) {
+        if (id) {
+          notifyAquariumChanged(id);
+        }
+      }
+
+      return updatedFish;
     },
   );
 
@@ -221,6 +258,23 @@ export async function fishRoutes(app: FastifyInstance) {
         });
       }
 
+      // Capture aquarium ID before deleting the fish.
+      const existingFish = await prisma.fish.findFirst({
+        where: {
+          id: request.params.id,
+          ownerId: user.id,
+        },
+        select: {
+          aquariumId: true,
+        },
+      });
+
+      if (!existingFish) {
+        return reply.code(404).send({
+          error: 'Fish not found',
+        });
+      }
+
       const result = await prisma.fish.deleteMany({
         where: {
           id: request.params.id,
@@ -232,6 +286,11 @@ export async function fishRoutes(app: FastifyInstance) {
         return reply.code(404).send({
           error: 'Fish not found',
         });
+      }
+
+      // Notify connected displays after deletion.
+      if (existingFish.aquariumId) {
+        notifyAquariumChanged(existingFish.aquariumId);
       }
 
       return reply.code(204).send();

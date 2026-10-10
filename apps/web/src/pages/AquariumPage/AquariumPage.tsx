@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { socket } from '../../lib/socket';
+
 import {
   aquariumApi,
   fishApi,
@@ -90,6 +92,9 @@ export function AquariumPage() {
   const [fishCollectionOpen, setFishCollectionOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  const lastLoadVersion = useRef(0);
+
   const [renamedAquarium, setRenamedAquarium] = useState<{
     id: string;
     name: string;
@@ -110,49 +115,112 @@ export function AquariumPage() {
   };
 
   useEffect(() => {
-    let cancelled = false;
-
-    setFish([]);
-    setSelectedFishId(null);
-    setDrawing(false);
-    setError(null);
-
-    if (!aquarium) {
+    if (!aquarium?.id) {
+      setFish([]);
       setFishLoading(false);
       return;
     }
 
     const aquariumId = aquarium.id;
-    setFishLoading(true);
+    const version = ++lastLoadVersion.current;
+    let cancelled = false;
 
-    async function load() {
+    async function loadFish() {
+      setFishLoading(true);
+
       try {
         const items = await fishApi.list();
+
         const matching = items.filter(
           (item) => item.aquariumId === aquariumId,
         );
-        const mapped = await Promise.all(matching.map(mapApiFish));
 
-        if (!cancelled) {
+        const mapped = await Promise.all(
+          matching.map(mapApiFish),
+        );
+
+        if (
+          !cancelled &&
+          version === lastLoadVersion.current
+        ) {
           setFish(mapped);
+          setError(null);
         }
       } catch (err) {
-        if (!cancelled) {
+        if (
+          !cancelled &&
+          version === lastLoadVersion.current
+        ) {
           setError(
-            err instanceof Error ? err.message : 'Failed to load fish',
+            err instanceof Error
+              ? err.message
+              : 'Failed to load fish',
           );
         }
       } finally {
-        if (!cancelled) {
+        if (
+          !cancelled &&
+          version === lastLoadVersion.current
+        ) {
           setFishLoading(false);
         }
       }
     }
 
-    void load();
+    void loadFish();
 
     return () => {
       cancelled = true;
+    };
+  }, [aquarium?.id, refreshVersion]);
+
+  useEffect(() => {
+    if (!aquarium?.id) return;
+
+    const aquariumId = aquarium.id;
+
+    const refresh = () => {
+      setRefreshVersion((value) => value + 1);
+    };
+
+    const joinAquarium = () => {
+      socket.emit(
+        'aquarium:join',
+        aquariumId,
+        (result: { ok: boolean }) => {
+          if (result.ok) {
+            // Reload after joining to avoid missing changes
+            // between the initial REST request and subscription.
+            refresh();
+          } else {
+            console.warn('Failed to join aquarium room');
+          }
+        },
+      );
+    };
+
+    const handleChanged = (event: {
+      aquariumId: string;
+    }) => {
+      if (event.aquariumId === aquariumId) {
+        refresh();
+      }
+    };
+
+    socket.on('connect', joinAquarium);
+    socket.on('aquarium:changed', handleChanged);
+
+    socket.connect();
+
+    if (socket.connected) {
+      joinAquarium();
+    }
+
+    return () => {
+      socket.emit('aquarium:leave', aquariumId);
+      socket.off('connect', joinAquarium);
+      socket.off('aquarium:changed', handleChanged);
+      socket.disconnect();
     };
   }, [aquarium?.id]);
 

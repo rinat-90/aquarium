@@ -6,6 +6,11 @@ import multipart from '@fastify/multipart';
 import Fastify from 'fastify';
 
 import {
+  initializeSocket,
+  closeSocket,
+} from './realtime/socket.js';
+
+import {
   hasZodFastifySchemaValidationErrors,
   serializerCompiler,
   validatorCompiler,
@@ -78,6 +83,8 @@ async function start() {
     // Register CORS before all routes, including Better Auth.
     const webOrigin =
       process.env.WEB_URL ?? 'http://localhost:5173';
+
+    initializeSocket(app.server, webOrigin);
 
     await app.register(cors, {
       origin: webOrigin,
@@ -205,6 +212,7 @@ async function shutdown() {
   shuttingDown = true;
 
   try {
+    await closeSocket();
     await app.close();
   } catch (error) {
     app.log.error(error, 'Failed to close Fastify');
