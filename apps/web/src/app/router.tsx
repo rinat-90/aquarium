@@ -9,6 +9,7 @@ import { AquariumPage } from '../pages/AquariumPage/AquariumPage';
 import { CreateFishPage } from '../pages/CreateFishPage/CreateFishPage';
 import { DrawFishPage } from '../pages/DrawFishPage/DrawFishPage';
 import { CustomizeFishPage } from '../pages/CustomizeFishPage/CustomizeFishPage';
+import { ProfilePage } from '../pages/ProfilePage/ProfilePage';
 
 import { ProtectedRoute } from './ProtectedRoute';
 
@@ -40,7 +41,10 @@ export const router = createBrowserRouter([
             path: '/fish/create',
             element: <CreateFishPage />,
           },
-          // Profile route will go here once ProfilePage exists.
+          {
+            path: '/profile',
+            element: <ProfilePage />,
+          },
         ],
       },
 
