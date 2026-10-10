@@ -67,6 +67,7 @@ export function createGuppy3DModel(): Fish3DModel {
   const paintBody = new THREE.Mesh(paintGeometry, paintMaterial);
   paintBody.name = 'fish-paint-layer';
   paintBody.renderOrder = 3;
+  paintBody.visible = false; // No overlay draw call until a paint image loads.
   group.add(paintBody);
 
   // Painted-on scales and patches follow the body UVs, including in 3D.
@@ -357,6 +358,7 @@ export function createGuppy3DModel(): Fish3DModel {
   let paintLoadVersion = 0;
   const setPaintImage = (image?: string) => {
     const version = ++paintLoadVersion;
+    paintBody.visible = false;
     paintContext.clearRect(0, 0, paintCanvas.width, paintCanvas.height);
     paintTexture.needsUpdate = true;
     if (!image) return;
@@ -366,6 +368,7 @@ export function createGuppy3DModel(): Fish3DModel {
       paintContext.clearRect(0, 0, paintCanvas.width, paintCanvas.height);
       paintContext.drawImage(source, 0, 0, paintCanvas.width, paintCanvas.height);
       paintTexture.needsUpdate = true;
+      paintBody.visible = true;
     };
     source.onerror = () => {
       if (!disposed && version === paintLoadVersion) console.error('Failed to load guppy paint image.');

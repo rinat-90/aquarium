@@ -97,6 +97,7 @@ export function createFish3DModel(): Fish3DModel {
   });
   const paintBody = new THREE.Mesh(paintGeometry, paintMaterial);
   paintBody.name = 'fish-paint-layer';
+  paintBody.visible = false; // Skip overlay draw calls until painting loads.
   group.add(paintBody);
 
   // A shallow extrusion gives the fins thickness when viewed at an angle.
@@ -128,8 +129,8 @@ export function createFish3DModel(): Fish3DModel {
   // Rounded dorsal fin with a root tucked into the back.
   const dorsalShape = new THREE.Shape();
   dorsalShape.moveTo(-0.85, -0.18);
-  dorsalShape.bezierCurveTo(-0.92, 0.14, -0.78, 0.48, -0.56, 0.65);
-  dorsalShape.bezierCurveTo(-0.42, 0.70, -0.33, 0.52, -0.19, 0.34);
+  dorsalShape.bezierCurveTo(-0.82, 0.12, -0.68, 0.48, -0.40, 0.68);
+  dorsalShape.bezierCurveTo(-0.28, 0.72, -0.26, 0.54, -0.16, 0.38);
   dorsalShape.bezierCurveTo(0.02, 0.12, 0.28, -0.04, 0.52, -0.20);
   dorsalShape.quadraticCurveTo(-0.12, -0.30, -0.85, -0.18);
   const dorsalFin = makeFin(dorsalShape, 0.04);
@@ -144,43 +145,27 @@ export function createFish3DModel(): Fish3DModel {
   analShape.quadraticCurveTo(0.12, 0.04, 0.28, 0.16);
   analShape.quadraticCurveTo(-0.12, 0.08, -0.55, 0.16);
   const analFin = makeFin(analShape, 0.035);
-  analFin.position.set(-0.70, -0.52, 0);
+  analFin.position.set(-0.52, -0.52, 0);
   group.add(analFin);
 
-  // Pectoral fins: curve outward from the body so they read as fins
-  // both from the side and when looking directly at the fish's face.
-  // Keep the root near the body and fan the outer edge along +/-Z.
+  // Pectoral fins pivot around their narrow root.
   const sideShape = new THREE.Shape();
   sideShape.moveTo(0.08, 0.04);
   sideShape.bezierCurveTo(-0.12, 0.12, -0.36, 0.02, -0.62, -0.16);
   sideShape.bezierCurveTo(-0.76, -0.28, -0.68, -0.40, -0.49, -0.39);
   sideShape.bezierCurveTo(-0.26, -0.36, -0.04, -0.16, 0.08, 0.04);
 
-  const createPectoralFin = (side: 1 | -1) => {
-    const fin = makeFin(sideShape, 0.035);
-    fin.scale.setScalar(0.75);
+  const leftFin = makeFin(sideShape, 0.035);
+  leftFin.position.set(0.43, -0.13, 0.73);
+  leftFin.rotation.y = -0.16;
+  leftFin.rotation.z = -0.08;
+  group.add(leftFin);
 
-    // A flat XY fin is edge-on from the front. Bend its tip outward
-    // while leaving the attachment point almost unchanged.
-    const vertices = fin.geometry.getAttribute('position');
-    for (let i = 0; i < vertices.count; i += 1) {
-      const x = vertices.getX(i);
-      const reach = THREE.MathUtils.clamp((0.08 - x) / 0.8, 0, 1);
-      vertices.setZ(i, vertices.getZ(i) + side * 0.68 * reach);
-    }
-    vertices.needsUpdate = true;
-    fin.geometry.computeVertexNormals();
-    fin.geometry.computeBoundingSphere();
-
-    // A slightly exposed root keeps the fins connected to the body.
-    fin.position.set(0.54, -0.13, side * 0.67);
-    fin.rotation.z = 0.18;
-    group.add(fin);
-    return fin;
-  };
-
-  const leftFin = createPectoralFin(1);
-  const rightFin = createPectoralFin(-1);
+  const rightFin = makeFin(sideShape, 0.035);
+  rightFin.position.set(0.43, -0.13, -0.73);
+  rightFin.rotation.y = 0.16;
+  rightFin.rotation.z = -0.08;
+  group.add(rightFin);
 
   const eyeGeometry = new THREE.SphereGeometry(0.155, 24, 18);
   const pupilGeometry = new THREE.SphereGeometry(0.077, 20, 16);
@@ -193,43 +178,34 @@ export function createFish3DModel(): Fish3DModel {
     group.add(pupil);
   }
 
-  // One small mouth across the front of the snout, rather than
-  // separate smiles on the two cheeks.
-  // Find the deformed body's front surface so the line follows it.
-  const getSnoutX = (y: number, z: number) => {
-    let low = 0;
-    let high = 1;
-
-    for (let i = 0; i < 24; i += 1) {
-      const nx = (low + high) / 2;
-      const front = THREE.MathUtils.smoothstep(nx, 0.15, 1);
-      const roundness = 1 - front * 0.07;
-      const ry = 0.89 * roundness;
-      const rz = 0.72 * roundness;
-      const radius = nx * nx + (y / ry) ** 2 + (z / rz) ** 2;
-
-      if (radius > 1) high = nx;
-      else low = nx;
-    }
-
-    return ((low + high) / 2) * 1.58 + 0.012;
+  // Calculate the same deformed body surface used by the mesh.
+  // This places the mouth slightly above the surface, not inside it.
+  const getBodySurfaceZ = (x: number, y: number) => {
+    const nx = x / 1.58;
+    const rear = THREE.MathUtils.smoothstep(-nx, 0, 1);
+    const front = THREE.MathUtils.smoothstep(nx, 0.15, 1);
+    const taper = 1 - rear * 0.38;
+    const roundness = 1 - front * 0.07;
+    const ry = 0.89 * taper * roundness;
+    const rz = 0.72 * taper * roundness;
+    return rz * Math.sqrt(Math.max(0, 1 - nx * nx - (y / ry) ** 2));
   };
 
-  const mouthPoints = [
-    { y: -0.24, z: -0.105 },
-    { y: -0.255, z: 0 },
-    { y: -0.24, z: 0.105 },
-  ].map(({ y, z }) => new THREE.Vector3(getSnoutX(y, z), y, z));
-
-  const mouthCurve = new THREE.QuadraticBezierCurve3(
-    mouthPoints[0],
-    mouthPoints[1],
-    mouthPoints[2],
-  );
-  const mouthGeometry = new THREE.TubeGeometry(mouthCurve, 20, 0.009, 6, false);
-  const mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
-  mouth.name = 'fish-mouth';
-  group.add(mouth);
+  for (const side of [-1, 1]) {
+    const mouthPoints = [
+      { x: 1.29, y: -0.18 },
+      { x: 1.35, y: -0.205 },
+      { x: 1.41, y: -0.19 },
+    ];
+    const points = mouthPoints.map(({ x, y }) =>
+      new THREE.Vector3(x, y, side * (getBodySurfaceZ(x, y) + 0.025)),
+    );
+    const smile = new THREE.QuadraticBezierCurve3(points[0], points[1], points[2]);
+    const mouthGeometry = new THREE.TubeGeometry(smile, 16, 0.013, 6, false);
+    const mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+    mouth.name = 'fish-mouth';
+    group.add(mouth);
+  }
 
   group.rotation.y = -0.18;
 
@@ -243,6 +219,7 @@ export function createFish3DModel(): Fish3DModel {
   };
   const setPaintImage = (image?: string) => {
     const loadVersion = ++paintLoadVersion;
+    paintBody.visible = false;
     paintContext.clearRect(0, 0, paintCanvas.width, paintCanvas.height);
     paintTexture.needsUpdate = true;
     if (!image) return;
@@ -252,6 +229,7 @@ export function createFish3DModel(): Fish3DModel {
       paintContext.clearRect(0, 0, paintCanvas.width, paintCanvas.height);
       paintContext.drawImage(source, 0, 0, paintCanvas.width, paintCanvas.height);
       paintTexture.needsUpdate = true;
+      paintBody.visible = true;
     };
     source.onerror = () => {
       if (!disposed && loadVersion === paintLoadVersion) {

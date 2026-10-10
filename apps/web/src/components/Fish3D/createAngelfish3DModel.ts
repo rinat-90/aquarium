@@ -358,6 +358,7 @@ export function createAngelfish3DModel(): Fish3DModel {
 
   paintBody.name = 'fish-paint-layer';
   paintBody.renderOrder = 2;
+  paintBody.visible = false; // No overlay draw call until a paint image loads.
   group.add(paintBody);
 
   // --------------------------------------------------
@@ -842,6 +843,7 @@ export function createAngelfish3DModel(): Fish3DModel {
     image?: string,
   ) => {
     const version = ++paintLoadVersion;
+    paintBody.visible = false;
 
     paintContext.clearRect(
       0,
@@ -881,6 +883,7 @@ export function createAngelfish3DModel(): Fish3DModel {
       );
 
       paintTexture.needsUpdate = true;
+      paintBody.visible = true;
     };
 
     source.onerror = () => {
