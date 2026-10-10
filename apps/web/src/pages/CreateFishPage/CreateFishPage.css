@@ -1,32 +1,40 @@
+
 .create-fish-page {
-    min-height: 100dvh;
-    padding: 32px;
-    background:
-            radial-gradient(ellipse at 50% 0%, #104a72 0%, transparent 55%),
-            #061b2b;
+    width: 100%;
     color: #fff;
 }
+
+/* Header */
 
 .create-fish-header {
     display: flex;
     align-items: center;
     gap: 24px;
-    max-width: 1100px;
-    margin: 0 auto 60px;
+    margin-bottom: 32px;
 }
 
 .create-fish-back {
+    flex-shrink: 0;
     padding: 12px 20px;
     border: 1px solid #295b7b;
     border-radius: 12px;
     background: #103752;
     color: #fff;
+    font: inherit;
     cursor: pointer;
+    transition:
+            background 180ms ease,
+            border-color 180ms ease;
+}
+
+.create-fish-back:hover {
+    background: #174866;
+    border-color: #38bdf8;
 }
 
 .create-fish-header h1 {
     margin: 0 0 8px;
-    font-size: clamp(28px, 4vw, 40px);
+    font-size: clamp(28px, 4vw, 36px);
 }
 
 .create-fish-header p {
@@ -34,16 +42,78 @@
     color: #9fc1d5;
 }
 
+/* Aquarium selector */
+
+.create-fish-destination {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 28px;
+    padding: 20px 24px;
+    border: 1px solid #245b7d;
+    border-radius: 16px;
+    background: rgba(13, 44, 67, 0.7);
+}
+
+.create-fish-destination label {
+    color: #f1f9ff;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.create-fish-destination p {
+    margin: 0;
+    color: #9fc1d5;
+    font-size: 13px;
+}
+
+.create-fish-destination select {
+    width: 100%;
+    max-width: 420px;
+    padding: 12px 14px;
+    border: 1px solid #295b7b;
+    border-radius: 10px;
+    background: #103752;
+    color: #fff;
+    font: inherit;
+    cursor: pointer;
+}
+
+.create-fish-destination select:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+}
+
+.create-fish-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.create-fish-empty button {
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 10px;
+    background: #168fe0;
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Fish creation cards */
+
 .create-fish-options {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 24px;
-    max-width: 1000px;
-    margin: 0 auto;
+    width: 100%;
 }
 
 .create-fish-card {
     overflow: hidden;
+    min-width: 0;
     padding: 0;
     border: 1px solid #245b7d;
     border-radius: 22px;
@@ -61,6 +131,11 @@
     transform: translateY(-5px);
     border-color: #27a8f5;
     box-shadow: 0 16px 45px rgba(0, 0, 0, 0.25);
+}
+
+.create-fish-card:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 3px;
 }
 
 .create-fish-card:disabled {
@@ -110,27 +185,38 @@
     font-weight: 600;
 }
 
+/* Messages */
+
 .create-fish-error {
     margin-top: 24px;
     color: #ffb2b2;
     text-align: center;
 }
 
+/* Responsive */
+
 @media (max-width: 700px) {
-    .create-fish-page {
-        padding: 20px;
+    .create-fish-header {
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
     }
 
-    .create-fish-header {
-        margin-bottom: 32px;
+    .create-fish-destination {
+        padding: 16px;
     }
 
     .create-fish-options {
         grid-template-columns: 1fr;
+        gap: 16px;
     }
 
     .create-fish-card__art {
         height: 180px;
         font-size: 70px;
+    }
+
+    .create-fish-card__content {
+        padding: 20px;
     }
 }

@@ -1,0 +1,149 @@
+.aquariums-layout {
+    --aq-background: #061f32;
+    --aq-panel: #0a2940;
+    --aq-border: #1a4765;
+    --aq-text: #f3f8ff;
+    --aq-muted: #a9bfd2;
+    --aq-accent: #2b9ff1;
+
+    display: flex;
+    min-height: 100dvh;
+    background:
+            radial-gradient(ellipse at 60% -15%, #123c58 0%, transparent 55%),
+            var(--aq-background);
+    color: var(--aq-text);
+    font-family: Inter, system-ui, -apple-system, sans-serif;
+}
+
+.aquariums-layout *,
+.aquariums-layout *::before,
+.aquariums-layout *::after {
+    box-sizing: border-box;
+}
+
+.aquariums-sidebar {
+    width: 230px;
+    flex-shrink: 0;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 16px 20px;
+    border-right: 1px solid var(--aq-border);
+    background: linear-gradient(160deg, #102d47, #061c2d 75%);
+}
+
+.aquariums-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 8px 36px;
+    color: white;
+    text-decoration: none;
+}
+
+.aquariums-brand__icon {
+    font-size: 35px;
+}
+
+.aquariums-brand strong,
+.aquariums-brand small {
+    display: block;
+}
+
+.aquariums-brand strong {
+    font-size: 18px;
+}
+
+.aquariums-brand small {
+    margin-top: 2px;
+    font-size: 13px;
+    color: var(--aq-muted);
+}
+
+.aquariums-navigation {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.aquariums-navigation__item {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    width: 100%;
+    padding: 13px 14px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #e0edfa;
+    font: inherit;
+    font-size: 14px;
+    text-decoration: none;
+    text-align: left;
+    cursor: pointer;
+}
+
+.aquariums-navigation__item > span {
+    width: 20px;
+    font-size: 18px;
+    text-align: center;
+}
+
+.aquariums-navigation__item:hover,
+.aquariums-navigation__item.active {
+    background: linear-gradient(100deg, #24588d, #173e67);
+    color: #fff;
+}
+
+.aquariums-navigation__item--disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.aquariums-sidebar__bottom {
+    margin-top: auto;
+    padding-top: 24px;
+}
+
+.aquariums-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 4px;
+}
+
+.aquariums-user__avatar {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #d9e5ff;
+    color: #173353;
+    font-weight: 700;
+}
+
+.aquariums-user__details {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.aquariums-user__details strong {
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.aquariums-user__details button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #c4d5e7;
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+}

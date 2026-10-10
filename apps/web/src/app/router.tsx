@@ -2,6 +2,8 @@
 import { createBrowserRouter, Navigate } from 'react-router';
 
 import { AuthScreen } from '../components/Auth/AuthScreen';
+import { AppLayout } from '../layout/AppLayout';
+
 import { AquariumsPage } from '../pages/AquariumsPage/AquariumsPage';
 import { AquariumPage } from '../pages/AquariumPage/AquariumPage';
 import { CreateFishPage } from '../pages/CreateFishPage/CreateFishPage';
@@ -26,18 +28,29 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
+      // Dashboard pages share the main sidebar.
       {
-        path: '/aquariums',
-        element: <AquariumsPage />,
+        element: <AppLayout />,
+        children: [
+          {
+            path: '/aquariums',
+            element: <AquariumsPage />,
+          },
+          {
+            path: '/fish/create',
+            element: <CreateFishPage />,
+          },
+          // Profile route will go here once ProfilePage exists.
+        ],
       },
+
+      // Full-screen aquarium experience.
       {
         path: '/aquariums/:id',
         element: <AquariumPage />,
       },
-      {
-        path: '/fish/create',
-        element: <CreateFishPage />,
-      },
+
+      // Full-screen fish creation editors.
       {
         path: '/fish/create/draw',
         element: <DrawFishPage />,
@@ -46,6 +59,8 @@ export const router = createBrowserRouter([
         path: '/fish/create/3d',
         element: <CustomizeFishPage />,
       },
+
+      // Legacy route.
       {
         path: '/aquarium',
         element: <Navigate to="/aquariums" replace />,
