@@ -1015,8 +1015,19 @@ export function ThreeAquariumView({
         // Update the overlay once per second, not every frame.
         if (fpsElapsed >= 1) {
           const fps = Math.round(fpsFrames / fpsElapsed);
-          fpsOverlay.textContent =
-            `FPS: ${fps}\nQuality: ${quality}\nPixel ratio: ${renderer.getPixelRatio().toFixed(2)}`;
+          const renderInfo = renderer.info.render;
+
+          fpsOverlay.textContent = [
+            `FPS: ${fps}`,
+            `Quality: ${quality.toUpperCase()}`,
+            `Pixel ratio: ${renderer.getPixelRatio().toFixed(2)}`,
+            `Fish: ${threeFishRef.current.size}`,
+            `Draw calls: ${renderInfo.calls}`,
+            `Triangles: ${renderInfo.triangles.toLocaleString()}`,
+            `Geometries: ${renderer.info.memory.geometries}`,
+            `Textures: ${renderer.info.memory.textures}`,
+          ].join('\n');
+
           fpsFrames = 0;
           fpsElapsed = 0;
         }
