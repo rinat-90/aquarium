@@ -92,6 +92,25 @@
     background: rgba(42, 151, 220, 0.3);
 }
 
+/* Match the back button and aquarium title heights */
+.aquarium-hud__header {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+}
+
+.aquarium-hud__header > .aquarium-hud__icon-button {
+    align-self: stretch;
+    height: auto;
+    flex-shrink: 0;
+}
+
+.aquarium-hud__title {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
 @media (max-width: 540px) {
     .aquarium-hud__header {
         top: 12px;

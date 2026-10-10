@@ -16,6 +16,7 @@ import { AquariumHUD } from '../../components/AquariumHUD/AquariumHUD';
 import { FishPanel } from '../../components/FishPanel/FishPanel';
 
 import './AquariumPage.css';
+import {AquariumSettingsPanel} from "../../components/FishPanel/AquariumSettingsPanel.tsx";
 
 const AQUARIUM_CAPACITY = 8;
 
@@ -80,6 +81,7 @@ export function AquariumPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fishCollectionOpen, setFishCollectionOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const activeAquariumId = useRef<string | null>(null);
   activeAquariumId.current = aquarium?.id ?? null;
@@ -312,11 +314,11 @@ export function AquariumPage() {
 
           navigate(`/fish/create?aquariumId=${encodeURIComponent(aquarium.id)}`);
         }}
-        onEdit={() => {
-          // Edit Aquarium is on hold.
-        }}
         onViewFish={handleOpenFishList}
         onFeed={handleFeedFish}
+        onSettings={() => {
+          setSettingsOpen(true);
+        }}
       />
 
       <ThreeAquariumView
@@ -381,6 +383,13 @@ export function AquariumPage() {
       >
         ✏️ Draw Fish
       </button>
+
+      <AquariumSettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        name={aquarium?.name ?? 'My Aquarium'}
+        fishCount={fish.length}
+      />
 
       <FishPanel
         open={fishCollectionOpen}

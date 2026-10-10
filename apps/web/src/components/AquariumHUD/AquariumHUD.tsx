@@ -1,3 +1,4 @@
+
 import './AquariumHUD.css';
 
 type AquariumHUDProps = {
@@ -5,10 +6,9 @@ type AquariumHUDProps = {
   fishCount: number;
   onBack: () => void;
   onAddFish: () => void;
-  onEdit: () => void;
+  onSettings: () => void;
   onViewFish: () => void;
   onFeed: () => void;
-
 };
 
 export function AquariumHUD({
@@ -16,11 +16,10 @@ export function AquariumHUD({
                               fishCount,
                               onBack,
                               onAddFish,
-                              onEdit,
+                              onSettings,
                               onViewFish,
                               onFeed,
                             }: AquariumHUDProps) {
-
   return (
     <div className="aquarium-hud">
       <header className="aquarium-hud__header">
@@ -37,39 +36,30 @@ export function AquariumHUD({
           <strong>{name}</strong>
           <span>{fishCount} fish</span>
         </div>
-
-        <button
-          className="aquarium-hud__icon-button"
-          type="button"
-          onClick={onEdit}
-          aria-label="Edit aquarium"
-        >
-          ⚙
-        </button>
       </header>
 
-      <nav className="aquarium-hud__actions" aria-label="Aquarium actions">
+      <nav
+        className="aquarium-hud__actions"
+        aria-label="Aquarium actions"
+      >
         <button type="button" onClick={onAddFish}>
           <span>🐠</span>
           Add Fish
         </button>
 
-        <button type="button" onClick={onEdit}>
-          <span>🪸</span>
-          Edit Aquarium
-        </button>
-
-        <button
-          type="button"
-          onClick={onFeed}
-        >
+        <button type="button" onClick={onFeed}>
           <span>🫧</span>
           Feed Fish
         </button>
 
         <button type="button" onClick={onViewFish}>
-          <span>☷</span>
+          <span>🤿 </span>
           View Fish
+        </button>
+
+        <button type="button" onClick={onSettings}>
+          <span>🛠️</span>
+          Settings
         </button>
       </nav>
     </div>

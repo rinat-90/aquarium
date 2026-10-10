@@ -1,0 +1,19 @@
+/* Aquarium Settings — left-side drawer */
+
+.aquarium-settings-panel .aquarium-settings__sidebar {
+    left: 0;
+    right: auto;
+    border-left: none;
+    border-right: 1px solid rgba(95, 220, 255, 0.18);
+    animation: aquarium-settings-slide-in 240ms ease-out;
+}
+
+@keyframes aquarium-settings-slide-in {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
