@@ -420,7 +420,7 @@ export function ThreeAquariumView({
       );
 
     const graphicsQuality =
-      createGraphicsQualityController('high');
+      createGraphicsQualityController('low');
 
     /*
      * Dynamic water lighting.

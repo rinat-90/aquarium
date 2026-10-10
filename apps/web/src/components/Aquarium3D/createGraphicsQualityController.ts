@@ -30,7 +30,7 @@ export function createGraphicsQualityController(
     }
 
     // Ignore long pauses, such as background tabs.
-    if (deltaTime > 0.25) {
+    if (deltaTime > 2) {
       elapsed = 0;
       frameCount = 0;
       return quality;
