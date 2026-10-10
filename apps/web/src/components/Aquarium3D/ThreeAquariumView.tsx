@@ -596,11 +596,13 @@ export function ThreeAquariumView({
       0,
     );
 
+    const highPixelRatio = Math.min(window.devicePixelRatio || 1, 1.25);
+    const lowPixelRatio = Math.min(window.devicePixelRatio || 1, 0.85);
+
     renderer.setPixelRatio(
-      Math.min(
-        window.devicePixelRatio,
-        1.25,
-      ),
+      graphicsQuality.getQuality() === 'low'
+        ? lowPixelRatio
+        : highPixelRatio,
     );
 
     renderer.setSize(
@@ -957,6 +959,7 @@ export function ThreeAquariumView({
       new THREE.Clock();
 
     let animationFrame = 0;
+    let currentQuality = graphicsQuality.getQuality();
 
     const animate = () => {
       if (cancelled) {
@@ -979,7 +982,15 @@ export function ThreeAquariumView({
 
       // Adapt water shader quality based on measured FPS.
       const quality = graphicsQuality.update(deltaTime);
-      waterEffects.setQuality(quality);
+
+      if (quality !== currentQuality) {
+        currentQuality = quality;
+        waterEffects.setQuality(quality);
+        renderer.setPixelRatio(
+          quality === 'low' ? lowPixelRatio : highPixelRatio,
+        );
+      }
+
       waterEffects.update(deltaTime, elapsed);
 
       /*
