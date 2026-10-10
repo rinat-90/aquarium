@@ -591,8 +591,13 @@ void main() {
 
   const setQuality = (nextQuality: WaterQuality) => {
     if (nextQuality === currentQuality) return;
+
     currentQuality = nextQuality;
+
     surface.material = nextQuality === 'low' ? lowMaterial : material;
+
+    // Temporarily disable water surface on low-end devices
+    surface.visible = nextQuality === 'high';
   };
 
   const surface =
