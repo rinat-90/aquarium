@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { Fish3DModel } from './createFish3DModel';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 export function createAngelfish3DModel(): Fish3DModel {
   const group = new THREE.Group();
@@ -459,31 +460,17 @@ export function createAngelfish3DModel(): Fish3DModel {
   // Fin ray helper
   // --------------------------------------------------
 
+  const finRayGeometries: THREE.BufferGeometry[] = [];
+
   const addFinRay = (
     points: THREE.Vector3[],
     radius = 0.007,
   ) => {
-    const curve = new THREE.CatmullRomCurve3(
-      points,
-    );
+    const curve = new THREE.CatmullRomCurve3(points);
 
-    const geometry = trackGeometry(
-      new THREE.TubeGeometry(
-        curve,
-        16,
-        radius,
-        5,
-        false,
-      ),
+    finRayGeometries.push(
+      new THREE.TubeGeometry(curve, 16, radius, 5, false),
     );
-
-    const mesh = new THREE.Mesh(
-      geometry,
-      finRayMaterial,
-    );
-
-    group.add(mesh);
-    return mesh;
   };
 
   const addFinRays = (
@@ -622,6 +609,24 @@ export function createAngelfish3DModel(): Fish3DModel {
     tailData.edgeCurve,
     9,
   );
+
+  // Merge static decorative fin rays into one draw call.
+  // Keep the tail and pectoral fin meshes separate for animation.
+  if (finRayGeometries.length > 0) {
+    const mergedGeometry = mergeGeometries(finRayGeometries, false);
+
+    if (!mergedGeometry) {
+      finRayGeometries.forEach((geometry) => geometry.dispose());
+      throw new Error('Failed to merge angelfish fin rays');
+    }
+
+    trackGeometry(mergedGeometry);
+    const mergedFinRays = new THREE.Mesh(mergedGeometry, finRayMaterial);
+    mergedFinRays.name = 'angelfish-merged-fin-rays';
+    group.add(mergedFinRays);
+
+    finRayGeometries.forEach((geometry) => geometry.dispose());
+  }
 
   // --------------------------------------------------
   // Pectoral fins
@@ -927,4 +932,3 @@ export function createAngelfish3DModel(): Fish3DModel {
     dispose,
   };
 }
-
