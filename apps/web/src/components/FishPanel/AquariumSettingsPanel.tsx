@@ -1,5 +1,5 @@
 
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import '../FishPanel/FishPanel.css';
@@ -10,6 +10,7 @@ type AquariumSettingsPanelProps = {
   onClose: () => void;
   name: string;
   fishCount: number;
+  onRename: (name: string) => Promise<void>;
 };
 
 export function AquariumSettingsPanel({
@@ -17,10 +18,49 @@ export function AquariumSettingsPanel({
                                         onClose,
                                         name,
                                         fishCount,
+                                        onRename
                                       }: AquariumSettingsPanelProps) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
+
+  const [draftName, setDraftName] = useState(name);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    setDraftName(name);
+    setError(null);
+  }, [open, name]);
+
+  const trimmedName = draftName.trim();
+
+  const canSave =
+    trimmedName.length > 0 &&
+    trimmedName !== name &&
+    !saving;
+
+  async function handleSaveName() {
+    if (!canSave) return;
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      await onRename(trimmedName);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to rename aquarium.',
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
 
   useEffect(() => {
     if (!open) return;
@@ -120,6 +160,47 @@ export function AquariumSettingsPanel({
               <strong>{fishCount}</strong>
             </div>
           </div>
+
+          <section className="fish-panel__section">
+            <h3>Rename Aquarium</h3>
+            <p>Give your aquarium a new name.</p>
+
+            <label
+              className="fish-panel__label"
+              htmlFor="aquarium-settings-name"
+            >
+              Aquarium name
+            </label>
+
+            <input
+              id="aquarium-settings-name"
+              className="fish-panel__input"
+              value={draftName}
+              maxLength={50}
+              disabled={saving}
+              onChange={(event) => setDraftName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  void handleSaveName();
+                }
+              }}
+            />
+
+            <button
+              type="button"
+              className="fish-panel__primary"
+              disabled={!canSave}
+              onClick={() => void handleSaveName()}
+            >
+              {saving ? 'Saving...' : 'Save Name'}
+            </button>
+
+            {error && (
+              <p className="fish-panel__error" role="alert">
+                {error}
+              </p>
+            )}
+          </section>
         </div>
 
         <footer className="fish-panel__footer">

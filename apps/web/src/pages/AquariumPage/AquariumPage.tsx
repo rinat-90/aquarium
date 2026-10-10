@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
+  aquariumApi,
   fishApi,
   type ApiFish,
 } from '../../lib/aquarium-api';
@@ -82,6 +83,16 @@ export function AquariumPage() {
   const [error, setError] = useState<string | null>(null);
   const [fishCollectionOpen, setFishCollectionOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const [renamedAquarium, setRenamedAquarium] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  const aquariumName =
+    renamedAquarium && renamedAquarium.id === aquarium?.id
+      ? renamedAquarium.name
+      : aquarium?.name ?? 'My Aquarium';
 
   const activeAquariumId = useRef<string | null>(null);
   activeAquariumId.current = aquarium?.id ?? null;
@@ -303,10 +314,29 @@ export function AquariumPage() {
     setSelectedFishId(null);
   };
 
+  const handleRenameAquarium = async (name: string) => {
+    if (!aquarium) {
+      throw new Error('No aquarium selected.');
+    }
+
+    const trimmedName = name.trim();
+
+    if (!trimmedName) {
+      throw new Error('Aquarium name cannot be empty.');
+    }
+
+    const updated = await aquariumApi.update(aquarium.id, trimmedName);
+
+    setRenamedAquarium({
+      id: updated.id,
+      name: updated.name,
+    });
+  };
+
   return (
     <div className="aquarium-page">
       <AquariumHUD
-        name={aquarium?.name ?? 'Aquarium'}
+        name={aquariumName}
         fishCount={fish.length}
         onBack={() => navigate('/aquariums')}
         onAddFish={() => {
@@ -387,8 +417,9 @@ export function AquariumPage() {
       <AquariumSettingsPanel
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
-        name={aquarium?.name ?? 'My Aquarium'}
+        name={aquariumName}
         fishCount={fish.length}
+        onRename={handleRenameAquarium}
       />
 
       <FishPanel
