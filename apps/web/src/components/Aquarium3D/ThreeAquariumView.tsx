@@ -591,7 +591,7 @@ export function ThreeAquariumView({
     renderer.setPixelRatio(
       Math.min(
         window.devicePixelRatio,
-        2,
+        1.25,
       ),
     );
 
