@@ -10,7 +10,7 @@ type DrawnFish = {
 type ThreeDFish = {
   id: string;
   type: '3d';
-  model: 'basic' | 'angelfish';
+  model?: 'basic' | 'classic' | 'angelfish' | 'guppy';
   bodyColor: string;
   finColor: string;
   paintImage?: string;

@@ -8,6 +8,7 @@ import {
 import {
   createAngelfish3DModel,
 } from '../Fish3D/createAngelfish3DModel';
+import { createGuppy3DModel } from '../Fish3D/createGuppy3DModel';
 
 type FishDirection = 'left' | 'right';
 
@@ -30,14 +31,17 @@ export function createThreeModelFish(
   finColor: string,
   paintImage?: string,
   size = 1,
-  species: 'classic' | 'angelfish' = 'classic',
+  species: 'classic' | 'angelfish' | 'guppy' = 'classic',
 ): ThreeModelFish {
   const model =
     species === 'angelfish'
       ? createAngelfish3DModel()
-      : createFish3DModel();
+      : species === 'guppy'
+        ? createGuppy3DModel()
+        : createFish3DModel();
 
   const isAngelfish = species === 'angelfish';
+  const isGuppy = species === 'guppy';
 
   model.setBodyColor(bodyColor);
   model.setFinColor(finColor);
@@ -89,8 +93,8 @@ export function createThreeModelFish(
     );
 
     // Different swimming rhythms for each species.
-    const tailFrequency = isAngelfish ? 1.15 : 1.9;
-    const tailAmplitude = isAngelfish ? 0.16 : 0.32;
+    const tailFrequency = isAngelfish ? 1.15 : isGuppy ? 2.5 : 1.9;
+    const tailAmplitude = isAngelfish ? 0.16 : isGuppy ? 0.24 : 0.32;
 
     const swim = Math.sin(time * tailFrequency);
 
@@ -101,8 +105,8 @@ export function createThreeModelFish(
       (0.3 + activity * 0.7);
 
     // Side fins paddle continuously.
-    const finFrequency = isAngelfish ? 1.7 : 2.6;
-    const finAmplitude = isAngelfish ? 0.11 : 0.085;
+    const finFrequency = isAngelfish ? 1.7 : isGuppy ? 3.2 : 2.6;
+    const finAmplitude = isAngelfish ? 0.11 : isGuppy ? 0.065 : 0.085;
 
     const finMovement =
       Math.sin(time * finFrequency) *
@@ -118,7 +122,7 @@ export function createThreeModelFish(
     // Gentle body sway.
     const bodySway =
       Math.sin(time * tailFrequency) *
-      (isAngelfish ? 0.012 : 0.025) *
+      (isAngelfish ? 0.012 : isGuppy ? 0.018 : 0.025) *
       (0.3 + activity * 0.7);
 
     const velocityX =
@@ -143,7 +147,7 @@ export function createThreeModelFish(
 
       // Angelfish rotate more gracefully.
       const turnResponsiveness =
-        isAngelfish ? 2.1 : 4.2;
+        isAngelfish ? 2.1 : isGuppy ? 3.5 : 4.2;
 
       const turnAmount =
         1 - Math.exp(

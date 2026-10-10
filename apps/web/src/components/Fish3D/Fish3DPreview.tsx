@@ -14,8 +14,9 @@ import {
 } from './createFish3DModel';
 
 import { createAngelfish3DModel } from './createAngelfish3DModel';
+import { createGuppy3DModel } from './createGuppy3DModel';
 
-type FishSpecies = 'classic' | 'angelfish';
+export type FishSpecies = 'classic' | 'angelfish' | 'guppy';
 
 type Fish3DPreviewProps = {
   bodyColor: string;
@@ -319,10 +320,12 @@ export function Fish3DPreview({
     /*
      * Fish
      */
-    const fish =
+    const fish: Fish3DModel =
       species === 'angelfish'
         ? createAngelfish3DModel()
-        : createFish3DModel();
+        : species === 'guppy'
+          ? createGuppy3DModel()
+          : createFish3DModel();
 
     fishRef.current =
       fish;
@@ -362,9 +365,12 @@ export function Fish3DPreview({
 
       const sphere = bounds.getBoundingSphere(new THREE.Sphere());
       const aspect = width / currentHeight;
-      // Extra padding leaves room for the fins during rotation and
-      // keeps the fish comfortably inside the painting controls.
-      const radius = Math.max(sphere.radius, 0.01) * 1.45;
+
+      // The Guppy has a long tail, so its bounding sphere needs less
+      // visual padding than the other species. A sphere also provides
+      // room for the silhouette as the user rotates it.
+      const padding = species === 'guppy' ? 1.14 : 1.35;
+      const radius = Math.max(sphere.radius, 0.01) * padding;
       const halfHeight = Math.max(radius, radius / aspect);
       const halfWidth = halfHeight * aspect;
 
@@ -997,9 +1003,8 @@ export function Fish3DPreview({
         time * 0.001;
 
       fish.tail.rotation.y =
-        Math.sin(
-          seconds * 5,
-        ) * 0.28;
+        Math.sin(seconds * (species === 'guppy' ? 4.2 : 5)) *
+        (species === 'guppy' ? 0.22 : 0.28);
 
       fish.leftFin.rotation.z =
         -Math.PI / 2.5 +

@@ -4,7 +4,7 @@ import { apiFetch } from './api-client';
 const API_URL =
   import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
-type FishSpecies = 'classic' | 'angelfish' | 'drawn';
+type FishSpecies = 'classic' | 'angelfish' | 'drawn' | 'guppy';
 
 export type ApiFish = {
   id: string;

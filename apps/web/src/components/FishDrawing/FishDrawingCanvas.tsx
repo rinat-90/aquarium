@@ -20,7 +20,7 @@ export type FishCreation =
 }
   | {
   type: '3d';
-  model: 'classic' | 'angelfish';
+  model: 'classic' | 'angelfish' | 'guppy';
   bodyColor: string;
   finColor: string;
   paintImage?: string;
@@ -107,7 +107,7 @@ export function FishDrawingCanvas({
     null,
   );
 
-  type FishSpecies = 'basic' | 'angelfish';
+  type FishSpecies = 'basic' | 'angelfish' | 'guppy';
 
   const [fishSpecies, setFishSpecies] =
     useState<FishSpecies>('basic');
@@ -484,7 +484,7 @@ export function FishDrawingCanvas({
 
     onDone({
       type: '3d',
-      model: fishSpecies === 'angelfish' ? 'angelfish' : 'classic',
+      model: fishSpecies === 'basic' ? 'classic' : fishSpecies,
       bodyColor,
       finColor,
       size: fishSize,
@@ -550,7 +550,7 @@ export function FishDrawingCanvas({
             <div className="fish-editor__3d-stage">
               <Fish3DPreview
                 key={fishSpecies}
-                species={fishSpecies === 'basic' ? 'classic' : 'angelfish'}
+                species={fishSpecies === 'basic' ? 'classic' : fishSpecies}
                 bodyColor={bodyColor}
                 finColor={finColor}
                 size={fishSize}
@@ -567,7 +567,7 @@ export function FishDrawingCanvas({
               <div className="fish-editor__section">
                 <h2>Species</h2>
                 <div className="fish-editor__segmented">
-                  {(['basic', 'angelfish'] as const).map((species) => (
+                  {(['basic', 'angelfish', 'guppy'] as const).map((species) => (
                     <button
                       type="button"
                       key={species}
@@ -575,7 +575,7 @@ export function FishDrawingCanvas({
                       onClick={() => { setFishSpecies(species); setPaintImage(null); }}
                       aria-pressed={fishSpecies === species}
                     >
-                      {species === 'basic' ? 'Classic' : 'Angelfish'}
+                      {species === 'basic' ? 'Classic' : species === 'angelfish' ? 'Angelfish' : 'Guppy'}
                     </button>
                   ))}
                 </div>

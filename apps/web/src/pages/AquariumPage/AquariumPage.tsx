@@ -18,13 +18,14 @@ import { FishPanel } from '../../components/FishPanel/FishPanel';
 
 import './AquariumPage.css';
 import {AquariumSettingsPanel} from "../../components/FishPanel/AquariumSettingsPanel.tsx";
+import {createFish} from "../../lib/create-fish.ts";
 
 const AQUARIUM_CAPACITY = 8;
 
-async function imageToBlob(image: string): Promise<Blob> {
-  const response = await fetch(image);
-  return response.blob();
-}
+// async function imageToBlob(image: string): Promise<Blob> {
+//   const response = await fetch(image);
+//   return response.blob();
+// }
 
 async function mapApiFish(item: ApiFish): Promise<CreatedFish> {
   let texture: string | undefined;
@@ -54,7 +55,12 @@ async function mapApiFish(item: ApiFish): Promise<CreatedFish> {
   return {
     id: item.id,
     type: '3d',
-    model: item.species === 'angelfish' ? 'angelfish' : 'basic',
+    model:
+      item.species === 'angelfish'
+        ? 'angelfish'
+        : item.species === 'guppy'
+          ? 'guppy'
+          : 'basic',
     bodyColor: item.bodyColor,
     finColor: item.finColor,
     paintImage: texture,
@@ -174,40 +180,12 @@ export function AquariumPage() {
     setBusy(true);
     setError(null);
 
-    let createdId: string | null = null;
-
     try {
-      const created = await fishApi.create({
-        name: `Fish ${fish.length + 1}`,
-        species:
-          creation.type === 'drawn'
-            ? 'drawn'
-            : creation.model === 'angelfish'
-              ? 'angelfish'
-              : 'classic',
-        bodyColor:
-          creation.type === 'drawn' ? '#4F9CF9' : creation.bodyColor,
-        finColor:
-          creation.type === 'drawn' ? '#3B82F6' : creation.finColor,
-        size: creation.size,
+      const saved = await createFish(
         aquariumId,
-      });
-
-      createdId = created.id;
-
-      const image =
-        creation.type === 'drawn'
-          ? creation.image
-          : creation.paintImage;
-
-      let saved = created;
-
-      if (image) {
-        saved = await fishApi.uploadTexture(
-          created.id,
-          await imageToBlob(image),
-        );
-      }
+        creation,
+        fish.length,
+      );
 
       const mapped = await mapApiFish(saved);
 
@@ -216,17 +194,10 @@ export function AquariumPage() {
         setDrawing(false);
       }
     } catch (err) {
-      // If texture upload fails, avoid leaving an incomplete fish.
-      if (createdId) {
-        try {
-          await fishApi.remove(createdId);
-        } catch {
-          // Preserve the original error.
-        }
-      }
-
       setError(
-        err instanceof Error ? err.message : 'Failed to create fish',
+        err instanceof Error
+          ? err.message
+          : 'Failed to create fish',
       );
     } finally {
       setBusy(false);

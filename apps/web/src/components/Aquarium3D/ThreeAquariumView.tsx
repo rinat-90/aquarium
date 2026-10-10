@@ -189,7 +189,11 @@ export function ThreeAquariumView({
           created.finColor,
           created.paintImage,
           created.size,
-          created.model === 'angelfish' ? 'angelfish' : 'classic',
+          created.model === 'angelfish'
+            ? 'angelfish'
+            : created.model === 'guppy'
+              ? 'guppy'
+              : 'classic',
         );
       }
 

@@ -8,6 +8,7 @@ const colorSchema = z
 const speciesSchema = z.enum([
   'classic',
   'angelfish',
+  'guppy',
   'drawn',
 ]);
 
