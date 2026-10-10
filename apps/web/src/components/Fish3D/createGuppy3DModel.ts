@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { Fish3DModel } from './createFish3DModel';
 
 export function createGuppy3DModel(): Fish3DModel {
@@ -231,17 +232,27 @@ export function createGuppy3DModel(): Fish3DModel {
   const rimMaterial = material(new THREE.MeshBasicMaterial({
     color: '#ffb4da', transparent: true, opacity: 0.55, depthWrite: false,
   }));
+  // Combine the three static rim tubes into a single tail child.
+  // The tail's existing animation continues to transform this mesh.
+  const rimGeometries: THREE.BufferGeometry[] = [];
   const addRim = (points: THREE.Vector3[]) => {
     const curve = new THREE.CatmullRomCurve3(points);
-    tail.add(new THREE.Mesh(geometry(new THREE.TubeGeometry(curve, points.length * 2, 0.011, 5, false)), rimMaterial));
+    rimGeometries.push(new THREE.TubeGeometry(curve, points.length * 2, 0.011, 5, false));
   };
   addRim(Array.from({ length: 49 }, (_, i) => tailPoint(1, i / 48, 0.006)));
   addRim(Array.from({ length: 25 }, (_, i) => tailPoint(i / 24, 0, 0.006)));
   addRim(Array.from({ length: 25 }, (_, i) => tailPoint(i / 24, 1, 0.006)));
+  const mergedRimGeometry = mergeGeometries(rimGeometries, false);
+  rimGeometries.forEach((g) => g.dispose());
+  if (!mergedRimGeometry) throw new Error('Failed to merge guppy tail rims');
+  const mergedRim = new THREE.Mesh(geometry(mergedRimGeometry), rimMaterial);
+  mergedRim.name = 'guppy-merged-tail-rims';
+  tail.add(mergedRim);
 
   const rayMaterial = material(new THREE.MeshBasicMaterial({
     color: '#e5d6ff', transparent: true, opacity: 0.34, depthWrite: false,
   }));
+  const rayGeometries: THREE.BufferGeometry[] = [];
   for (let j = 1; j < 18; j++) {
     const v = j / 18;
     const points: THREE.Vector3[] = [];
@@ -249,9 +260,14 @@ export function createGuppy3DModel(): Fish3DModel {
       const u = k / 12;
       points.push(tailPoint(u, v, 0.013));
     }
-    const ray = new THREE.Mesh(geometry(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 24, 0.004, 4, false)), rayMaterial);
-    tail.add(ray);
+    rayGeometries.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 24, 0.004, 4, false));
   }
+  const mergedRayGeometry = mergeGeometries(rayGeometries, false);
+  rayGeometries.forEach((g) => g.dispose());
+  if (!mergedRayGeometry) throw new Error('Failed to merge guppy tail rays');
+  const mergedRays = new THREE.Mesh(geometry(mergedRayGeometry), rayMaterial);
+  mergedRays.name = 'guppy-merged-tail-rays';
+  tail.add(mergedRays);
 
   // Swept dorsal fin, textured with the same blue/orange/purple mosaic.
   const dorsalShape = new THREE.Shape();
