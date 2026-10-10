@@ -31,6 +31,10 @@ import {
 
 import type {CreatedFish} from "../../types/fish.ts";
 
+import {
+  createGraphicsQualityController,
+} from './createGraphicsQualityController';
+
 type ThreeAquariumViewProps = {
   createdFish: CreatedFish[];
   /** Increment to drop a handful of pellets from the water surface. */
@@ -415,6 +419,9 @@ export function ThreeAquariumView({
         tankDepth,
       );
 
+    const graphicsQuality =
+      createGraphicsQualityController('high');
+
     /*
      * Dynamic water lighting.
      *
@@ -428,6 +435,7 @@ export function ThreeAquariumView({
         tankWidth,
         tankHeight,
         tankDepth,
+        graphicsQuality.getQuality(),
       );
 
     /*
@@ -969,6 +977,11 @@ export function ThreeAquariumView({
       const elapsed =
         clock.elapsedTime;
 
+      // Adapt water shader quality based on measured FPS.
+      const quality = graphicsQuality.update(deltaTime);
+      waterEffects.setQuality(quality);
+      waterEffects.update(deltaTime, elapsed);
+
       /*
        * Update the real 3D simulation.
        */
@@ -983,13 +996,6 @@ export function ThreeAquariumView({
         deltaTime,
         elapsed,
       );
-
-      waterEffects.update(
-        deltaTime,
-        elapsed,
-      );
-
-      sandCaustics.update(elapsed);
 
       /*
        * Synchronize food.
@@ -1122,11 +1128,18 @@ export function ThreeAquariumView({
          * original drawing readable.
          */
         view.update(
-          elapsed * (3.5 + speedRatio * 2),
-          0.55 + speedRatio * 0.45,
+          elapsed *
+          (
+            3.5 +
+            speedRatio * 2
+          ),
+
+          0.55 +
+          speedRatio * 0.45,
+
           fish.direction,
+
           fish.velocity.z,
-          fish.velocity.x,
         );
       }
 

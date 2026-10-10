@@ -14,6 +14,8 @@ export type WaterEffects = {
     elapsed: number,
   ) => void;
 
+  setQuality: (quality: WaterQuality) => void;
+
   destroy: () => void;
 };
 
@@ -137,9 +139,7 @@ void main() {
 }
 `,
 
-      fragmentShader: quality === 'low'
-        ? lowQualityFragmentShader
-        : `
+      fragmentShader: `
 varying vec2 vUv;
 
 uniform float uTime;
@@ -581,10 +581,24 @@ void main() {
 `,
     });
 
+  // Create both materials once; share uniform values so quality
+  // changes do not reset animation time or aspect ratio.
+  const lowMaterial = material.clone();
+  lowMaterial.fragmentShader = lowQualityFragmentShader;
+  lowMaterial.uniforms = material.uniforms;
+
+  let currentQuality: WaterQuality = quality;
+
+  const setQuality = (nextQuality: WaterQuality) => {
+    if (nextQuality === currentQuality) return;
+    currentQuality = nextQuality;
+    surface.material = nextQuality === 'low' ? lowMaterial : material;
+  };
+
   const surface =
     new THREE.Mesh(
       geometry,
-      material,
+      quality === 'low' ? lowMaterial : material,
     );
 
   /*
@@ -952,6 +966,7 @@ void main() {
 
     geometry.dispose();
     material.dispose();
+    lowMaterial.dispose();
 
     rayGeometry.dispose();
     rayMaterial.dispose();
@@ -961,6 +976,7 @@ void main() {
     setCamera,
     resize,
     update,
+    setQuality,
     destroy,
   };
 }
