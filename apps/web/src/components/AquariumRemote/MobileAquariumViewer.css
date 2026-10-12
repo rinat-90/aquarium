@@ -1,0 +1,68 @@
+.mobile-aquarium-viewer {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    width: 100vw;
+    height: 100dvh;
+    overflow: hidden;
+    background: #061522;
+}
+
+.mobile-aquarium-viewer__scene {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.mobile-aquarium-viewer__scene > * {
+    width: 100%;
+    height: 100%;
+}
+
+.mobile-aquarium-viewer__close {
+    position: absolute;
+    top: max(16px, env(safe-area-inset-top));
+    right: max(16px, env(safe-area-inset-right));
+    z-index: 10001;
+
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+
+    border: 1px solid #ffffff55;
+    border-radius: 50%;
+    background: #061522cc;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.mobile-aquarium-viewer__rotate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 24px;
+    box-sizing: border-box;
+    color: white;
+    text-align: center;
+}
+
+.mobile-aquarium-viewer__rotate-icon {
+    margin-bottom: 20px;
+    font-size: 64px;
+    transform: rotate(90deg);
+}
+
+.mobile-aquarium-viewer__rotate h2 {
+    margin: 0 0 8px;
+}
+
+.mobile-aquarium-viewer__rotate p {
+    color: #9db8c9;
+}

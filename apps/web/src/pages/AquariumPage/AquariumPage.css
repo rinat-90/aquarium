@@ -62,3 +62,34 @@
         max-width: none;
     }
 }
+
+@media (max-width: 767px) {
+    .aquarium-page {
+        position: relative;
+        width: 100%;
+        min-height: 100dvh;
+        height: auto;
+        overflow: visible;
+    }
+}
+
+@media (max-width: 767px) {
+    html,
+    body,
+    #root {
+        min-height: 100%;
+        height: auto;
+    }
+
+    body {
+        overflow-y: auto !important;
+    }
+
+    .aquarium-page {
+        position: relative;
+        width: 100%;
+        min-height: 100dvh;
+        height: auto !important;
+        overflow: visible !important;
+    }
+}

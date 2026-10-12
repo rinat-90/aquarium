@@ -22,6 +22,14 @@ import {createFish} from "../../lib/create-fish.ts";
 import { mapApiFish } from '../../lib/mapApiFish';
 import { useLiveAquariumFish } from '../../hooks/useLiveAquariumFish';
 
+import {
+  AquariumRemote,
+} from '../../components/AquariumRemote/AquariumRemote';
+
+import {
+  MobileAquariumViewer,
+} from '../../components/AquariumRemote/MobileAquariumViewer';
+
 const AQUARIUM_CAPACITY = 8;
 
 // async function imageToBlob(image: string): Promise<Blob> {
@@ -47,6 +55,23 @@ export function AquariumPage() {
   const [error, setError] = useState<string | null>(null);
   const [fishCollectionOpen, setFishCollectionOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const [mobileViewerOpen, setMobileViewerOpen] = useState(false);
+
+  const [isMobile, setIsMobile] = useState(
+    () => window.matchMedia('(max-width: 767px)').matches,
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)');
+
+    const update = () => setIsMobile(media.matches);
+
+    update();
+    media.addEventListener('change', update);
+
+    return () => media.removeEventListener('change', update);
+  }, []);
 
   const [renamedAquarium, setRenamedAquarium] = useState<{
     id: string;
@@ -246,29 +271,69 @@ export function AquariumPage() {
 
   return (
     <div className="aquarium-page">
-      <AquariumHUD
-        name={aquariumName}
-        fishCount={fish.length}
-        onBack={() => navigate('/aquariums')}
-        onAddFish={() => {
-          if (!aquarium?.id) return;
+      {isMobile ? (
+        mobileViewerOpen ? (
+          <MobileAquariumViewer
+            fish={fish}
+            feedSequence={feedSequence}
+            onClose={() => setMobileViewerOpen(false)}
+          />
+        ) : (
+          <AquariumRemote
+            name={aquariumName}
+            fish={fish}
+            onBack={() => navigate('/aquariums')}
+            onFeed={handleFeedFish}
+            onAddFish={() => {
+              if (!aquarium?.id) return;
 
-          navigate(`/fish/create?aquariumId=${encodeURIComponent(aquarium.id)}`);
-        }}
-        onViewFish={handleOpenFishList}
-        onFeed={handleFeedFish}
-        onSettings={() => {
-          setSettingsOpen(true);
-        }}
-      />
+              navigate(
+                `/fish/create?aquariumId=${encodeURIComponent(aquarium.id)}`,
+              );
+            }}
+            onSelectFish={handleOpenFishProfile}
+            onSettings={() => setSettingsOpen(true)}
+            onViewAquarium={() => setMobileViewerOpen(true)}
+          />
+        )
+      ) : (
+        <>
+          <AquariumHUD
+            name={aquariumName}
+            fishCount={fish.length}
+            onBack={() => navigate('/aquariums')}
+            onAddFish={() => {
+              if (!aquarium?.id) return;
 
-      <ThreeAquariumView
-        createdFish={fish}
-        onFishSelect={(selectedFish) => {
-          handleOpenFishProfile(selectedFish.id);
-        }}
-        feedSequence={feedSequence}
-      />
+              navigate(
+                `/fish/create?aquariumId=${encodeURIComponent(aquarium.id)}`,
+              );
+            }}
+            onViewFish={handleOpenFishList}
+            onFeed={handleFeedFish}
+            onSettings={() => setSettingsOpen(true)}
+          />
+
+          <ThreeAquariumView
+            createdFish={fish}
+            onFishSelect={(selectedFish) => {
+              handleOpenFishProfile(selectedFish.id);
+            }}
+            feedSequence={feedSequence}
+          />
+        </>
+      )}
+
+      {!isMobile && (
+        <button
+          type="button"
+          disabled={!aquarium || busy || fishLoading}
+          onClick={() => setDrawing(true)}
+          // Keep your existing styles and button contents
+        >
+          {/* Existing content */}
+        </button>
+      )}
 
       {(aquariumLoading || fishLoading) && (
         <div

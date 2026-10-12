@@ -1,0 +1,238 @@
+.aquarium-remote {
+    width: 100%;
+    min-height: 100dvh;
+    height: auto;
+    overflow: visible;
+    box-sizing: border-box;
+    padding:
+            max(20px, env(safe-area-inset-top))
+            20px
+            max(28px, env(safe-area-inset-bottom));
+
+    /* Keep your existing background and text styles */
+}
+
+.aquarium-remote button {
+    font: inherit;
+    cursor: pointer;
+}
+
+.aquarium-remote__header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.aquarium-remote__icon-button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border: 1px solid #24465c;
+    border-radius: 14px;
+    background: #102a3d;
+    color: #eaf6ff;
+    font-size: 22px !important;
+}
+
+.aquarium-remote__heading {
+    flex: 1;
+    min-width: 0;
+}
+
+.aquarium-remote__heading h1 {
+    margin: 0;
+    font-size: 21px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.aquarium-remote__heading span {
+    display: block;
+    margin-top: 4px;
+    color: #8db4c8;
+    font-size: 12px;
+}
+
+.aquarium-remote__hero {
+    padding: 28px 20px;
+    text-align: center;
+    border: 1px solid #21475c;
+    border-radius: 24px;
+    background: linear-gradient(160deg, #103d57, #0b263b);
+}
+
+.aquarium-remote__hero-icon {
+    font-size: 56px;
+    margin-bottom: 12px;
+}
+
+.aquarium-remote__hero h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+}
+
+.aquarium-remote__hero p {
+    max-width: 280px;
+    margin: 0 auto;
+    color: #a9c8d8;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.aquarium-remote__fish-count {
+    display: inline-block;
+    margin-top: 18px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: #174c63;
+    color: #b7f2f1;
+    font-size: 12px;
+}
+
+.aquarium-remote__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 18px 0 28px;
+}
+
+.aquarium-remote__action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    padding: 22px 10px;
+    border: 1px solid #21475c;
+    border-radius: 20px;
+    background: #102b40;
+    color: #eaf6ff;
+}
+
+.aquarium-remote__action:active,
+.aquarium-remote__fish-item:active,
+.aquarium-remote__view-button:active {
+    transform: scale(0.98);
+}
+
+.aquarium-remote__action-icon {
+    font-size: 32px;
+}
+
+.aquarium-remote__action strong {
+    font-size: 15px;
+}
+
+.aquarium-remote__action small {
+    color: #90b1c4;
+    font-size: 12px;
+}
+
+.aquarium-remote__section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.aquarium-remote__section-heading h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.aquarium-remote__section-heading span {
+    color: #8db4c8;
+    font-size: 12px;
+}
+
+.aquarium-remote__fish-list {
+    display: grid;
+    gap: 9px;
+}
+
+.aquarium-remote__fish-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #21475c;
+    border-radius: 16px;
+    background: #102b40;
+    color: #eaf6ff;
+    text-align: left;
+}
+
+.aquarium-remote__fish-avatar {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #1a4058;
+    font-size: 25px;
+}
+
+.aquarium-remote__fish-info {
+    display: grid;
+    gap: 4px;
+    flex: 1;
+}
+
+.aquarium-remote__fish-info strong {
+    font-size: 14px;
+}
+
+.aquarium-remote__fish-info small {
+    color: #90b1c4;
+    font-size: 12px;
+}
+
+.aquarium-remote__chevron {
+    color: #9ab9ca;
+    font-size: 25px;
+}
+
+.aquarium-remote__empty {
+    padding: 24px;
+    border: 1px dashed #31556b;
+    border-radius: 16px;
+    text-align: center;
+    color: #9ab9ca;
+}
+
+.aquarium-remote__view-button {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    margin-top: 24px;
+    padding: 17px;
+    border: 1px solid #34728b;
+    border-radius: 18px;
+    background: #12384d;
+    color: #eaf6ff;
+    text-align: left;
+}
+
+.aquarium-remote__view-icon {
+    font-size: 28px;
+}
+
+.aquarium-remote__view-button > span:nth-child(2) {
+    display: grid;
+    flex: 1;
+    gap: 5px;
+}
+
+.aquarium-remote__view-button strong {
+    font-size: 15px;
+}
+
+.aquarium-remote__view-button small {
+    color: #9fc4d4;
+    font-size: 12px;
+}
