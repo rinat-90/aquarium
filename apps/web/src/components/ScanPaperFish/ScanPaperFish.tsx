@@ -8,6 +8,12 @@ import { fishApi } from '../../lib/aquarium-api';
 import { removePaperBackground } from '../../lib/image-processing/removePaperBackground';
 import { cropDrawing } from '../../lib/image-processing/cropDrawing';
 import { createFishSilhouette } from '../../lib/image-processing/createFishSilhouette';
+import {
+  detectFishOrientation,
+  type FishOrientation,
+} from '../../lib/image-processing/detectFishOrientation';
+
+import { flipFishImage } from '../../lib/image-processing/flipFishImage';
 
 type ScanPaperFishProps = {
   aquariumId: string;
@@ -28,6 +34,10 @@ export function ScanPaperFish({
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
+  const [orientation, setOrientation] =
+    useState<FishOrientation>('right');
+
+  const [isFlipping, setIsFlipping] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,6 +71,10 @@ export function ScanPaperFish({
       const result = await removePaperBackground(file);
       const croppedResult = await cropDrawing(result);
       const silhouetteResult = await createFishSilhouette(croppedResult);
+      const detectedOrientation =
+        await detectFishOrientation(silhouetteResult);
+
+      setOrientation(detectedOrientation);
 
       setProcessedImage(silhouetteResult);
     } catch (err) {
@@ -123,6 +137,33 @@ export function ScanPaperFish({
       setSaving(false);
     }
   };
+
+
+  const handleFlip = async () => {
+    if (!processedImage || isFlipping || savingRef.current) return;
+
+    setIsFlipping(true);
+    setSaveError(null);
+
+    try {
+      const flipped = await flipFishImage(processedImage);
+
+      setProcessedImage(flipped);
+
+      setOrientation((current) =>
+        current === 'left' ? 'right' : 'left',
+      );
+    } catch (err) {
+      setSaveError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to flip fish.',
+      );
+    } finally {
+      setIsFlipping(false);
+    }
+  };
+
 
 
   return (
@@ -205,6 +246,28 @@ export function ScanPaperFish({
               }}
             />
 
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                marginTop: 16,
+              }}
+            >
+              <span>
+                Head facing: <strong>{orientation}</strong>
+              </span>
+
+              <button
+                type="button"
+                onClick={() => void handleFlip()}
+                disabled={isFlipping || saving}
+              >
+                {isFlipping ? 'Flipping...' : '↔ Flip Fish'}
+              </button>
+            </div>
+
             {saveError && (
               <p role="alert" style={{ color: '#ef4444' }}>
                 {saveError}
@@ -214,7 +277,7 @@ export function ScanPaperFish({
             <button
               type="button"
               onClick={() => void handleAddToAquarium()}
-              disabled={saving}
+              disabled={saving || isFlipping || isProcessing}
               style={{
                 width: '100%',
                 padding: '14px 20px',
