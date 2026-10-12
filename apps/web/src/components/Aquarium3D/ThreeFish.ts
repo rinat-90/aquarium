@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { detectFishOrientation } from '../../lib/image-processing/detectFishOrientation';
 
 export type ThreeFish = {
   group: THREE.Group;
@@ -34,6 +35,15 @@ export async function createThreeFish(
 
   const texture =
     await loader.loadAsync(image);
+
+  // Detect the original drawing's head direction.
+  let orientation: 'left' | 'right' = 'right';
+
+  try {
+    orientation = await detectFishOrientation(image);
+  } catch (error) {
+    console.warn('Fish orientation detection failed:', error);
+  }
 
   texture.colorSpace =
     THREE.SRGBColorSpace;
@@ -179,8 +189,10 @@ export async function createThreeFish(
      * Smoothly flip the fish instead of
      * instantly snapping between 1 and -1.
      */
+// Match the drawing's original orientation
+// to the direction of movement.
     const targetDirectionScale =
-      direction === 'right'
+      direction === orientation
         ? 1
         : -1;
 
@@ -232,9 +244,11 @@ export async function createThreeFish(
        * X=0 is therefore the tail and
        * X=1 is the head.
        */
+      // The tail is opposite the detected head direction.
       const tailAmount =
-        1 -
-        segment.normalizedX;
+        orientation === 'right'
+          ? 1 - segment.normalizedX
+          : segment.normalizedX;
 
       /*
        * Non-linear falloff keeps the head
