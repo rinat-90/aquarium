@@ -18,7 +18,13 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export type PairingResult =
   | { status: 'pending' }
-  | { status: 'paired'; token: string; aquariumId: string; expiresAt: string };
+  | { status: 'expired' }
+  | {
+  status: 'paired';
+  token: string;
+  aquariumId: string;
+  expiresAt: string;
+};
 
 export const tvPairingApi = {
   create: () => request<{ code: string; expiresAt: string }>('/api/tv/pairing', { method: 'POST' }),
