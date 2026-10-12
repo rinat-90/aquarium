@@ -770,11 +770,14 @@ export function ThreeAquariumView({
 
     // Both toolbar feeding and click-to-feed use the same engine and meshes.
     const spawnFood = (x: number, y: number, z: number) => {
-      const id = crypto.randomUUID();
+      const id = THREE.MathUtils.generateUUID();
+
       aquarium.addFood({ id, position: { x, y, z } });
+
       const pellet = new THREE.Mesh(foodGeometry, foodMaterial);
       pellet.position.set(x, y, z);
       scene.add(pellet);
+
       foodMeshesRef.current.set(id, pellet);
     };
 

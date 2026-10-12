@@ -110,6 +110,8 @@ export function TvAquariumPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [feedSequence, setFeedSequence] = useState(0);
+
   const enterFullscreen = async () => {
     try {
       if (!document.fullscreenElement) {
@@ -279,6 +281,17 @@ export function TvAquariumPage() {
       }
     };
 
+    const handleFeed = (event: {
+      aquariumId: string;
+      eventId: string;
+    }) => {
+      if (!active || event.aquariumId !== aquariumId) return;
+
+      setFeedSequence((current) => current + 1);
+    };
+
+    socket.on('aquarium:feed', handleFeed);
+
     socket.on('connect', join);
     socket.on('aquarium:changed', changed);
 
@@ -377,6 +390,7 @@ export function TvAquariumPage() {
     >
       <ThreeAquariumView
         createdFish={fish}
+        feedSequence={feedSequence}
         interactive={false}
         showDebugStats={false}
       />

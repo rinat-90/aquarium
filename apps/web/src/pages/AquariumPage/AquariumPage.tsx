@@ -1,5 +1,6 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { socket } from '../../lib/socket';
 
 import {
   aquariumApi,
@@ -63,7 +64,17 @@ export function AquariumPage() {
   const [feedSequence, setFeedSequence] = useState(0);
 
   const handleFeedFish = () => {
-    setFeedSequence((current) => current + 1);
+    if (!aquarium?.id) return;
+
+    socket.emit(
+      'aquarium:feed',
+      aquarium.id,
+      (result: { ok: boolean }) => {
+        if (!result.ok) {
+          console.warn('[Aquarium] Feeding rejected by server');
+        }
+      },
+    );
   };
 
   const usedCapacity = fish.reduce(
@@ -213,6 +224,25 @@ export function AquariumPage() {
       name: updated.name,
     });
   };
+
+  useEffect(() => {
+    if (!aquarium?.id) return;
+
+    const handleFeed = (event: {
+      aquariumId: string;
+      eventId: string;
+    }) => {
+      if (event.aquariumId !== aquarium.id) return;
+
+      setFeedSequence((current) => current + 1);
+    };
+
+    socket.on('aquarium:feed', handleFeed);
+
+    return () => {
+      socket.off('aquarium:feed', handleFeed);
+    };
+  }, [aquarium?.id]);
 
   return (
     <div className="aquarium-page">

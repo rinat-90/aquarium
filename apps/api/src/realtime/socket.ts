@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { Server as HttpServer } from 'node:http';
 import { Server } from 'socket.io';
 import { prisma } from '@aquarium/database';
@@ -149,6 +149,49 @@ export function initializeSocket(
       }
     });
 
+    socket.on(
+      'aquarium:feed',
+      async (
+        aquariumId: unknown,
+        acknowledge?: (result: JoinResult) => void,
+      ) => {
+        const userId = socket.data.userId as string | null;
+
+        if (
+          typeof aquariumId !== 'string' ||
+          !aquariumId ||
+          !userId
+        ) {
+          acknowledge?.({ ok: false });
+          return;
+        }
+
+        try {
+          const aquarium = await prisma.aquarium.findFirst({
+            where: {
+              id: aquariumId,
+              ownerId: userId,
+            },
+            select: { id: true },
+          });
+
+          if (!aquarium || !socket.connected) {
+            acknowledge?.({ ok: false });
+            return;
+          }
+
+          io?.to(aquariumRoom(aquariumId)).emit('aquarium:feed', {
+            aquariumId,
+            eventId: randomUUID(),
+          });
+
+          acknowledge?.({ ok: true });
+        } catch (error) {
+          console.error('[Socket] Failed to feed aquarium:', error);
+          acknowledge?.({ ok: false });
+        }
+      },
+    );
     socket.on('aquarium:leave', (aquariumId: unknown) => {
       if (typeof aquariumId === 'string' && socket.data.userId) {
         void socket.leave(aquariumRoom(aquariumId));
