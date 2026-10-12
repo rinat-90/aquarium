@@ -1,11 +1,13 @@
-
 import { useCallback, useEffect, useState } from 'react';
 import { ThreeAquariumView } from '../../components/Aquarium3D/ThreeAquariumView';
 import {
   TvPairingScreen,
   type TvDisplayCredentials,
 } from './TvPairingScreen';
-import { tvPairingApi } from '../../lib/tv-pairing-api';
+import {
+  tvPairingApi,
+  TvApiError,
+} from '../../lib/tv-pairing-api';
 import { createTvSocket } from '../../lib/tv-socket';
 import type { CreatedFish } from '../../types/fish';
 import type { ApiFish } from '../../lib/aquarium-api';
@@ -15,7 +17,15 @@ const MAX_TIMEOUT_MS = 2_147_483_647;
 
 function restore(): TvDisplayCredentials | null {
   try {
-    const value = sessionStorage.getItem(STORAGE_KEY);
+    // Migrate an existing pairing from session storage once.
+    const value =
+      localStorage.getItem(STORAGE_KEY) ??
+      sessionStorage.getItem(STORAGE_KEY);
+
+    if (value && !localStorage.getItem(STORAGE_KEY)) {
+      localStorage.setItem(STORAGE_KEY, value);
+      sessionStorage.removeItem(STORAGE_KEY);
+    }
 
     if (!value) {
       console.log('[TV] No saved display credentials');
@@ -32,6 +42,7 @@ function restore(): TvDisplayCredentials | null {
       !('expiresAt' in parsed)
     ) {
       console.warn('[TV] Saved credentials have invalid structure');
+      localStorage.removeItem(STORAGE_KEY);
       return null;
     }
 
@@ -43,6 +54,7 @@ function restore(): TvDisplayCredentials | null {
       typeof item.expiresAt !== 'string'
     ) {
       console.warn('[TV] Saved credentials have invalid fields');
+      localStorage.removeItem(STORAGE_KEY);
       return null;
     }
 
@@ -54,7 +66,7 @@ function restore(): TvDisplayCredentials | null {
         currentTime: new Date().toISOString(),
       });
 
-      sessionStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_KEY);
       return null;
     }
 
@@ -98,6 +110,16 @@ export function TvAquariumPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const enterFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch (err) {
+      console.warn('[TV] Fullscreen unavailable:', err);
+    }
+  };
+
   useEffect(() => {
     console.log('[TV] Aquarium page mounted');
 
@@ -125,9 +147,9 @@ export function TvAquariumPage() {
       remainingDays: remainingMs / 86_400_000,
     });
 
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
 
-    console.log('[TV] Display credentials saved to sessionStorage');
+    console.log('[TV] Display credentials saved to localStorage');
 
     setError(null);
     setLoading(true);
@@ -156,6 +178,7 @@ export function TvAquariumPage() {
       console.error('[TV] DISPLAY RESET:', reason);
       console.trace('[TV] Reset call stack');
 
+      localStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(STORAGE_KEY);
 
       setCredentials(null);
@@ -185,7 +208,7 @@ export function TvAquariumPage() {
             received: result.aquariumId,
           });
 
-          setError('The display token belongs to another aquarium.');
+          reset('The display token belongs to another aquarium');
           return;
         }
 
@@ -210,11 +233,10 @@ export function TvAquariumPage() {
         console.error('[TV] Fish API failed:', message);
 
         if (
-          /\b401\b|\b403\b|unauthorized|forbidden|expired|revoked/i.test(
-            message,
-          )
+          err instanceof TvApiError &&
+          (err.status === 401 || err.status === 403)
         ) {
-          reset(`Fish API rejected credentials: ${message}`);
+          reset(`Display session rejected (${err.status})`);
           return;
         }
 
@@ -358,6 +380,25 @@ export function TvAquariumPage() {
         interactive={false}
         showDebugStats={false}
       />
+
+      <button
+        type="button"
+        onClick={() => void enterFullscreen()}
+        style={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          zIndex: 100,
+          padding: '12px 20px',
+          borderRadius: 12,
+          background: 'rgba(0, 30, 50, 0.75)',
+          color: '#fff',
+          border: '1px solid rgba(255,255,255,0.3)',
+          cursor: 'pointer',
+        }}
+      >
+        ⛶ Fullscreen
+      </button>
 
       {(loading || error) && (
         <div

@@ -1,18 +1,45 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
+export class TvApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'TvApiError';
+    this.status = status;
+  }
+}
+
+async function request<T>(
+  path: string,
+  options?: RequestInit,
+): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     credentials: 'include',
     cache: 'no-store',
     ...options,
-    headers: { ...(options?.body ? { 'Content-Type': 'application/json' } : {}), ...options?.headers },
+    headers: {
+      ...(options?.body
+        ? { 'Content-Type': 'application/json' }
+        : {}),
+      ...options?.headers,
+    },
   });
+
   const data: unknown = await response.json().catch(() => null);
+
   if (!response.ok) {
-    const message = data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
-      ? data.error : `Request failed (${response.status})`;
-    throw new Error(message);
+    const message =
+      data &&
+      typeof data === 'object' &&
+      'error' in data &&
+      typeof data.error === 'string'
+        ? data.error
+        : `Request failed (${response.status})`;
+
+    throw new TvApiError(response.status, message);
   }
+
   return data as T;
 }
 
