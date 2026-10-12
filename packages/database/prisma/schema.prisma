@@ -106,3 +106,33 @@ model Verification {
   @@index([identifier])
   @@map("verification")
 }
+
+model TvPairingSession {
+  id               String    @id @default(cuid())
+  codeHash         String    @unique
+  status           String    @default("pending")
+  aquariumId       String?
+  approvedByUserId String?
+  expiresAt        DateTime
+  createdAt        DateTime  @default(now())
+  approvedAt       DateTime?
+  consumedAt       DateTime?
+
+  @@index([expiresAt])
+  @@index([status])
+}
+
+model TvDisplaySession {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  aquariumId String
+  ownerId    String
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+  lastSeenAt DateTime?
+
+  @@index([aquariumId])
+  @@index([ownerId])
+  @@index([expiresAt])
+}

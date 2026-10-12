@@ -22,17 +22,35 @@ import { auth } from './lib/auth.js';
 import { aquariumRoutes } from './routes/aquariums.js';
 import { fishRoutes } from './routes/fish.js';
 import { fishTextureRoutes } from './routes/fish-textures.js';
+import { tvPairingRoutes } from './routes/tv-pairing.js';
 
 const app = Fastify({
   logger: true,
 });
+
+// Allowed frontend origins.
+// WEB_URL can contain comma-separated origins.
+const allowedOrigins = [
+  process.env.WEB_URL ?? 'http://localhost:5173',
+  ...(process.env.NODE_ENV !== 'production'
+    ? [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://192.168.86.23:5173',
+    ]
+    : []),
+]
+  .flatMap((value) => value.split(','))
+  .map((value) => value.trim())
+  .filter((value, index, array) =>
+    value.length > 0 && array.indexOf(value) === index,
+  );
 
 // Zod request validation and response serialization.
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
 // Consistent API error responses.
-
 app.setErrorHandler((error, request, reply) => {
   if (hasZodFastifySchemaValidationErrors(error)) {
     return reply.code(400).send({
@@ -44,7 +62,6 @@ app.setErrorHandler((error, request, reply) => {
     });
   }
 
-  // Safely extract properties from unknown errors.
   const statusCode =
     error !== null &&
     typeof error === 'object' &&
@@ -77,20 +94,27 @@ app.setErrorHandler((error, request, reply) => {
   });
 });
 
-
 async function start() {
   try {
+    // Socket.IO receives the same allowed origins.
+    initializeSocket(app.server, allowedOrigins);
+
     // Register CORS before all routes, including Better Auth.
-    const webOrigin =
-      process.env.WEB_URL ?? 'http://localhost:5173';
-
-    initializeSocket(app.server, webOrigin);
-
     await app.register(cors, {
-      origin: webOrigin,
+      origin: allowedOrigins,
       credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
+      methods: [
+        'GET',
+        'POST',
+        'PUT',
+        'PATCH',
+        'DELETE',
+        'OPTIONS',
+      ],
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+      ],
     });
 
     // Multipart uploads for fish PNG textures.
@@ -186,6 +210,7 @@ async function start() {
     await app.register(aquariumRoutes);
     await app.register(fishRoutes);
     await app.register(fishTextureRoutes);
+    await app.register(tvPairingRoutes);
 
     // Start API server.
     await app.listen({
@@ -193,7 +218,10 @@ async function start() {
       host: process.env.HOST ?? '0.0.0.0',
     });
 
-    app.log.info('Aquarium API is running');
+    app.log.info(
+      { allowedOrigins },
+      'Aquarium API is running',
+    );
   } catch (error) {
     app.log.error(error);
     process.exitCode = 1;

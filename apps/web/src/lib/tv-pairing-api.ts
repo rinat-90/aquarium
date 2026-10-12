@@ -1,0 +1,33 @@
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
+
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, {
+    credentials: 'include',
+    cache: 'no-store',
+    ...options,
+    headers: { ...(options?.body ? { 'Content-Type': 'application/json' } : {}), ...options?.headers },
+  });
+  const data: unknown = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
+      ? data.error : `Request failed (${response.status})`;
+    throw new Error(message);
+  }
+  return data as T;
+}
+
+export type PairingResult =
+  | { status: 'pending' }
+  | { status: 'paired'; token: string; aquariumId: string; expiresAt: string };
+
+export const tvPairingApi = {
+  create: () => request<{ code: string; expiresAt: string }>('/api/tv/pairing', { method: 'POST' }),
+  poll: (code: string) => request<PairingResult>(`/api/tv/pairing/${encodeURIComponent(code)}`),
+  approve: (code: string, aquariumId: string) => request<{ ok: boolean }>(
+    `/api/tv/pairing/${encodeURIComponent(code)}/approve`,
+    { method: 'POST', body: JSON.stringify({ aquariumId }) },
+  ),
+  fish: (token: string) => request<{ aquariumId: string; fish: import('./aquarium-api').ApiFish[] }>(
+    '/api/tv/display/fish', { headers: { Authorization: `Bearer ${token}` } },
+  ),
+};

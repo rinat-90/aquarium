@@ -7,6 +7,14 @@ import './AuthScreen.css';
 export function AuthScreen() {
   const location = useLocation();
   const navigate = useNavigate();
+  const redirectParam = new URLSearchParams(location.search).get('redirect');
+
+  const redirectTo =
+    redirectParam?.startsWith('/tv/pair/') &&
+    !redirectParam.includes('\\')
+      ? redirectParam
+      : '/aquariums';
+
   const { data: session, isPending } = authClient.useSession();
 
   const isSignUp = location.pathname === '/signup';
@@ -23,7 +31,7 @@ export function AuthScreen() {
   }
 
   if (session) {
-    return <Navigate to="/aquariums" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -48,7 +56,7 @@ export function AuthScreen() {
         return;
       }
 
-      navigate('/aquariums', { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch {
       setError('Unable to connect to the server. Please try again.');
     } finally {
@@ -180,7 +188,7 @@ export function AuthScreen() {
           <p className="auth-switch">
             {isSignUp ? 'Already have an account?' : 'New to our ocean?'}{' '}
             <Link
-              to={isSignUp ? '/login' : '/signup'}
+              to={`${isSignUp ? '/login' : '/signup'}${location.search}`}
               onClick={() => setError('')}
             >
               {isSignUp ? 'Sign in' : 'Create an account'}

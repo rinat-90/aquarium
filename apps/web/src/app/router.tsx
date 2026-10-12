@@ -6,6 +6,8 @@ import { AppLayout } from '../layout/AppLayout';
 
 import { AquariumsPage } from '../pages/AquariumsPage/AquariumsPage';
 import { AquariumPage } from '../pages/AquariumPage/AquariumPage';
+import { TvAquariumPage } from '../pages/TvAquariumPage/TvAquariumPage';
+import { TvPairPage } from '../pages/TvPairPage/TvPairPage';
 import { CreateFishPage } from '../pages/CreateFishPage/CreateFishPage';
 import { DrawFishPage } from '../pages/DrawFishPage/DrawFishPage';
 import { CustomizeFishPage } from '../pages/CustomizeFishPage/CustomizeFishPage';
@@ -18,6 +20,8 @@ export const router = createBrowserRouter([
     path: '/',
     element: <Navigate to="/aquariums" replace />,
   },
+
+  // Authentication.
   {
     path: '/login',
     element: <AuthScreen />,
@@ -26,6 +30,19 @@ export const router = createBrowserRouter([
     path: '/signup',
     element: <AuthScreen />,
   },
+
+  // Public TV routes.
+  // TVs don't need a Better Auth session.
+  {
+    path: '/tv',
+    element: <TvAquariumPage />,
+  },
+  {
+    path: '/tv/pair/:code',
+    element: <TvPairPage />,
+  },
+
+  // Authenticated application routes.
   {
     element: <ProtectedRoute />,
     children: [
@@ -48,10 +65,17 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // Full-screen aquarium experience.
+      // Full-screen aquarium editor.
       {
         path: '/aquariums/:id',
         element: <AquariumPage />,
+      },
+
+      // Legacy authenticated TV route.
+      // Keep temporarily for development/testing.
+      {
+        path: '/tv/:aquariumId',
+        element: <TvAquariumPage />,
       },
 
       // Full-screen fish creation editors.

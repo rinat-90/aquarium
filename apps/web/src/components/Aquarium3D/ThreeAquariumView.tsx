@@ -43,6 +43,10 @@ type ThreeAquariumViewProps = {
   onFishSelect?: (
     fish: CreatedFish,
   ) => void;
+  /** Disable fish selection and click-to-feed on display-only screens. */
+  interactive?: boolean;
+  /** Show renderer performance statistics. */
+  showDebugStats?: boolean;
 };
 
 type RenderedFish = {
@@ -53,6 +57,8 @@ export function ThreeAquariumView({
                                     createdFish,
                                     feedSequence = 0,
                                     onFishSelect,
+                                    interactive = true,
+                                    showDebugStats = import.meta.env.DEV,
                                   }: ThreeAquariumViewProps) {
   const containerRef =
     useRef<HTMLDivElement>(null);
@@ -931,11 +937,12 @@ export function ThreeAquariumView({
       spawnFood(x, y, z);
     };
 
-    renderer.domElement
-      .addEventListener(
+    if (interactive) {
+      renderer.domElement.addEventListener(
         'pointerdown',
         handlePointerDown,
       );
+    }
 
     /*
      * Existing persisted fish.
@@ -962,7 +969,7 @@ export function ThreeAquariumView({
       new THREE.Clock();
 
     // Development-only overlay: no React re-renders and no production DOM.
-    const fpsOverlay = import.meta.env.DEV || import.meta.env.PROD
+    const fpsOverlay = showDebugStats
       ? document.createElement('div')
       : null;
 
@@ -1351,7 +1358,7 @@ export function ThreeAquariumView({
       fpsOverlay?.remove();
       renderer.domElement.remove();
     };
-  }, []);
+  }, [interactive, showDebugStats]);
 
   return (
     <div

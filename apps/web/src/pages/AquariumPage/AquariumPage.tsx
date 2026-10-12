@@ -1,14 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { socket } from '../../lib/socket';
 
 import {
   aquariumApi,
   fishApi,
-  type ApiFish,
 } from '../../lib/aquarium-api';
 
-import type {CreatedFish} from "../../types/fish.ts";
 import {
   FishDrawingCanvas,
   type FishCreation,
@@ -21,6 +18,8 @@ import { FishPanel } from '../../components/FishPanel/FishPanel';
 import './AquariumPage.css';
 import {AquariumSettingsPanel} from "../../components/FishPanel/AquariumSettingsPanel.tsx";
 import {createFish} from "../../lib/create-fish.ts";
+import { mapApiFish } from '../../lib/mapApiFish';
+import { useLiveAquariumFish } from '../../hooks/useLiveAquariumFish';
 
 const AQUARIUM_CAPACITY = 8;
 
@@ -28,49 +27,6 @@ const AQUARIUM_CAPACITY = 8;
 //   const response = await fetch(image);
 //   return response.blob();
 // }
-
-async function mapApiFish(item: ApiFish): Promise<CreatedFish> {
-  let texture: string | undefined;
-
-  if (item.paintKey) {
-    const blob = await fishApi.getTexture(item.id);
-    texture = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error('Failed to read texture'));
-      reader.readAsDataURL(blob);
-    });
-  }
-
-  if (item.species === 'drawn') {
-    return {
-      id: item.id,
-      type: 'drawn',
-      image: texture ?? '',
-      size: item.size,
-      name: item.name,
-      createdAt: item.createdAt,
-    };
-  }
-
-  return {
-    id: item.id,
-    type: '3d',
-    model:
-      item.species === 'angelfish'
-        ? 'angelfish'
-        : item.species === 'guppy'
-          ? 'guppy'
-          : 'basic',
-    bodyColor: item.bodyColor,
-    finColor: item.finColor,
-    paintImage: texture,
-    size: item.size,
-    name: item.name,
-    createdAt: item.createdAt,
-  };
-}
 
 export function AquariumPage() {
   const navigate = useNavigate();
@@ -83,17 +39,13 @@ export function AquariumPage() {
     error: aquariumError,
   } = useAquarium(aquariumId);
 
-  const [fish, setFish] = useState<CreatedFish[]>([]);
+  const { fish, setFish, loading: fishLoading, error: fishError } = useLiveAquariumFish(aquarium?.id);
   const [drawing, setDrawing] = useState(false);
   const [selectedFishId, setSelectedFishId] = useState<string | null>(null);
-  const [fishLoading, setFishLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fishCollectionOpen, setFishCollectionOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-
-  const [refreshVersion, setRefreshVersion] = useState(0);
-  const lastLoadVersion = useRef(0);
 
   const [renamedAquarium, setRenamedAquarium] = useState<{
     id: string;
@@ -113,116 +65,6 @@ export function AquariumPage() {
   const handleFeedFish = () => {
     setFeedSequence((current) => current + 1);
   };
-
-  useEffect(() => {
-    if (!aquarium?.id) {
-      setFish([]);
-      setFishLoading(false);
-      return;
-    }
-
-    const aquariumId = aquarium.id;
-    const version = ++lastLoadVersion.current;
-    let cancelled = false;
-
-    async function loadFish() {
-      setFishLoading(true);
-
-      try {
-        const items = await fishApi.list();
-
-        const matching = items.filter(
-          (item) => item.aquariumId === aquariumId,
-        );
-
-        const mapped = await Promise.all(
-          matching.map(mapApiFish),
-        );
-
-        if (
-          !cancelled &&
-          version === lastLoadVersion.current
-        ) {
-          setFish(mapped);
-          setError(null);
-        }
-      } catch (err) {
-        if (
-          !cancelled &&
-          version === lastLoadVersion.current
-        ) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'Failed to load fish',
-          );
-        }
-      } finally {
-        if (
-          !cancelled &&
-          version === lastLoadVersion.current
-        ) {
-          setFishLoading(false);
-        }
-      }
-    }
-
-    void loadFish();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [aquarium?.id, refreshVersion]);
-
-  useEffect(() => {
-    if (!aquarium?.id) return;
-
-    const aquariumId = aquarium.id;
-
-    const refresh = () => {
-      setRefreshVersion((value) => value + 1);
-    };
-
-    const joinAquarium = () => {
-      socket.emit(
-        'aquarium:join',
-        aquariumId,
-        (result: { ok: boolean }) => {
-          if (result.ok) {
-            // Reload after joining to avoid missing changes
-            // between the initial REST request and subscription.
-            refresh();
-          } else {
-            console.warn('Failed to join aquarium room');
-          }
-        },
-      );
-    };
-
-    const handleChanged = (event: {
-      aquariumId: string;
-    }) => {
-      if (event.aquariumId === aquariumId) {
-        refresh();
-      }
-    };
-
-    socket.on('connect', joinAquarium);
-    socket.on('aquarium:changed', handleChanged);
-
-    socket.connect();
-
-    if (socket.connected) {
-      joinAquarium();
-    }
-
-    return () => {
-      socket.emit('aquarium:leave', aquariumId);
-      socket.off('connect', joinAquarium);
-      socket.off('aquarium:changed', handleChanged);
-      socket.disconnect();
-    };
-  }, [aquarium?.id]);
 
   const usedCapacity = fish.reduce(
     (total, item) => total + item.size * item.size,
@@ -414,7 +256,7 @@ export function AquariumPage() {
         </div>
       )}
 
-      {(error || aquariumError) && (
+      {(error || fishError || aquariumError) && (
         <div
           role="alert"
           style={{
@@ -429,7 +271,7 @@ export function AquariumPage() {
             maxWidth: 320,
           }}
         >
-          {error || aquariumError}
+          {error || fishError || aquariumError}
         </div>
       )}
 
