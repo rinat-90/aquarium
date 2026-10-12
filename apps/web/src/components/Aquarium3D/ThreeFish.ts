@@ -261,33 +261,29 @@ export async function createThreeFish(
       /*
        * Move slices slightly through depth.
        */
-      segment.mesh.position.z =
-        wave *
-        bendStrength *
-        0.105;
-
-      /*
-       * Very small vertical movement.
-       */
+      // Side-to-side tail movement, visible from the front.
       segment.mesh.position.y =
         wave *
         bendStrength *
-        0.012;
+        0.035;
 
-      /*
-       * Rotation creates the visual body
-       * bend without heavily deforming the
-       * original drawing.
-       */
+      // Slight depth movement adds a 3D swimming effect.
+      segment.mesh.position.z =
+        wave *
+        bendStrength *
+        0.065;
+
+      // Rotate each segment around its vertical axis.
       segment.mesh.rotation.y =
         wave *
         bendStrength *
-        0.14;
+        0.22;
 
+      // Gentle visible bending of the tail.
       segment.mesh.rotation.z =
         wave *
         bendStrength *
-        0.006;
+        0.018;
 
       /*
        * Preserve the source drawing's
