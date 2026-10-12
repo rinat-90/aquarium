@@ -1,42 +1,38 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type ProxyOptions } from 'vite';
 import react from '@vitejs/plugin-react';
 
 const API_TARGET =
-  process.env.API_PROXY_TARGET ??
-  'http://localhost:3001';
+  process.env.API_PROXY_TARGET ?? 'http://localhost:3001';
+
+const createProxy = (): Record<string, string | ProxyOptions> => ({
+  '/api': {
+    target: API_TARGET,
+    changeOrigin: true,
+  },
+  '/aquariums': {
+    target: API_TARGET,
+    changeOrigin: true,
+  },
+  '/fish': {
+    target: API_TARGET,
+    changeOrigin: true,
+  },
+  '/socket.io': {
+    target: API_TARGET,
+    changeOrigin: true,
+    ws: true,
+  },
+});
 
 export default defineConfig({
   plugins: [react()],
 
   server: {
-    proxy: {
-      '/api': {
-        target: API_TARGET,
-        changeOrigin: true,
-      },
-      '/socket.io': {
-        target: API_TARGET,
-        changeOrigin: true,
-        ws: true,
-      },
-    },
+    proxy: createProxy(),
   },
 
   preview: {
-    allowedHosts: [
-      'aquariumweb-production.up.railway.app',
-    ],
-
-    proxy: {
-      '/api': {
-        target: API_TARGET,
-        changeOrigin: true,
-      },
-      '/socket.io': {
-        target: API_TARGET,
-        changeOrigin: true,
-        ws: true,
-      },
-    },
+    allowedHosts: ['aquariumweb-production.up.railway.app'],
+    proxy: createProxy(),
   },
 });
