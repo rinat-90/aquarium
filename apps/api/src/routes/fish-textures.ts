@@ -5,6 +5,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { prisma } from '@aquarium/database';
 import { getAuthenticatedUser } from '../lib/get-authenticated-user.js';
 import { fishIdParamsSchema } from '../schemas/fish.schema.js';
+import { notifyAquariumChanged } from '../realtime/socket.js';
 
 import {
   mkdir,
@@ -134,6 +135,7 @@ export async function fishTextureRoutes(app: FastifyInstance) {
         },
         select: {
           id: true,
+          aquariumId: true,
           paintKey: true,
         },
       });
@@ -220,6 +222,12 @@ export async function fishTextureRoutes(app: FastifyInstance) {
         await unlink(filePath).catch(() => {});
 
         throw error;
+      }
+
+      // Notify connected aquariums after the drawing texture
+      // has been saved and linked to the fish.
+      if (fish.aquariumId) {
+        notifyAquariumChanged(fish.aquariumId);
       }
 
       // Remove the previous texture after the new one is saved.

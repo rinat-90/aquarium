@@ -82,8 +82,51 @@ function restore(): TvDisplayCredentials | null {
   }
 }
 
-function mapDisplayFish(item: ApiFish): CreatedFish | null {
-  if (item.species === 'drawn') return null;
+async function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Failed to read fish texture'));
+
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function mapDisplayFish(
+  item: ApiFish,
+  token: string,
+): Promise<CreatedFish | null> {
+  let texture: string | undefined;
+
+  if (item.paintKey) {
+    try {
+      const blob = await tvPairingApi.texture(token, item.id);
+      texture = await blobToDataUrl(blob);
+    } catch (error) {
+      console.error('[TV] Failed to load texture', {
+        fishId: item.id,
+        error,
+      });
+
+      if (item.species === 'drawn') {
+        return null;
+      }
+    }
+  }
+
+  if (item.species === 'drawn') {
+    if (!texture) return null;
+
+    return {
+      id: item.id,
+      type: 'drawn',
+      image: texture,
+      size: item.size,
+      name: item.name,
+      createdAt: item.createdAt,
+    };
+  }
 
   return {
     id: item.id,
@@ -96,6 +139,7 @@ function mapDisplayFish(item: ApiFish): CreatedFish | null {
           : 'basic',
     bodyColor: item.bodyColor,
     finColor: item.finColor,
+    paintImage: texture,
     size: item.size,
     name: item.name,
     createdAt: item.createdAt,
@@ -214,9 +258,15 @@ export function TvAquariumPage() {
           return;
         }
 
-        const mappedFish = result.fish
-          .map(mapDisplayFish)
-          .filter((item): item is CreatedFish => item !== null);
+        const mapped = await Promise.all(
+          result.fish.map((item) => mapDisplayFish(item, token)),
+        );
+
+        if (!active || id !== requestId) return;
+
+        const mappedFish = mapped.filter(
+          (item): item is CreatedFish => item !== null,
+        );
 
         setFish(mappedFish);
         setError(null);

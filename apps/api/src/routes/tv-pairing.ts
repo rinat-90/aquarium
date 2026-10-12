@@ -4,6 +4,9 @@ import { prisma } from '@aquarium/database';
 import { auth } from '../lib/auth.js';
 import { disconnectTvDisplaySession } from '../realtime/socket.js';
 
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
 const PAIRING_TTL_MS = 5 * 60 * 1000;
 const DISPLAY_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -133,6 +136,101 @@ export async function tvPairingRoutes(app: FastifyInstance) {
     });
     return { aquariumId: aquarium.id, fish };
   });
+
+  app.get<{ Params: { fishId: string } }>(
+    '/api/tv/display/fish/:fishId/texture',
+    async (request, reply) => {
+      const token = bearerToken(request);
+
+      if (!token) {
+        return reply.code(401).send({
+          error: 'Display token required',
+        });
+      }
+
+      const session = await prisma.tvDisplaySession.findUnique({
+        where: {
+          tokenHash: hashSecret(token),
+        },
+      });
+
+      if (
+        !session ||
+        session.revokedAt ||
+        session.expiresAt <= new Date()
+      ) {
+        return reply.code(401).send({
+          error: 'Invalid or expired display token',
+        });
+      }
+
+      const aquarium = await prisma.aquarium.findFirst({
+        where: {
+          id: session.aquariumId,
+          ownerId: session.ownerId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!aquarium) {
+        return reply.code(403).send({
+          error: 'Aquarium access revoked',
+        });
+      }
+
+      const fish = await prisma.fish.findFirst({
+        where: {
+          id: request.params.fishId,
+          aquariumId: aquarium.id,
+          ownerId: session.ownerId,
+        },
+        select: {
+          paintKey: true,
+        },
+      });
+
+      if (!fish?.paintKey) {
+        return reply.code(404).send({
+          error: 'Fish texture not found',
+        });
+      }
+
+      const textureKeyPattern =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.png$/i;
+
+      if (!textureKeyPattern.test(fish.paintKey)) {
+        return reply.code(500).send({
+          error: 'Invalid texture key',
+        });
+      }
+
+      const storageDir =
+        process.env.STORAGE_DIR ??
+        join(process.cwd(), 'storage', 'fish-textures');
+
+      try {
+        const buffer = await readFile(
+          join(storageDir, fish.paintKey),
+        );
+
+        return reply
+          .type('image/png')
+          .header('Cache-Control', 'private, no-store')
+          .send(buffer);
+      } catch (error) {
+        request.log.error(
+          { err: error },
+          'Failed to read TV fish texture',
+        );
+
+        return reply.code(404).send({
+          error: 'Texture file not found',
+        });
+      }
+    },
+  );
 
   // Owner: revoke an active TV display session.
   app.post<{ Params: { sessionId: string } }>(

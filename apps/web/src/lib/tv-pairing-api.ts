@@ -63,4 +63,22 @@ export const tvPairingApi = {
   fish: (token: string) => request<{ aquariumId: string; fish: import('./aquarium-api').ApiFish[] }>(
     '/api/tv/display/fish', { headers: { Authorization: `Bearer ${token}` } },
   ),
+  texture: async (token: string, fishId: string): Promise<Blob> => {
+    const response = await fetch(
+      `${API_URL}/api/tv/display/fish/${encodeURIComponent(fishId)}/texture`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to load TV fish texture (${response.status})`,
+      );
+    }
+
+    return response.blob();
+  },
 };
