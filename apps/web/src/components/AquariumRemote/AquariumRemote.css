@@ -236,3 +236,11 @@
     color: #9fc4d4;
     font-size: 12px;
 }
+
+.aquarium-remote__action--scan {
+    grid-column: 1 / -1;
+}
+
+.aquarium-remote__action--scan .aquarium-remote__action-icon {
+    font-size: 2rem;
+}

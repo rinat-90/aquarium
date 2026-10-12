@@ -280,6 +280,7 @@ export function AquariumPage() {
           />
         ) : (
           <AquariumRemote
+            aquariumId={aquariumId}
             name={aquariumName}
             fish={fish}
             onBack={() => navigate('/aquariums')}
