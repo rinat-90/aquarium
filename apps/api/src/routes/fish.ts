@@ -59,6 +59,7 @@ export async function fishRoutes(app: FastifyInstance) {
         finColor,
         size,
         aquariumId,
+        headDirection,
       } = request.body;
 
       if (aquariumId) {
@@ -86,6 +87,7 @@ export async function fishRoutes(app: FastifyInstance) {
           ...(bodyColor !== undefined && { bodyColor }),
           ...(finColor !== undefined && { finColor }),
           ...(size !== undefined && { size }),
+          ...(headDirection !== undefined && { headDirection }),
           ...(aquariumId !== undefined && { aquariumId }),
           ownerId: user.id,
         },
@@ -159,6 +161,7 @@ export async function fishRoutes(app: FastifyInstance) {
         finColor,
         size,
         aquariumId,
+        headDirection,
       } = request.body;
 
       // Verify ownership before assigning an aquarium.
@@ -208,6 +211,7 @@ export async function fishRoutes(app: FastifyInstance) {
           ...(bodyColor !== undefined && { bodyColor }),
           ...(finColor !== undefined && { finColor }),
           ...(size !== undefined && { size }),
+          ...(headDirection !== undefined && { headDirection }),
           ...(aquariumId !== undefined && { aquariumId }),
         },
       });

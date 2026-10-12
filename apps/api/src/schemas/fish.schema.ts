@@ -14,6 +14,8 @@ const speciesSchema = z.enum([
 
 const sizeSchema = z.number().min(0.1).max(5);
 
+const headDirectionSchema = z.enum(['left', 'right']);
+
 export const fishIdParamsSchema = z.strictObject({
   id: z.string().min(1, 'Fish ID is required'),
 });
@@ -23,6 +25,7 @@ export const createFishSchema = z.strictObject({
   species: speciesSchema.optional(),
   bodyColor: colorSchema.optional(),
   finColor: colorSchema.optional(),
+  headDirection: headDirectionSchema.optional(),
   size: sizeSchema.optional(),
   aquariumId: z.string().min(1).optional(),
 });
@@ -33,6 +36,7 @@ export const updateFishSchema = z
     species: speciesSchema.optional(),
     bodyColor: colorSchema.optional(),
     finColor: colorSchema.optional(),
+    headDirection: headDirectionSchema.optional(),
     size: sizeSchema.optional(),
     aquariumId: z.string().min(1).nullable().optional(),
   })

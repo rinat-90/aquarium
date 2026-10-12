@@ -201,6 +201,7 @@ export function ThreeAquariumView({
         view = await createThreeFish(
           created.image,
           1.3 * created.size,
+          created.headDirection,
         );
       } else {
         view = createThreeModelFish(

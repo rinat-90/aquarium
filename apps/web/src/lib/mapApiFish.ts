@@ -31,6 +31,7 @@ export async function mapApiFish(item: ApiFish): Promise<CreatedFish> {
       size: item.size,
       name: item.name,
       createdAt: item.createdAt,
+      headDirection: item.headDirection,
     };
   }
 

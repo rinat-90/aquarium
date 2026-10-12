@@ -14,6 +14,7 @@ export type ApiFish = {
   finColor: string;
   paintKey: string | null;
   size: number;
+  headDirection: 'left' | 'right' | null;
   ownerId: string;
   aquariumId: string | null;
   createdAt: string;
@@ -38,6 +39,7 @@ export type CreateFishInput = {
   finColor: string;
   size: number;
   aquariumId?: string;
+  headDirection?: 'left' | 'right';
 };
 
 export type UpdateFishInput = Partial<{
@@ -46,6 +48,7 @@ export type UpdateFishInput = Partial<{
   finColor: string;
   size: number;
   aquariumId: string | null;
+  headDirection: 'left' | 'right';
 }>;
 
 // Aquarium API

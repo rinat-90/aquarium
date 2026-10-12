@@ -5,6 +5,7 @@ type DrawnFish = {
   size: number;
   name: string;
   createdAt: string;
+  headDirection?: 'left' | 'right' | null;
 };
 
 type ThreeDFish = {

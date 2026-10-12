@@ -32,16 +32,26 @@ export async function createFish(
             : creation.model === 'guppy'
               ? 'guppy'
               : 'classic',
+
       bodyColor:
         creation.type === 'drawn'
           ? '#4F9CF9'
           : creation.bodyColor,
+
       finColor:
         creation.type === 'drawn'
           ? '#3B82F6'
           : creation.finColor,
+
       size: creation.size,
       aquariumId,
+
+      // Persist the selected orientation for drawn fish.
+      // Existing drawings without this property still work.
+      ...(creation.type === 'drawn' &&
+        creation.headDirection && {
+          headDirection: creation.headDirection,
+        }),
     });
 
     createdId = created.id;

@@ -117,6 +117,7 @@ export function ScanPaperFish({
           type: 'drawn',
           image: processedImage,
           size,
+          headDirection: orientation,
         },
         aquariumFish.length,
       );

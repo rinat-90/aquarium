@@ -29,6 +29,7 @@ const SEGMENT_COUNT = 18;
 export async function createThreeFish(
   image: string,
   maxWidth = 1.3,
+  headDirection?: 'left' | 'right' | null,
 ): Promise<ThreeFish> {
   const loader =
     new THREE.TextureLoader();
@@ -37,12 +38,14 @@ export async function createThreeFish(
     await loader.loadAsync(image);
 
   // Detect the original drawing's head direction.
-  let orientation: 'left' | 'right' = 'right';
+  let orientation: 'left' | 'right' = headDirection ?? 'right';
 
-  try {
-    orientation = await detectFishOrientation(image);
-  } catch (error) {
-    console.warn('Fish orientation detection failed:', error);
+  if (!headDirection) {
+    try {
+      orientation = await detectFishOrientation(image);
+    } catch (error) {
+      console.warn('Fish orientation detection failed:', error);
+    }
   }
 
   texture.colorSpace =
