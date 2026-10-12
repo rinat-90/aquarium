@@ -1,3 +1,4 @@
+
 import { defineConfig, type ProxyOptions } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -12,6 +13,15 @@ const createProxy = (): Record<string, string | ProxyOptions> => ({
   '/aquariums': {
     target: API_TARGET,
     changeOrigin: true,
+
+    // Only proxy API requests, not browser page navigation.
+    bypass(req) {
+      const accept = req.headers.accept ?? '';
+
+      if (accept.includes('text/html')) {
+        return '/index.html';
+      }
+    },
   },
   '/fish': {
     target: API_TARGET,
