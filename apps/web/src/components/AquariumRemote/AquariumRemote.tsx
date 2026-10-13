@@ -18,7 +18,8 @@ type AquariumRemoteProps = {
   onAddFish: () => void;
   onViewFish: () => void;
   onSettings: () => void;
-  onViewAquarium: () => void;
+  feedCooldownSeconds: number;
+  feedPending: boolean;
 };
 
 export function AquariumRemote({
@@ -30,6 +31,8 @@ export function AquariumRemote({
                                  onAddFish,
                                  onViewFish,
                                  onSettings,
+                                 feedCooldownSeconds,
+                                 feedPending,
                                }: AquariumRemoteProps) {
   const [isScanning, setIsScanning] = useState(false);
 
@@ -104,7 +107,7 @@ export function AquariumRemote({
           <span className="aquarium-remote__hero-content">
             <strong>Your fish are swimming!</strong>
             <small>
-              {fish.length} {fish.length === 1 ? 'fish' : 'fish'} in your aquarium
+              {fish.length} fish in your aquarium
             </small>
           </span>
 
@@ -122,12 +125,25 @@ export function AquariumRemote({
           type="button"
           className="aquarium-remote__action"
           onClick={onFeed}
+          disabled={feedPending || feedCooldownSeconds > 0}
         >
-          <span className="aquarium-remote__action-icon">
-            🍽️
-          </span>
-          <strong>Feed Fish</strong>
-          <small>Drop some food</small>
+  <span className="aquarium-remote__action-icon">
+    🍽️
+  </span>
+
+          <strong>
+            {feedPending
+              ? 'Feeding...'
+              : feedCooldownSeconds > 0
+                ? `Feed in ${feedCooldownSeconds}s`
+                : 'Feed Fish'}
+          </strong>
+
+          <small>
+            {feedCooldownSeconds > 0
+              ? 'Let your fish eat'
+              : 'Drop some food'}
+          </small>
         </button>
 
         <button

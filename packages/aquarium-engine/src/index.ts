@@ -64,6 +64,8 @@ export class Aquarium {
       }
     >();
 
+  private eatingUntil = new Map<string, number>();
+
   private options: AquariumOptions;
 
   constructor(options: AquariumOptions) {
@@ -304,6 +306,9 @@ export class Aquarium {
       const fish of
       this.fish.values()
       ) {
+      if (this.elapsedTime < (this.eatingUntil.get(fish.id) ?? 0)) {
+        continue;
+      }
       if (
         fish.targetFoodId
       ) {
@@ -1012,12 +1017,14 @@ export class Aquarium {
     fish: Fish,
     food: Food,
   ) {
-    this.food.delete(
-      food.id,
-    );
+    this.food.delete(food.id);
 
-    this.returnToWandering(
-      fish,
+    this.returnToWandering(fish);
+
+    // Brief pause after eating before chasing another pellet.
+    this.eatingUntil.set(
+      fish.id,
+      this.elapsedTime + 0.8,
     );
   }
 

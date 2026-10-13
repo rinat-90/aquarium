@@ -88,16 +88,63 @@ export function AquariumPage() {
 
   const [feedSequence, setFeedSequence] = useState(0);
 
-  const handleFeedFish = () => {
-    if (!aquarium?.id) return;
+  const [feedCooldownUntil, setFeedCooldownUntil] = useState(0);
+  const [feedCooldownSeconds, setFeedCooldownSeconds] = useState(0);
+  const [feedPending, setFeedPending] = useState(false);
 
-    socket.emit(
+  useEffect(() => {
+    if (!feedCooldownUntil) {
+      setFeedCooldownSeconds(0);
+      return;
+    }
+
+    const updateCountdown = () => {
+      setFeedCooldownSeconds(
+        Math.max(0, Math.ceil((feedCooldownUntil - Date.now()) / 1000)),
+      );
+    };
+
+    updateCountdown();
+
+    const interval = window.setInterval(updateCountdown, 200);
+
+    return () => window.clearInterval(interval);
+  }, [feedCooldownUntil]);
+
+  const handleFeedFish = () => {
+    if (!aquarium?.id || feedPending || Date.now() < feedCooldownUntil) {
+      return;
+    }
+
+    setFeedPending(true);
+
+    socket.timeout(5000).emit(
       'aquarium:feed',
       aquarium.id,
-      (result: { ok: boolean }) => {
-        if (!result.ok) {
-          console.warn('[Aquarium] Feeding rejected by server');
+      (
+        error: Error | null,
+        result?: {
+          ok: boolean;
+          retryAfterMs?: number;
+        },
+      ) => {
+        setFeedPending(false);
+
+        if (error || !result) {
+          console.warn('[Aquarium] Feeding request timed out');
+          return;
         }
+
+        if (result.ok) {
+          setFeedCooldownUntil(Date.now() + 3000);
+          return;
+        }
+
+        if (result.retryAfterMs) {
+          setFeedCooldownUntil(Date.now() + result.retryAfterMs);
+        }
+
+        console.warn('[Aquarium] Feeding rejected by server');
       },
     );
   };
@@ -294,7 +341,8 @@ export function AquariumPage() {
             }}
             onViewFish={handleOpenFishList}
             onSettings={() => setSettingsOpen(true)}
-            onViewAquarium={() => setMobileViewerOpen(true)}
+            feedCooldownSeconds={feedCooldownSeconds}
+            feedPending={feedPending}
           />
         )
       ) : (
@@ -302,6 +350,8 @@ export function AquariumPage() {
           <AquariumHUD
             name={aquariumName}
             fishCount={fish.length}
+            feedCooldownSeconds={feedCooldownSeconds}
+            feedPending={feedPending}
             onBack={() => navigate('/aquariums')}
             onAddFish={() => {
               if (!aquarium?.id) return;

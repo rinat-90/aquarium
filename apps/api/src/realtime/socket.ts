@@ -4,6 +4,10 @@ import { Server } from 'socket.io';
 import { prisma } from '@aquarium/database';
 import { auth } from '../lib/auth.js';
 
+const FEED_COOLDOWN_MS = 3_000;
+
+const lastFeedByAquarium = new Map<string, number>();
+
 let io: Server | undefined;
 const aquariumRoom = (id: string) => `aquarium:${id}`;
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
@@ -153,7 +157,12 @@ export function initializeSocket(
       'aquarium:feed',
       async (
         aquariumId: unknown,
-        acknowledge?: (result: JoinResult) => void,
+        acknowledge?: (
+          result: {
+            ok: boolean;
+            retryAfterMs?: number;
+          },
+        ) => void,
       ) => {
         const userId = socket.data.userId as string | null;
 
@@ -179,6 +188,21 @@ export function initializeSocket(
             acknowledge?.({ ok: false });
             return;
           }
+
+          const now = Date.now();
+          const lastFeed = lastFeedByAquarium.get(aquariumId) ?? 0;
+
+          const remainingMs = FEED_COOLDOWN_MS - (now - lastFeed);
+
+          if (remainingMs > 0) {
+            acknowledge?.({
+              ok: false,
+              retryAfterMs: remainingMs,
+            });
+            return;
+          }
+
+          lastFeedByAquarium.set(aquariumId, now);
 
           io?.to(aquariumRoom(aquariumId)).emit('aquarium:feed', {
             aquariumId,

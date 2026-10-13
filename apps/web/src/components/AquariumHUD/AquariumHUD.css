@@ -83,8 +83,12 @@
     white-space: nowrap;
 }
 
-.aquarium-hud__actions button span {
+.aquarium-hud__actions button span:first-child {
     font-size: 22px;
+}
+
+.aquarium-hud__actions button span:not(:first-child) {
+    font-size: 12px;
 }
 
 .aquarium-hud__actions button:hover,
