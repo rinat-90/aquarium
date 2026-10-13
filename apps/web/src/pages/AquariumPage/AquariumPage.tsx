@@ -18,8 +18,8 @@ import { AquariumHUD } from '../../components/AquariumHUD/AquariumHUD';
 import { FishPanel } from '../../components/FishPanel/FishPanel';
 
 import './AquariumPage.css';
-import {AquariumSettingsPanel} from "../../components/FishPanel/AquariumSettingsPanel.tsx";
-import {createFish} from "../../lib/create-fish.ts";
+import { AquariumSettingsPanel } from '../../components/FishPanel/AquariumSettingsPanel';
+import { createFish } from '../../lib/create-fish';
 import { mapApiFish } from '../../lib/mapApiFish';
 import { useLiveAquariumFish } from '../../hooks/useLiveAquariumFish';
 import { tvPairingApi } from '../../lib/tv-pairing-api';
@@ -97,6 +97,49 @@ export function AquariumPage() {
 
   const [feedSequence, setFeedSequence] = useState(0);
 
+  const [broadcastStatus, setBroadcastStatus] = useState<
+    'loading' | 'live' | 'offline' | 'error'
+  >('loading');
+
+  useEffect(() => {
+    if (!settingsOpen || !aquarium?.id) return;
+
+    let cancelled = false;
+    const id = aquarium.id;
+
+    async function refreshBroadcastStatus() {
+      try {
+        const { sessions } = await tvPairingApi.sessions();
+
+        if (cancelled) return;
+
+        setBroadcastStatus(
+          sessions.some((session) => session.aquariumId === id)
+            ? 'live'
+            : 'offline',
+        );
+      } catch {
+        if (!cancelled) setBroadcastStatus('error');
+      }
+    }
+
+    setBroadcastStatus('loading');
+    void refreshBroadcastStatus();
+
+    // Fallback refresh while the settings panel is open.
+    const interval = window.setInterval(
+      refreshBroadcastStatus,
+      5000,
+    );
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [settingsOpen, aquarium?.id]);
+
+
+
   const [feedCooldownUntil, setFeedCooldownUntil] = useState(0);
   const [feedCooldownSeconds, setFeedCooldownSeconds] = useState(0);
   const [feedPending, setFeedPending] = useState(false);
@@ -106,6 +149,7 @@ export function AquariumPage() {
       setFeedCooldownSeconds(0);
       return;
     }
+
 
     const updateCountdown = () => {
       setFeedCooldownSeconds(
@@ -356,6 +400,7 @@ export function AquariumPage() {
       }
 
       await tvPairingApi.revoke(activeSessions[0].id);
+      setBroadcastStatus('offline');
 
       window.alert('TV broadcast ended.');
     } catch (error) {
@@ -366,6 +411,59 @@ export function AquariumPage() {
       );
     } finally {
       setEndingBroadcast(false);
+    }
+  }
+
+  // Settings controls use the existing paired-TV sessions.
+  async function handleSettingsStartBroadcast() {
+    if (!aquarium?.id) throw new Error('No aquarium selected.');
+    const { sessions } = await tvPairingApi.sessions();
+    const alreadyAssigned = sessions.some(
+      (session) => session.aquariumId === aquarium.id,
+    );
+    if (alreadyAssigned) {
+      setBroadcastStatus('live');
+      return;
+    }
+
+    const available = sessions.filter(
+      (session) => session.isOnline && session.aquariumId !== aquarium.id,
+    );
+    if (available.length === 0) {
+      throw new Error('No connected TV is available. Open the TV pairing screen on your TV and pair it with this aquarium.');
+    }
+    if (available.length > 1) {
+      throw new Error('Multiple TVs are connected. Use Switch Aquarium to choose which TV to use.');
+    }
+
+    await tvPairingApi.switchAquarium(available[0].id, aquarium.id);
+    setBroadcastStatus('live');
+  }
+
+  async function handleSettingsEndBroadcast() {
+    if (!aquarium?.id) throw new Error('No aquarium selected.');
+    const { sessions } = await tvPairingApi.sessions();
+    const assigned = sessions.filter(
+      (session) => session.aquariumId === aquarium.id,
+    );
+    if (assigned.length === 0) {
+      setBroadcastStatus('offline');
+      return;
+    }
+    // Revocation invalidates the TV token: the TV must pair again later.
+    try {
+      for (const session of assigned) {
+        await tvPairingApi.revoke(session.id);
+      }
+    } finally {
+      try {
+        const current = await tvPairingApi.sessions();
+        setBroadcastStatus(current.sessions.some(
+          (session) => session.aquariumId === aquarium.id,
+        ) ? 'live' : 'offline');
+      } catch {
+        setBroadcastStatus('error');
+      }
     }
   }
 
@@ -434,6 +532,47 @@ export function AquariumPage() {
       setSwitchingAquarium(false);
     }
   }
+
+
+  const handleReleaseAllFish = async () => {
+    if (!aquarium?.id) {
+      throw new Error('No aquarium selected.');
+    }
+
+    const id = aquarium.id;
+
+    await aquariumApi.releaseAllFish(id);
+
+    if (activeAquariumId.current === id) {
+      setFish([]);
+      setSelectedFishId(null);
+      setFishCollectionOpen(false);
+    }
+  };
+
+  const handleDeleteAquarium = async () => {
+    if (!aquarium?.id) {
+      throw new Error('No aquarium selected.');
+    }
+
+    const id = aquarium.id;
+
+    // Recheck immediately before requesting deletion.
+    const { sessions } = await tvPairingApi.sessions();
+
+    if (sessions.some((session) => session.aquariumId === id)) {
+      setBroadcastStatus('live');
+      throw new Error(
+        'End the TV broadcast before deleting this aquarium.',
+      );
+    }
+
+    await aquariumApi.deletePermanently(id);
+
+    setSettingsOpen(false);
+    navigate('/aquariums', { replace: true });
+  };
+
 
   return (
     <div className="aquarium-page">
@@ -552,6 +691,11 @@ export function AquariumPage() {
         name={aquariumName}
         fishCount={fish.length}
         onRename={handleRenameAquarium}
+        broadcastStatus={broadcastStatus}
+        onReleaseAll={handleReleaseAllFish}
+        onDelete={handleDeleteAquarium}
+        onStartBroadcast={handleSettingsStartBroadcast}
+        onEndBroadcast={handleSettingsEndBroadcast}
       />
 
       <FishPanel

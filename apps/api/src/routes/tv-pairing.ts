@@ -5,7 +5,8 @@ import { auth } from '../lib/auth.js';
 import {
   disconnectTvDisplaySession,
   switchTvDisplayAquarium,
-  getOnlineTvDisplaySessionIds
+  getOnlineTvDisplaySessionIds,
+  setTvDisplayPaused
 } from '../realtime/socket.js';
 
 import { readFile } from 'node:fs/promises';
@@ -257,6 +258,7 @@ export async function tvPairingRoutes(app: FastifyInstance) {
         aquariumId: true,
         createdAt: true,
         expiresAt: true,
+        pausedAt: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -271,6 +273,7 @@ export async function tvPairingRoutes(app: FastifyInstance) {
         aquariumId: session.aquariumId,
         createdAt: session.createdAt,
         expiresAt: session.expiresAt,
+        pausedAt: session.pausedAt,
         isOnline: onlineSessionIds.has(session.id),
       })),
     };
@@ -365,5 +368,93 @@ export async function tvPairingRoutes(app: FastifyInstance) {
       return { ok: true };
     },
   );
+
+
+  app.post<{ Params: { sessionId: string } }>(
+    '/api/tv/display/sessions/:sessionId/pause',
+    async (request, reply) => {
+      const userId = await authenticatedUserId(request);
+
+      if (!userId) {
+        return reply.code(401).send({
+          error: 'Authentication required',
+        });
+      }
+
+      const { sessionId } = request.params;
+
+      if (!sessionId || sessionId.length > 256) {
+        return reply.code(400).send({
+          error: 'Invalid session ID',
+        });
+      }
+
+      const result = await prisma.tvDisplaySession.updateMany({
+        where: {
+          id: sessionId,
+          ownerId: userId,
+          revokedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+        data: {
+          pausedAt: new Date(),
+        },
+      });
+
+      if (result.count !== 1) {
+        return reply.code(404).send({
+          error: 'Active TV session not found',
+        });
+      }
+
+      setTvDisplayPaused(sessionId, true);
+
+      return { ok: true };
+    },
+  );
+
+  app.post<{ Params: { sessionId: string } }>(
+    '/api/tv/display/sessions/:sessionId/resume',
+    async (request, reply) => {
+      const userId = await authenticatedUserId(request);
+
+      if (!userId) {
+        return reply.code(401).send({
+          error: 'Authentication required',
+        });
+      }
+
+      const { sessionId } = request.params;
+
+      if (!sessionId || sessionId.length > 256) {
+        return reply.code(400).send({
+          error: 'Invalid session ID',
+        });
+      }
+
+      const result = await prisma.tvDisplaySession.updateMany({
+        where: {
+          id: sessionId,
+          ownerId: userId,
+          revokedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+        data: {
+          pausedAt: null,
+        },
+      });
+
+      if (result.count !== 1) {
+        return reply.code(404).send({
+          error: 'Active TV session not found',
+        });
+      }
+
+      setTvDisplayPaused(sessionId, false);
+
+      return { ok: true };
+    },
+  );
+
 
 }

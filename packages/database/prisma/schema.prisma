@@ -132,6 +132,7 @@ model TvDisplaySession {
   createdAt  DateTime  @default(now())
   revokedAt  DateTime?
   lastSeenAt DateTime?
+  pausedAt   DateTime?
 
   @@index([aquariumId])
   @@index([ownerId])

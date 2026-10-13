@@ -106,6 +106,26 @@ export const aquariumApi = {
         method: 'PATCH',
       },
     ),
+
+
+  // Release all fish while keeping the aquarium and TV broadcast.
+  releaseAllFish: (id: string) =>
+    apiFetch<void>(
+      `/aquariums/${encodeURIComponent(id)}/fish`,
+      {
+        method: 'DELETE',
+      },
+    ),
+
+  // Permanently delete aquarium and its fish.
+  deletePermanently: (id: string) =>
+    apiFetch<void>(
+      `/aquariums/${encodeURIComponent(id)}/permanent`,
+      {
+        method: 'DELETE',
+      },
+    ),
+
 };
 
 // Fish API
@@ -177,4 +197,21 @@ export const fishApi = {
 
     return response.blob();
   },
+
+
+  // Atomically remove all fish belonging to this aquarium.
+  releaseAllFish: (id: string) =>
+    apiFetch<void>(
+      `/aquariums/${encodeURIComponent(id)}/fish`,
+      { method: 'DELETE' },
+    ),
+
+  // Permanently delete the aquarium and its contents.
+  // Backend must reject active broadcasts with HTTP 409.
+  deletePermanently: (id: string) =>
+    apiFetch<void>(
+      `/aquariums/${encodeURIComponent(id)}/permanent`,
+      { method: 'DELETE' },
+    ),
+
 };

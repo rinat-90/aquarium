@@ -416,4 +416,57 @@ export async function aquariumRoutes(app: FastifyInstance) {
       }
     },
   );
+
+
+  api.delete(
+    '/aquariums/:id/fish',
+    {
+      schema: {
+        params: aquariumIdParamsSchema,
+      },
+    },
+    async (request, reply) => {
+      const user = await getAuthenticatedUser(request);
+
+      if (!user) {
+        return reply.code(401).send({
+          error: 'Unauthorized',
+        });
+      }
+
+      const aquariumId = request.params.id;
+
+      const result = await prisma.$transaction(async (tx) => {
+        const aquarium = await tx.aquarium.findFirst({
+          where: {
+            id: aquariumId,
+            ownerId: user.id,
+          },
+          select: { id: true },
+        });
+
+        if (!aquarium) return null;
+
+        return tx.fish.deleteMany({
+          where: {
+            aquariumId,
+            ownerId: user.id,
+          },
+        });
+      });
+
+      if (!result) {
+        return reply.code(404).send({
+          error: 'Aquarium not found',
+        });
+      }
+
+      // Existing realtime mechanism.
+      // Connected TV clients should refresh their fish.
+      notifyAquariumChanged(aquariumId);
+
+      return reply.code(204).send();
+    },
+  );
+
 }

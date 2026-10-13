@@ -310,3 +310,38 @@ export async function closeSocket() {
   io = undefined;
   await new Promise<void>((resolve) => server.close(() => resolve()));
 }
+
+
+export function setTvDisplayPaused(
+  sessionId: string,
+  paused: boolean,
+) {
+  const server = io;
+  if (!server) return;
+
+  for (const socket of server.sockets.sockets.values()) {
+    if (socket.data.displaySessionId !== sessionId) {
+      continue;
+    }
+
+    const aquariumId = socket.data.displayAquariumId as
+      | string
+      | null;
+
+    socket.data.displayPaused = paused;
+
+    if (paused && aquariumId) {
+      void socket.leave(aquariumRoom(aquariumId));
+    }
+
+    if (!paused && aquariumId) {
+      void socket.join(aquariumRoom(aquariumId));
+    }
+
+    socket.emit('tv:broadcast-status', {
+      paused,
+      aquariumId,
+    });
+  }
+}
+

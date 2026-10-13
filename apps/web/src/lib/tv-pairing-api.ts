@@ -104,4 +104,17 @@ export const tvPairingApi = {
         body: JSON.stringify({ aquariumId }),
       },
     ),
+
+  pause: (sessionId: string) =>
+    request<{ ok: boolean }>(
+      `/api/tv/display/sessions/${encodeURIComponent(sessionId)}/pause`,
+      { method: 'POST' },
+    ),
+
+  resume: (sessionId: string) =>
+    request<{ ok: boolean }>(
+      `/api/tv/display/sessions/${encodeURIComponent(sessionId)}/resume`,
+      { method: 'POST' },
+    ),
+
 };

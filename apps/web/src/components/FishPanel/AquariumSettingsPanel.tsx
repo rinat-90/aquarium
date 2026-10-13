@@ -5,12 +5,19 @@ import { createPortal } from 'react-dom';
 import '../FishPanel/FishPanel.css';
 import './AquariumSettingsPanel.css';
 
+type BroadcastStatus = 'loading' | 'live' | 'offline' | 'error';
+
 type AquariumSettingsPanelProps = {
   open: boolean;
   onClose: () => void;
   name: string;
   fishCount: number;
   onRename: (name: string) => Promise<void>;
+  broadcastStatus: BroadcastStatus;
+  onReleaseAll: () => Promise<void>;
+  onDelete: () => Promise<void>;
+  onStartBroadcast: () => Promise<void>;
+  onEndBroadcast: () => Promise<void>;
 };
 
 export function AquariumSettingsPanel({
@@ -18,7 +25,12 @@ export function AquariumSettingsPanel({
                                         onClose,
                                         name,
                                         fishCount,
-                                        onRename
+                                        onRename,
+                                        broadcastStatus,
+                                        onReleaseAll,
+                                        onDelete,
+                                        onStartBroadcast,
+                                        onEndBroadcast,
                                       }: AquariumSettingsPanelProps) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -27,6 +39,95 @@ export function AquariumSettingsPanel({
   const [draftName, setDraftName] = useState(name);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+
+  const [dangerAction, setDangerAction] = useState<
+    'release' | 'delete' | null
+  >(null);
+  const [confirmName, setConfirmName] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const [dangerError, setDangerError] = useState<string | null>(null);
+
+
+  const [broadcastBusy, setBroadcastBusy] = useState(false);
+  const [broadcastError, setBroadcastError] = useState<string | null>(null);
+
+  async function handleBroadcastAction() {
+    if (
+      broadcastBusy ||
+      (broadcastStatus !== 'live' && broadcastStatus !== 'offline')
+    ) {
+      return;
+    }
+
+    if (
+      broadcastStatus === 'live' &&
+      !window.confirm('End the TV broadcast for this aquarium?')
+    ) {
+      return;
+    }
+
+    setBroadcastBusy(true);
+    setBroadcastError(null);
+
+    try {
+      if (broadcastStatus === 'live') {
+        await onEndBroadcast();
+      } else {
+        await onStartBroadcast();
+      }
+    } catch (err) {
+      setBroadcastError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to update TV broadcast.',
+      );
+    } finally {
+      setBroadcastBusy(false);
+    }
+  }
+
+
+  const broadcastLive = broadcastStatus === 'live';
+  const broadcastKnown =
+    broadcastStatus === 'live' ||
+    broadcastStatus === 'offline';
+
+  const canDelete =
+    broadcastStatus === 'offline' &&
+    !processing &&
+    !saving;
+
+  async function handleDangerAction() {
+    if (!dangerAction || processing) return;
+
+    if (dangerAction === 'delete') {
+      if (!canDelete || confirmName !== name) return;
+    }
+
+    setProcessing(true);
+    setDangerError(null);
+
+    try {
+      if (dangerAction === 'release') {
+        await onReleaseAll();
+      } else {
+        await onDelete();
+      }
+
+      setDangerAction(null);
+      setConfirmName('');
+    } catch (err) {
+      setDangerError(
+        err instanceof Error
+          ? err.message
+          : 'Something went wrong. Please try again.',
+      );
+    } finally {
+      setProcessing(false);
+    }
+  }
+
 
   useEffect(() => {
     if (!open) return;
@@ -201,6 +302,174 @@ export function AquariumSettingsPanel({
               </p>
             )}
           </section>
+
+
+
+          <section className="fish-panel__section">
+            <div className="aquarium-settings__broadcast">
+              <h3>TV Broadcast</h3>
+
+              {broadcastStatus === 'live' && (
+                <span className="aquarium-settings__status aquarium-settings__status--live">
+        <span className="aquarium-settings__status-dot" />
+        Live
+      </span>
+              )}
+
+              {broadcastStatus === 'offline' && (
+                <span className="aquarium-settings__status aquarium-settings__status--offline">
+        <span className="aquarium-settings__status-dot" />
+        Offline
+      </span>
+              )}
+            </div>
+
+            <p>
+              {broadcastStatus === 'live'
+                ? 'This aquarium is currently displayed on TV.'
+                : broadcastStatus === 'offline'
+                  ? 'This aquarium is not currently broadcasting.'
+                  : broadcastStatus === 'loading'
+                    ? 'Checking TV broadcast status...'
+                    : 'Unable to check TV broadcast status.'}
+            </p>
+
+            <button
+              type="button"
+              className={
+                broadcastStatus === 'live'
+                  ? 'aquarium-settings__broadcast-button aquarium-settings__broadcast-button--end'
+                  : 'aquarium-settings__broadcast-button aquarium-settings__broadcast-button--start'
+              }
+              disabled={
+                broadcastBusy ||
+                processing ||
+                !['live', 'offline'].includes(broadcastStatus)
+              }
+              onClick={() => void handleBroadcastAction()}
+            >
+              {broadcastBusy
+                ? 'Please wait...'
+                : broadcastStatus === 'live'
+                  ? 'End Broadcast'
+                  : 'Start Broadcast'}
+            </button>
+
+            {broadcastError && (
+              <p className="fish-panel__error" role="alert">
+                {broadcastError}
+              </p>
+            )}
+          </section>
+
+
+          <section className="fish-panel__section aquarium-settings__danger">
+            <h3>Danger Zone</h3>
+
+            <div className="aquarium-settings__danger-item">
+              <h4>Release All Fish</h4>
+              <p>
+                Remove all {fishCount} fish from this aquarium.
+                The aquarium and any active TV broadcast will remain.
+              </p>
+
+              <button
+                type="button"
+                disabled={fishCount === 0 || processing || saving}
+                onClick={() => {
+                  setDangerError(null);
+                  setDangerAction('release');
+                }}
+              >
+                Release All Fish
+              </button>
+            </div>
+
+            <div className="aquarium-settings__danger-item">
+              <h4>Delete Aquarium</h4>
+              <p>
+                Permanently delete this aquarium and all its fish.
+                This cannot be undone.
+              </p>
+
+              <button
+                type="button"
+                disabled={!canDelete}
+                onClick={() => {
+                  setDangerError(null);
+                  setConfirmName('');
+                  setDangerAction('delete');
+                }}
+              >
+                Delete Aquarium
+              </button>
+
+              {broadcastLive && (
+                <p role="status">
+                  End the TV broadcast before deleting this aquarium.
+                </p>
+              )}
+
+              {!broadcastKnown && (
+                <p role="status">
+                  Deletion is unavailable until broadcast status is verified.
+                </p>
+              )}
+            </div>
+
+            {dangerAction && (
+              <div className="aquarium-settings__confirmation">
+                <h4>
+                  {dangerAction === 'release'
+                    ? 'Release all fish?'
+                    : 'Permanently delete aquarium?'}
+                </h4>
+
+                <p>
+                  {dangerAction === 'release'
+                    ? `This will permanently remove ${fishCount} fish.`
+                    : `Type "${name}" to confirm permanent deletion.`}
+                </p>
+
+                {dangerAction === 'delete' && (
+                  <input
+                    className="fish-panel__input"
+                    aria-label="Confirm aquarium name"
+                    value={confirmName}
+                    disabled={processing}
+                    onChange={(event) => setConfirmName(event.target.value)}
+                  />
+                )}
+
+                <button
+                  type="button"
+                  disabled={
+                    processing ||
+                    (dangerAction === 'delete' &&
+                      (!canDelete || confirmName !== name))
+                  }
+                  onClick={() => void handleDangerAction()}
+                >
+                  {processing ? 'Processing...' : 'Confirm'}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={processing}
+                  onClick={() => setDangerAction(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+
+            {dangerError && (
+              <p role="alert" className="fish-panel__error">
+                {dangerError}
+              </p>
+            )}
+          </section>
+
         </div>
 
         <footer className="fish-panel__footer">

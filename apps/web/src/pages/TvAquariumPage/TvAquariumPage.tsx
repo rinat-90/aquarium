@@ -154,6 +154,7 @@ export function TvAquariumPage() {
   const [fish, setFish] = useState<CreatedFish[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [paused, setPaused] = useState(false);
 
   const [feedSequence, setFeedSequence] = useState(0);
 
@@ -199,6 +200,7 @@ export function TvAquariumPage() {
     console.log('[TV] Display credentials saved to localStorage');
 
     setError(null);
+    setPaused(false);
     setLoading(true);
     setCredentials(next);
   }, []);
@@ -211,6 +213,8 @@ export function TvAquariumPage() {
 
     let active = true;
     let requestId = 0;
+    let joinVersion = 0;
+    let broadcastPaused = false;
 
     const { token, expiresAt } = credentials;
     let currentAquariumId = credentials.aquariumId;
@@ -232,11 +236,24 @@ export function TvAquariumPage() {
 
       setCredentials(null);
       setFish([]);
+      setPaused(false);
       setError(null);
       setLoading(true);
     };
 
+    function setBroadcastPaused(nextPaused: boolean) {
+      broadcastPaused = nextPaused;
+      if (nextPaused) joinVersion++;
+      requestId++; // Invalidate fish/texture responses already in flight.
+      setPaused(nextPaused);
+      setFish([]);
+      setError(null);
+      setLoading(!nextPaused);
+      if (nextPaused) setFeedSequence(0);
+    }
+
     async function reload() {
+      if (broadcastPaused) return;
       const id = ++requestId;
       const requestedAquariumId = currentAquariumId;
 
@@ -245,7 +262,7 @@ export function TvAquariumPage() {
       try {
         const result = await tvPairingApi.fish(token);
 
-        if (!active || id !== requestId) return;
+        if (!active || broadcastPaused || id !== requestId) return;
 
         console.log('[TV] Fish API succeeded', {
           aquariumId: result.aquariumId,
@@ -278,6 +295,7 @@ export function TvAquariumPage() {
         // another aquarium switch.
         if (
           !active ||
+          broadcastPaused ||
           id !== requestId ||
           (
             requestedAquariumId !== currentAquariumId &&
@@ -294,6 +312,7 @@ export function TvAquariumPage() {
         // Another switch may have happened while textures loaded.
         if (
           !active ||
+          broadcastPaused ||
           id !== requestId ||
           result.aquariumId !== currentAquariumId
         ) {
@@ -312,7 +331,7 @@ export function TvAquariumPage() {
           visibleFish: mappedFish.length,
         });
       } catch (err) {
-        if (!active || id !== requestId) return;
+        if (!active || broadcastPaused || id !== requestId) return;
 
         const message =
           err instanceof Error
@@ -320,6 +339,14 @@ export function TvAquariumPage() {
             : 'Unable to load aquarium';
 
         console.error('[TV] Fish API failed:', message);
+
+        if (
+          err instanceof TvApiError &&
+          err.status === 409
+        ) {
+          setBroadcastPaused(true);
+          return;
+        }
 
         if (
           err instanceof TvApiError &&
@@ -344,12 +371,16 @@ export function TvAquariumPage() {
 
       // Backend already knows the aquarium from the display token.
       // It expects only the acknowledgment callback.
+      const version = ++joinVersion;
       socket.emit('tv:join', (result: { ok: boolean }) => {
-        if (!active) return;
+        if (!active || version !== joinVersion) return;
 
         console.log('[TV] Socket join result:', result);
 
         if (result.ok) {
+          if (broadcastPaused) {
+            setBroadcastPaused(false);
+          }
           void reload();
         } else {
           console.warn(
@@ -362,7 +393,7 @@ export function TvAquariumPage() {
     const changed = (event: { aquariumId: string }) => {
       if (!active) return;
 
-      if (event.aquariumId === currentAquariumId) {
+      if (!broadcastPaused && event.aquariumId === currentAquariumId) {
         void reload();
       }
     };
@@ -371,10 +402,20 @@ export function TvAquariumPage() {
       aquariumId: string;
       eventId: string;
     }) => {
-      if (!active || event.aquariumId !== currentAquariumId) return;
+      if (!active || broadcastPaused || event.aquariumId !== currentAquariumId) return;
 
       setFeedSequence((current) => current + 1);
     };
+
+    socket.on('tv:broadcast-status', (event: { paused: boolean; aquariumId: string | null }) => {
+      if (!active || typeof event?.paused !== 'boolean') return;
+      if (event.paused) {
+        setBroadcastPaused(true);
+      } else {
+        // Re-authorize room membership instead of joining directly.
+        join();
+      }
+    });
 
     socket.on('aquarium:feed', handleFeed);
 
@@ -418,13 +459,16 @@ export function TvAquariumPage() {
         setFeedSequence(0);
         setLoading(true);
 
-        void reload();
+        if (!broadcastPaused) {
+          join();
+        }
       },
     );
 
     socket.connect();
 
-    void reload();
+    // The initial socket join authorizes loading. A paused session
+    // receives tv:broadcast-status from the server.
 
     // Display sessions can last 30 days, but setTimeout supports
     // a maximum delay of approximately 24.8 days.
@@ -491,12 +535,36 @@ export function TvAquariumPage() {
         backgroundColor: '#087fc4',
       }}
     >
-      <ThreeAquariumView
-        createdFish={fish}
-        feedSequence={feedSequence}
-        interactive={false}
-        showDebugStats={false}
-      />
+      {!paused && (
+        <ThreeAquariumView
+          createdFish={fish}
+          feedSequence={feedSequence}
+          interactive={false}
+          showDebugStats={false}
+        />
+      )}
+
+      {paused && (
+        <div
+          role="status"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 16,
+            background: '#092b3a',
+            color: '#fff',
+            textAlign: 'center',
+            padding: 24,
+          }}
+        >
+          <h1 style={{ margin: 0, fontSize: 'clamp(28px, 5vw, 56px)' }}>Broadcast paused</h1>
+          <p style={{ margin: 0, opacity: 0.8 }}>Resume broadcasting from Aquarium Settings.</p>
+        </div>
+      )}
 
       <button
         type="button"
@@ -517,7 +585,7 @@ export function TvAquariumPage() {
         ⛶ Fullscreen
       </button>
 
-      {(loading || error) && (
+      {!paused && (loading || error) && (
         <div
           role={error ? 'alert' : 'status'}
           style={{
