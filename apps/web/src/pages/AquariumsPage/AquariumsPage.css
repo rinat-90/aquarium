@@ -331,3 +331,105 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Mobile aquarium dashboard */
+.aquariums-header__count {
+    display: none;
+}
+
+@media (max-width: 720px) {
+    .aquariums-content {
+        padding: 24px 16px 100px;
+    }
+
+    .aquariums-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 22px;
+    }
+
+    .aquariums-header h1 {
+        font-size: 25px;
+        line-height: 1.2;
+        letter-spacing: -0.6px;
+    }
+
+    .aquariums-header__description {
+        display: none;
+    }
+
+    .aquariums-header__count {
+        display: block;
+        margin-top: 6px;
+        color: var(--aq-muted);
+        font-size: 13px;
+    }
+
+    .aquariums-create-button {
+        width: auto;
+        min-height: 42px;
+        padding: 0 15px;
+        border-radius: 12px;
+        font-size: 0;
+        gap: 5px;
+    }
+
+    .aquariums-create-button span {
+        font-size: 23px;
+        line-height: 1;
+    }
+
+    .aquariums-create-button::after {
+        content: 'New';
+        font-size: 14px;
+    }
+
+    .aquariums-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .aquarium-card {
+        min-height: 0;
+        padding: 8px;
+        border-radius: 18px;
+    }
+
+    .aquarium-card__preview {
+        height: auto;
+        aspect-ratio: 16 / 8;
+        border-radius: 12px;
+    }
+
+    .aquarium-card__footer {
+        padding: 14px 8px 7px;
+    }
+
+    .aquarium-card__info a {
+        font-size: 16px;
+    }
+
+    .aquarium-card__info span {
+        font-size: 13px;
+    }
+
+    .aquarium-card__action {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: rgb(255 255 255 / 6%);
+    }
+
+    /* The New button is already available in the header */
+    .aquariums-new-card {
+        display: none;
+    }
+}
+
+@media (max-width: 720px) {
+    .aquariums-header .aquariums-create-button {
+        display: none;
+    }
+}

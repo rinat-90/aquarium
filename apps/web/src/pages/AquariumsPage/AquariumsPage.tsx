@@ -25,41 +25,6 @@ export function AquariumsPage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadAquariums() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const items = await aquariumApi.list();
-
-        if (!cancelled) {
-          setAquariums(items);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'Failed to load aquariums',
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void loadAquariums();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   function openCreateModal() {
     setNewAquariumName('');
     setCreateError(null);
@@ -105,12 +70,64 @@ export function AquariumsPage() {
     }
   }
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAquariums() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const items = await aquariumApi.list();
+
+        if (!cancelled) {
+          setAquariums(items);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'Failed to load aquariums',
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadAquariums();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleOpenCreate = () => {
+      openCreateModal();
+    };
+
+    window.addEventListener('aquarium:open-create', handleOpenCreate);
+
+    return () => {
+      window.removeEventListener('aquarium:open-create', handleOpenCreate);
+    };
+  }, []);
+
   return (
     <>
       <header className="aquariums-header">
         <div>
           <h1>My Aquariums</h1>
-          <p>Create different underwater worlds</p>
+          <p className="aquariums-header__description">
+            Create different underwater worlds
+          </p>
+          <p className="aquariums-header__count">
+            {aquariums.length} {aquariums.length === 1 ? 'aquarium' : 'aquariums'}
+          </p>
         </div>
 
         <button
