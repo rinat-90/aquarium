@@ -437,6 +437,7 @@ export function AquariumPage() {
 
   return (
     <div className="aquarium-page">
+
       {isMobile ? (
         mobileViewerOpen ? (
           <MobileAquariumViewer
@@ -444,7 +445,7 @@ export function AquariumPage() {
             feedSequence={feedSequence}
             onClose={() => setMobileViewerOpen(false)}
           />
-        ) : (
+        ) : aquariumId ? (
           <AquariumRemote
             aquariumId={aquariumId}
             name={aquariumName}
@@ -467,8 +468,9 @@ export function AquariumPage() {
             onSwitchAquarium={handleOpenSwitchAquarium}
             switchingAquarium={switchingAquarium}
           />
-        )
+        ) : null
       ) : (
+
         <>
           <AquariumHUD
             name={aquariumName}
