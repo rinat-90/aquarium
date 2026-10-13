@@ -161,12 +161,30 @@ export class Aquarium {
     this.foodSeekProgress.delete(
       id,
     );
+    this.eatingUntil.delete(id);
   }
 
   getFish(): Fish[] {
     return [
       ...this.fish.values(),
     ];
+  }
+
+  getNibbleProgress(fishId: string): number {
+    const remaining = (this.eatingUntil.get(fishId) ?? 0) - this.elapsedTime;
+
+    if (remaining <= 0) {
+      return 0;
+    }
+
+    // Nibbling occurs during the first 0.45 seconds after eating.
+    const elapsed = 0.8 - remaining;
+
+    if (elapsed >= 0.45) {
+      return 0;
+    }
+
+    return Math.sin((elapsed / 0.45) * Math.PI);
   }
 
   addFood(

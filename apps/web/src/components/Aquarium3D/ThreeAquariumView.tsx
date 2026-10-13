@@ -1210,8 +1210,8 @@ export function ThreeAquariumView({
           speedRatio * 0.45,
 
           fish.direction,
-
           fish.velocity.z,
+          aquarium.getNibbleProgress(fish.id),
         );
       }
 

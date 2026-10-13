@@ -9,6 +9,7 @@ export type ThreeFish = {
     intensity: number,
     direction: 'left' | 'right',
     depthVelocity?: number,
+    nibbleProgress?: number,
   ) => void;
 
   destroy: () => void;
@@ -180,6 +181,7 @@ export async function createThreeFish(
       | 'left'
       | 'right',
     depthVelocity = 0,
+    nibbleProgress = 0,
   ) => {
     const clampedIntensity = THREE.MathUtils.clamp(
       intensity,
@@ -236,12 +238,29 @@ export async function createThreeFish(
         0.16,
       );
 
-    body.rotation.y =
-      THREE.MathUtils.lerp(
-        body.rotation.y,
-        depthTurn,
-        0.08,
-      );
+    // Preserve the existing 3D depth movement.
+    body.rotation.y = THREE.MathUtils.lerp(
+      body.rotation.y,
+      depthTurn,
+      0.08,
+    );
+
+// Add a subtle nibbling movement.
+    // Three quick bites, fading out naturally.
+    const nibbleEnvelope = Math.sin(
+      Math.PI * THREE.MathUtils.clamp(nibbleProgress, 0, 1),
+    );
+
+    const nibble =
+      Math.sin(elapsed * 12) *
+      nibbleEnvelope *
+      0.09;
+
+// Slight head dip while eating.
+    body.rotation.z = nibble;
+    body.position.x = -Math.abs(nibble) * 0.12;
+
+    body.rotation.z = nibble;
 
     /*
      * Very small whole-body floating motion.
