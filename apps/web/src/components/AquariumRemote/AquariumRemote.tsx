@@ -1,3 +1,6 @@
+
+import { useState } from 'react';
+import { ScanPaperFish } from '../ScanPaperFish/ScanPaperFish';
 import './AquariumRemote.css';
 
 type RemoteFish = {
@@ -7,26 +10,70 @@ type RemoteFish = {
 };
 
 type AquariumRemoteProps = {
+  aquariumId: string;
   name: string;
   fish: RemoteFish[];
   onBack: () => void;
   onFeed: () => void;
   onAddFish: () => void;
-  onSelectFish: (id: string) => void;
+  onViewFish: () => void;
   onSettings: () => void;
-  onViewAquarium: () => void;
+  feedCooldownSeconds: number;
+  feedPending: boolean;
+  onEndBroadcast: () => void;
+  endingBroadcast: boolean;
+  onSwitchAquarium: () => void;
+  switchingAquarium: boolean;
 };
 
 export function AquariumRemote({
+                                 aquariumId,
                                  name,
                                  fish,
                                  onBack,
                                  onFeed,
                                  onAddFish,
-                                 onSelectFish,
+                                 onViewFish,
                                  onSettings,
-                                 onViewAquarium,
+                                 feedCooldownSeconds,
+                                 feedPending,
+                                 onEndBroadcast,
+                                 endingBroadcast,
+                                 onSwitchAquarium,
+                                 switchingAquarium,
                                }: AquariumRemoteProps) {
+  const [isScanning, setIsScanning] = useState(false);
+
+  if (isScanning) {
+    return (
+      <div className="aquarium-remote">
+        <header className="aquarium-remote__header">
+          <button
+            type="button"
+            className="aquarium-remote__icon-button"
+            onClick={() => setIsScanning(false)}
+            aria-label="Back to aquarium remote"
+          >
+            ←
+          </button>
+
+          <div className="aquarium-remote__heading">
+            <h1>Scan Drawing</h1>
+            <span>📸 Bring your fish to life</span>
+          </div>
+        </header>
+
+        <ScanPaperFish
+          aquariumId={aquariumId}
+          onSaved={() => {
+            setIsScanning(false);
+            window.location.reload();
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="aquarium-remote">
       <header className="aquarium-remote__header">
@@ -55,18 +102,30 @@ export function AquariumRemote({
       </header>
 
       <section className="aquarium-remote__hero">
-        <div className="aquarium-remote__hero-icon">🐠</div>
+        <button
+          type="button"
+          className="aquarium-remote__hero-toggle"
+          onClick={onViewFish}
+          aria-label="View your fish collection"
+        >
+          <span className="aquarium-remote__hero-icon">
+            🐠
+          </span>
 
-        <h2>Your fish are swimming!</h2>
+          <span className="aquarium-remote__hero-content">
+            <strong>Your fish are swimming!</strong>
+            <small>
+              {fish.length} fish in your aquarium
+            </small>
+          </span>
 
-        <p>
-          Feed your fish, add new friends, or watch your aquarium
-          in landscape mode.
-        </p>
-
-        <div className="aquarium-remote__fish-count">
-          {fish.length} {fish.length === 1 ? 'fish' : 'fish'} in your aquarium
-        </div>
+          <span
+            className="aquarium-remote__hero-chevron"
+            aria-hidden="true"
+          >
+            ›
+          </span>
+        </button>
       </section>
 
       <div className="aquarium-remote__actions">
@@ -74,10 +133,25 @@ export function AquariumRemote({
           type="button"
           className="aquarium-remote__action"
           onClick={onFeed}
+          disabled={feedPending || feedCooldownSeconds > 0}
         >
-          <span className="aquarium-remote__action-icon">🍽️</span>
-          <strong>Feed Fish</strong>
-          <small>Drop some food</small>
+  <span className="aquarium-remote__action-icon">
+    🍽️
+  </span>
+
+          <strong>
+            {feedPending
+              ? 'Feeding...'
+              : feedCooldownSeconds > 0
+                ? `Feed in ${feedCooldownSeconds}s`
+                : 'Feed Fish'}
+          </strong>
+
+          <small>
+            {feedCooldownSeconds > 0
+              ? 'Let your fish eat'
+              : 'Drop some food'}
+          </small>
         </button>
 
         <button
@@ -85,60 +159,40 @@ export function AquariumRemote({
           className="aquarium-remote__action"
           onClick={onAddFish}
         >
-          <span className="aquarium-remote__action-icon">🐟</span>
+          <span className="aquarium-remote__action-icon">
+            🐟
+          </span>
           <strong>Add Fish</strong>
           <small>Create a new friend</small>
         </button>
+
+        <button
+          type="button"
+          className="aquarium-remote__action aquarium-remote__action--scan"
+          onClick={() => setIsScanning(true)}
+        >
+          <span className="aquarium-remote__action-icon">
+            📸
+          </span>
+          <strong>Scan Drawing</strong>
+          <small>Bring your drawing to life</small>
+        </button>
       </div>
-
-      <section className="aquarium-remote__fish-section">
-        <div className="aquarium-remote__section-heading">
-          <h2>Your Fish</h2>
-          <span>{fish.length} total</span>
-        </div>
-
-        {fish.length === 0 ? (
-          <div className="aquarium-remote__empty">
-            No fish yet. Add your first fish!
-          </div>
-        ) : (
-          <div className="aquarium-remote__fish-list">
-            {fish.map((item, index) => (
-              <button
-                key={item.id}
-                type="button"
-                className="aquarium-remote__fish-item"
-                onClick={() => onSelectFish(item.id)}
-              >
-                <span className="aquarium-remote__fish-avatar">
-                  {['🐠', '🐟', '🐡'][index % 3]}
-                </span>
-
-                <span className="aquarium-remote__fish-info">
-                  <strong>{item.name || `Fish ${index + 1}`}</strong>
-                  <small>Size {item.size}</small>
-                </span>
-
-                <span className="aquarium-remote__chevron">›</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
-
       <button
         type="button"
-        className="aquarium-remote__view-button"
-        onClick={onViewAquarium}
+        className="aquarium-remote__end-broadcast"
+        onClick={onSwitchAquarium}
+        disabled={switchingAquarium}
       >
-        <span className="aquarium-remote__view-icon">▣</span>
-
-        <span>
-          <strong>View Aquarium</strong>
-          <small>Open the 3D aquarium in landscape</small>
-        </span>
-
-        <span className="aquarium-remote__chevron">›</span>
+        {switchingAquarium ? 'Switching...' : '🔄 Switch Aquarium'}
+      </button>
+      <button
+        type="button"
+        className="aquarium-remote__end-broadcast"
+        onClick={onEndBroadcast}
+        disabled={endingBroadcast}
+      >
+        {endingBroadcast ? 'Ending broadcast...' : '⏹ End Broadcast'}
       </button>
     </div>
   );

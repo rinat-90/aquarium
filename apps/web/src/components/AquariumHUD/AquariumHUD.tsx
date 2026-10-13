@@ -4,16 +4,21 @@ import './AquariumHUD.css';
 type AquariumHUDProps = {
   name: string;
   fishCount: number;
+  feedCooldownSeconds: number;
+  feedPending: boolean;
   onBack: () => void;
   onAddFish: () => void;
   onSettings: () => void;
   onViewFish: () => void;
   onFeed: () => void;
+
 };
 
 export function AquariumHUD({
                               name,
                               fishCount,
+                              feedCooldownSeconds,
+                              feedPending,
                               onBack,
                               onAddFish,
                               onSettings,
@@ -47,9 +52,19 @@ export function AquariumHUD({
           Add Fish
         </button>
 
-        <button type="button" onClick={onFeed}>
-          <span>🫧</span>
-          Feed Fish
+        <button
+          type="button"
+          onClick={onFeed}
+          disabled={feedPending || feedCooldownSeconds > 0}
+        >
+          <span>🍽️</span>
+          <span>
+    {feedPending
+      ? 'Feeding...'
+      : feedCooldownSeconds > 0
+        ? `Feed in ${feedCooldownSeconds}s`
+        : 'Feed Fish'}
+  </span>
         </button>
 
         <button type="button" onClick={onViewFish}>

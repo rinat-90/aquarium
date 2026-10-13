@@ -17,6 +17,7 @@ export type FishCreation =
   type: 'drawn';
   image: string;
   size: number;
+  headDirection?: 'left' | 'right';
 }
   | {
   type: '3d';

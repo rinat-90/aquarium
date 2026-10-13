@@ -4,6 +4,7 @@ import {
   Link,
   NavLink,
   Outlet,
+  useLocation,
   useNavigate,
 } from 'react-router';
 
@@ -17,6 +18,8 @@ type DashboardUser = {
 
 export function AppLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAquariumsPage = location.pathname === '/aquariums';
 
   const [user, setUser] = useState<DashboardUser | null>(null);
   const [signOutError, setSignOutError] = useState<string | null>(null);
@@ -98,6 +101,20 @@ export function AppLayout() {
           </span>
         </Link>
 
+        {isAquariumsPage && (
+          <button
+            type="button"
+            className="aquariums-mobile-create"
+            onClick={() => {
+              window.dispatchEvent(new Event('aquarium:open-create'));
+            }}
+            aria-label="Create new aquarium"
+          >
+            <span aria-hidden="true">+</span>
+            New
+          </button>
+        )}
+
         <nav
           className="aquariums-navigation"
           aria-label="Main navigation"
@@ -161,7 +178,51 @@ export function AppLayout() {
           )}
         </div>
       </aside>
+      <nav
+        className="aquariums-mobile-nav"
+        aria-label="Mobile navigation"
+      >
+        <NavLink
+          to="/aquariums"
+          end
+          className={({ isActive }) =>
+            `aquariums-mobile-nav__item${isActive ? ' active' : ''}`
+          }
+        >
+          <span aria-hidden="true">▣</span>
+          <small>Aquariums</small>
+        </NavLink>
 
+        <NavLink
+          to="/fish/create"
+          className={({ isActive }) =>
+            `aquariums-mobile-nav__item${isActive ? ' active' : ''}`
+          }
+        >
+          <span aria-hidden="true">✧</span>
+          <small>Create Fish</small>
+        </NavLink>
+
+        <NavLink
+          to="/tv/manage"
+          className={({ isActive }) =>
+            `aquariums-mobile-nav__item${isActive ? ' active' : ''}`
+          }
+        >
+          <span aria-hidden="true">▤</span>
+          <small>TV</small>
+        </NavLink>
+
+        <NavLink
+          to="/profile"
+          className={({ isActive }) =>
+            `aquariums-mobile-nav__item${isActive ? ' active' : ''}`
+          }
+        >
+          <span aria-hidden="true">♙</span>
+          <small>Profile</small>
+        </NavLink>
+      </nav>
       <main className="aquariums-content">
         <Outlet />
       </main>

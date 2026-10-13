@@ -9,3 +9,141 @@
 .draw-fish-page__content, .customize-fish-page__editor { position: relative; }
 .draw-fish-page__saving, .customize-fish-page__saving { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; border-radius: 18px; color: white; background: #031522d9; }
 @media (max-width: 650px) { .draw-fish-page, .customize-fish-page { padding: 18px 12px 36px; } .draw-fish-page__header, .customize-fish-page__header { gap: 12px; align-items: flex-start; } }
+/* Mobile Draw Fish redesign */
+@media (max-width: 720px) {
+    .draw-fish-page {
+        min-height: 0;
+        padding: 12px 0 100px;
+        background: transparent;
+    }
+
+    /* Compact page header */
+    .draw-fish-page__header {
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .draw-fish-page__header > div {
+        min-width: 0;
+    }
+
+    .draw-fish-page__header h1 {
+        margin-bottom: 4px;
+        font-size: 23px;
+        line-height: 1.2;
+    }
+
+    .draw-fish-page__header p {
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .draw-fish-page__back {
+        padding: 9px 12px;
+        border-radius: 10px;
+        font-size: 13px;
+    }
+
+    /* Drawing workspace */
+    .draw-fish-page .fish-editor__workspace {
+        grid-template-columns: minmax(0, 1fr);
+        min-height: 0;
+        border-radius: 16px;
+    }
+
+    .draw-fish-page .fish-editor__stage {
+        min-height: 0;
+        padding: 12px;
+    }
+
+    .draw-fish-page .fish-editor__canvas-wrap {
+        width: 100%;
+        aspect-ratio: 3 / 2;
+        border-radius: 12px;
+    }
+
+    /* Compact editing controls */
+    .draw-fish-page .fish-editor__sidebar {
+        gap: 16px;
+        padding: 16px 14px;
+    }
+
+    .draw-fish-page .fish-editor__section {
+        gap: 9px;
+    }
+
+    .draw-fish-page .fish-editor__section h2 {
+        font-size: 14px;
+    }
+
+    /* Color palette */
+    .draw-fish-page .fish-editor__palette {
+        gap: 10px;
+    }
+
+    .draw-fish-page .fish-editor__swatch {
+        width: 30px;
+        height: 30px;
+    }
+
+    .draw-fish-page .fish-editor__color-input {
+        width: 32px;
+        height: 32px;
+    }
+
+    /* Brush size */
+    .draw-fish-page .fish-editor__segmented {
+        padding: 3px;
+        border-radius: 10px;
+    }
+
+    .draw-fish-page .fish-editor__segmented button {
+        min-height: 40px;
+        padding: 8px 5px;
+        font-size: 13px;
+    }
+
+    /* Tools */
+    .draw-fish-page .fish-editor__tool-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .draw-fish-page .fish-editor__tool-grid button {
+        min-height: 42px;
+        padding: 8px 4px;
+        font-size: 13px;
+    }
+
+    /* Fish size slider */
+    .draw-fish-page .fish-editor__capacity {
+        gap: 8px;
+        margin-top: 0;
+    }
+
+    .draw-fish-page .fish-editor__capacity input[type='range'] {
+        min-height: 32px;
+        margin: 0;
+    }
+
+    .draw-fish-page .fish-editor__capacity-ok,
+    .draw-fish-page .fish-editor__capacity-full {
+        font-size: 11px;
+    }
+
+    /* Save / Cancel */
+    .draw-fish-page .fish-editor__actions {
+        gap: 10px;
+    }
+
+    .draw-fish-page .fish-editor__actions button {
+        min-height: 46px;
+        font-size: 14px;
+    }
+
+    .draw-fish-page .fish-editor__save {
+        flex: 1;
+    }
+}

@@ -64,6 +64,8 @@ export class Aquarium {
       }
     >();
 
+  private eatingUntil = new Map<string, number>();
+
   private options: AquariumOptions;
 
   constructor(options: AquariumOptions) {
@@ -159,12 +161,30 @@ export class Aquarium {
     this.foodSeekProgress.delete(
       id,
     );
+    this.eatingUntil.delete(id);
   }
 
   getFish(): Fish[] {
     return [
       ...this.fish.values(),
     ];
+  }
+
+  getNibbleProgress(fishId: string): number {
+    const remaining = (this.eatingUntil.get(fishId) ?? 0) - this.elapsedTime;
+
+    if (remaining <= 0) {
+      return 0;
+    }
+
+    // Nibbling occurs during the first 0.45 seconds after eating.
+    const elapsed = 0.8 - remaining;
+
+    if (elapsed >= 0.45) {
+      return 0;
+    }
+
+    return Math.sin((elapsed / 0.45) * Math.PI);
   }
 
   addFood(
@@ -304,6 +324,9 @@ export class Aquarium {
       const fish of
       this.fish.values()
       ) {
+      if (this.elapsedTime < (this.eatingUntil.get(fish.id) ?? 0)) {
+        continue;
+      }
       if (
         fish.targetFoodId
       ) {
@@ -823,12 +846,24 @@ export class Aquarium {
      * Responsive fish make tighter turns.
      * Calm fish make broader, slower turns.
      */
+    const currentSpeed = Math.hypot(
+      fish.velocity.x,
+      fish.velocity.y,
+      fish.velocity.z,
+    );
+
+    const isSlowingDown =
+      fish.behavior === 'wandering' &&
+      isIdling &&
+      currentSpeed > targetSpeed;
+
     const steering =
       (
-        fish.behavior ===
-        'seeking-food'
+        fish.behavior === 'seeking-food'
           ? 2.8
-          : 1.45
+          : isSlowingDown
+            ? 0.65
+            : 1.45
       ) *
       personality.turnResponsiveness;
 
@@ -1000,12 +1035,14 @@ export class Aquarium {
     fish: Fish,
     food: Food,
   ) {
-    this.food.delete(
-      food.id,
-    );
+    this.food.delete(food.id);
 
-    this.returnToWandering(
-      fish,
+    this.returnToWandering(fish);
+
+    // Brief pause after eating before chasing another pellet.
+    this.eatingUntil.set(
+      fish.id,
+      this.elapsedTime + 0.8,
     );
   }
 

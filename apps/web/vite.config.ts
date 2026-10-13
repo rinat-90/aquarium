@@ -10,6 +10,7 @@ const createProxy = (): Record<string, string | ProxyOptions> => ({
     target: API_TARGET,
     changeOrigin: true,
   },
+
   '/aquariums': {
     target: API_TARGET,
     changeOrigin: true,
@@ -23,10 +24,12 @@ const createProxy = (): Record<string, string | ProxyOptions> => ({
       }
     },
   },
+
   '/fish': {
     target: API_TARGET,
     changeOrigin: true,
   },
+
   '/socket.io': {
     target: API_TARGET,
     changeOrigin: true,
@@ -38,11 +41,17 @@ export default defineConfig({
   plugins: [react()],
 
   server: {
+    host: '0.0.0.0',
+
+    // Allow the current Cloudflare HTTPS tunnel.
+    allowedHosts: ['.trycloudflare.com'],
+
     proxy: createProxy(),
   },
 
   preview: {
-    allowedHosts: ['aquariumweb-production.up.railway.app'],
+    allowedHosts: ['.trycloudflare.com'],
+
     proxy: createProxy(),
   },
 });

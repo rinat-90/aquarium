@@ -125,6 +125,7 @@ async function mapDisplayFish(
       size: item.size,
       name: item.name,
       createdAt: item.createdAt,
+      headDirection: item.headDirection,
     };
   }
 
@@ -211,11 +212,13 @@ export function TvAquariumPage() {
     let active = true;
     let requestId = 0;
 
-    const { token, aquariumId, expiresAt } = credentials;
+    const { token, expiresAt } = credentials;
+    let currentAquariumId = credentials.aquariumId;
+
     const socket = createTvSocket(token);
 
     console.log('[TV] Starting aquarium display', {
-      aquariumId,
+      currentAquariumId,
     });
 
     const reset = (reason: string) => {
@@ -235,6 +238,7 @@ export function TvAquariumPage() {
 
     async function reload() {
       const id = ++requestId;
+      const requestedAquariumId = currentAquariumId;
 
       console.log('[TV] Loading aquarium fish');
 
@@ -248,13 +252,38 @@ export function TvAquariumPage() {
           fishCount: result.fish.length,
         });
 
-        if (result.aquariumId !== aquariumId) {
-          console.error('[TV] Aquarium ID mismatch', {
-            expected: aquariumId,
-            received: result.aquariumId,
-          });
+        // The server is authoritative about which aquarium
+        // belongs to this TV display session.
+        if (result.aquariumId !== currentAquariumId) {
+          currentAquariumId = result.aquariumId;
 
-          reset('The display token belongs to another aquarium');
+          setCredentials((current) => {
+            if (!current || current.token !== token) return current;
+
+            const updated = {
+              ...current,
+              aquariumId: result.aquariumId,
+            };
+
+            localStorage.setItem(
+              STORAGE_KEY,
+              JSON.stringify(updated),
+            );
+
+            return updated;
+          });
+        }
+
+        // Ignore responses from requests that started before
+        // another aquarium switch.
+        if (
+          !active ||
+          id !== requestId ||
+          (
+            requestedAquariumId !== currentAquariumId &&
+            result.aquariumId !== currentAquariumId
+          )
+        ) {
           return;
         }
 
@@ -262,7 +291,14 @@ export function TvAquariumPage() {
           result.fish.map((item) => mapDisplayFish(item, token)),
         );
 
-        if (!active || id !== requestId) return;
+        // Another switch may have happened while textures loaded.
+        if (
+          !active ||
+          id !== requestId ||
+          result.aquariumId !== currentAquariumId
+        ) {
+          return;
+        }
 
         const mappedFish = mapped.filter(
           (item): item is CreatedFish => item !== null,
@@ -272,6 +308,7 @@ export function TvAquariumPage() {
         setError(null);
 
         console.log('[TV] Aquarium fish loaded', {
+          aquariumId: currentAquariumId,
           visibleFish: mappedFish.length,
         });
       } catch (err) {
@@ -325,8 +362,7 @@ export function TvAquariumPage() {
     const changed = (event: { aquariumId: string }) => {
       if (!active) return;
 
-      if (event.aquariumId === aquariumId) {
-        console.log('[TV] Aquarium changed, reloading fish');
+      if (event.aquariumId === currentAquariumId) {
         void reload();
       }
     };
@@ -335,7 +371,7 @@ export function TvAquariumPage() {
       aquariumId: string;
       eventId: string;
     }) => {
-      if (!active || event.aquariumId !== aquariumId) return;
+      if (!active || event.aquariumId !== currentAquariumId) return;
 
       setFeedSequence((current) => current + 1);
     };
@@ -368,6 +404,23 @@ export function TvAquariumPage() {
     socket.on('tv:session-expired', () => {
       reset('Display session expired on server');
     });
+
+    socket.on(
+      'tv:aquarium-switched',
+      (event: { aquariumId: string }) => {
+        if (!active || !event.aquariumId) return;
+
+        console.log('[TV] Switching aquarium:', event.aquariumId);
+
+        currentAquariumId = event.aquariumId;
+
+        setFish([]);
+        setFeedSequence(0);
+        setLoading(true);
+
+        void reload();
+      },
+    );
 
     socket.connect();
 
@@ -423,7 +476,7 @@ export function TvAquariumPage() {
 
       socket.disconnect();
     };
-  }, [credentials]);
+  }, [credentials?.token, credentials?.expiresAt]);
 
   if (!credentials) {
     return <TvPairingScreen onPaired={onPaired} />;

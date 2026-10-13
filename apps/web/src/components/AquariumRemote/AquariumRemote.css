@@ -236,3 +236,160 @@
     color: #9fc4d4;
     font-size: 12px;
 }
+
+.aquarium-remote__action--scan {
+    grid-column: 1 / -1;
+}
+
+.aquarium-remote__action--scan .aquarium-remote__action-icon {
+    font-size: 2rem;
+}
+
+
+/* Sticky mobile remote header */
+.aquarium-remote__header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 14px 16px;
+    margin: -14px -16px 20px;
+    background: rgba(7, 26, 40, 0.96);
+    border-bottom: 1px solid #21475c;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+/* Compact, clickable aquarium summary */
+.aquarium-remote__hero {
+    padding: 0;
+    overflow: hidden;
+    text-align: left;
+}
+
+.aquarium-remote__hero-toggle {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 20px;
+    border: 0;
+    background: transparent;
+    color: #eaf6ff;
+    text-align: left;
+    cursor: pointer;
+}
+
+.aquarium-remote__hero-toggle:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: -3px;
+}
+
+.aquarium-remote__hero-toggle .aquarium-remote__hero-icon {
+    flex-shrink: 0;
+    margin: 0;
+    font-size: 38px;
+    line-height: 1;
+}
+
+.aquarium-remote__hero-content {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.aquarium-remote__hero-content strong {
+    font-size: 16px;
+    line-height: 1.3;
+}
+
+.aquarium-remote__hero-content small {
+    color: #a9c8d8;
+    font-size: 12px;
+}
+
+.aquarium-remote__hero-chevron {
+    flex-shrink: 0;
+    color: #9fc4d4;
+    font-size: 28px;
+    line-height: 1;
+    transition: transform 180ms ease;
+}
+
+.aquarium-remote__hero-chevron--expanded {
+    transform: rotate(180deg);
+}
+
+/* Expanded fish list */
+.aquarium-remote__hero-panel {
+    padding: 18px 16px 20px;
+    border-top: 1px solid #31556b;
+    background: rgba(4, 22, 35, 0.3);
+}
+
+.aquarium-remote__hero-panel .aquarium-remote__section-heading {
+    margin-bottom: 14px;
+}
+
+.aquarium-remote__hero-panel .aquarium-remote__section-heading h2 {
+    font-size: 16px;
+}
+
+.aquarium-remote__hero-panel .aquarium-remote__fish-list {
+    max-height: 45dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.aquarium-remote__hero-panel .aquarium-remote__view-button {
+    margin-top: 16px;
+}
+
+/* Small screens */
+@media (max-width: 480px) {
+    .aquarium-remote {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .aquarium-remote__header {
+        margin-left: -16px;
+        margin-right: -16px;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .aquarium-remote__hero-toggle {
+        padding: 18px 14px;
+        gap: 12px;
+    }
+
+    .aquarium-remote__hero-content strong {
+        font-size: 15px;
+    }
+}
+
+
+.aquarium-remote__header {
+    top: env(safe-area-inset-top, 0px);
+}
+
+.aquarium-remote__end-broadcast {
+    width: 100%;
+    padding: 14px 18px;
+    margin-top: 20px;
+    border: 1px solid #ef7777;
+    border-radius: 12px;
+    background: transparent;
+    color: #ef7777;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.aquarium-remote__end-broadcast:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

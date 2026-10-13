@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { detectFishOrientation } from '../../lib/image-processing/detectFishOrientation';
 
 export type ThreeFish = {
   group: THREE.Group;
@@ -8,6 +9,7 @@ export type ThreeFish = {
     intensity: number,
     direction: 'left' | 'right',
     depthVelocity?: number,
+    nibbleProgress?: number,
   ) => void;
 
   destroy: () => void;
@@ -28,12 +30,24 @@ const SEGMENT_COUNT = 18;
 export async function createThreeFish(
   image: string,
   maxWidth = 1.3,
+  headDirection?: 'left' | 'right' | null,
 ): Promise<ThreeFish> {
   const loader =
     new THREE.TextureLoader();
 
   const texture =
     await loader.loadAsync(image);
+
+  // Detect the original drawing's head direction.
+  let orientation: 'left' | 'right' = headDirection ?? 'right';
+
+  if (!headDirection) {
+    try {
+      orientation = await detectFishOrientation(image);
+    } catch (error) {
+      console.warn('Fish orientation detection failed:', error);
+    }
+  }
 
   texture.colorSpace =
     THREE.SRGBColorSpace;
@@ -96,7 +110,7 @@ export async function createThreeFish(
      */
     const geometry =
       new THREE.PlaneGeometry(
-        segmentWidth * 1.06,
+        segmentWidth * 1.12,
         height,
       );
 
@@ -158,6 +172,8 @@ export async function createThreeFish(
 
   let currentDirectionScale = 1;
 
+  const swimPhaseOffset = Math.random() * Math.PI * 2;
+
   const update = (
     elapsed: number,
     intensity: number,
@@ -165,22 +181,36 @@ export async function createThreeFish(
       | 'left'
       | 'right',
     depthVelocity = 0,
+    nibbleProgress = 0,
   ) => {
-    const clampedIntensity =
-      Math.max(
-        0.35,
-        Math.min(
-          intensity,
-          1.8,
-        ),
-      );
+    const clampedIntensity = THREE.MathUtils.clamp(
+      intensity,
+      0.35,
+      1.8,
+    );
+
+// Each fish gets its own swimming rhythm.
+    const glideCycle = elapsed * 0.65 + swimPhaseOffset;
+
+// Smooth transition between active swimming and gliding.
+    const glideFactor =
+      0.5 + 0.5 * Math.sin(glideCycle);
+
+// 1 = active swimming, 0.35 = gentle gliding.
+    const swimEffort =
+      THREE.MathUtils.lerp(0.35, 1, glideFactor);
+
+    const effectiveIntensity =
+      clampedIntensity * swimEffort;
 
     /*
      * Smoothly flip the fish instead of
      * instantly snapping between 1 and -1.
      */
+// Match the drawing's original orientation
+// to the direction of movement.
     const targetDirectionScale =
-      direction === 'right'
+      direction === orientation
         ? 1
         : -1;
 
@@ -208,12 +238,29 @@ export async function createThreeFish(
         0.16,
       );
 
-    body.rotation.y =
-      THREE.MathUtils.lerp(
-        body.rotation.y,
-        depthTurn,
-        0.08,
-      );
+    // Preserve the existing 3D depth movement.
+    body.rotation.y = THREE.MathUtils.lerp(
+      body.rotation.y,
+      depthTurn,
+      0.08,
+    );
+
+// Add a subtle nibbling movement.
+    // Three quick bites, fading out naturally.
+    const nibbleEnvelope = Math.sin(
+      Math.PI * THREE.MathUtils.clamp(nibbleProgress, 0, 1),
+    );
+
+    const nibble =
+      Math.sin(elapsed * 12) *
+      nibbleEnvelope *
+      0.09;
+
+// Slight head dip while eating.
+    body.rotation.z = nibble;
+    body.position.x = -Math.abs(nibble) * 0.12;
+
+    body.rotation.z = nibble;
 
     /*
      * Very small whole-body floating motion.
@@ -232,62 +279,46 @@ export async function createThreeFish(
        * X=0 is therefore the tail and
        * X=1 is the head.
        */
+      // The tail is opposite the detected head direction.
       const tailAmount =
-        1 -
-        segment.normalizedX;
+        orientation === 'right'
+          ? 1 - segment.normalizedX
+          : segment.normalizedX;
 
-      /*
-       * Non-linear falloff keeps the head
-       * almost stationary while allowing
-       * much more motion near the tail.
-       */
-      const tailInfluence =
-        tailAmount *
-        tailAmount;
+      // The head remains stable while movement increases
+      // progressively toward the tail.
+      const tailInfluence = Math.pow(tailAmount, 2.5);
 
-      /*
-       * Travelling wave.
-       */
-      const wave =
-        Math.sin(
-          elapsed * 1.15 -
-          tailAmount * 3.2,
-        );
+      // A wave traveling from head to tail.
+      // Swimming faster increases the tail-beat frequency.
+      const swimFrequency = 1.8 + effectiveIntensity * 1.2;
+
+      const wave = Math.sin(
+        elapsed * swimFrequency -
+        tailAmount * 4.2,
+      );
 
       const bendStrength =
-        tailInfluence *
-        clampedIntensity;
+        tailInfluence * effectiveIntensity;
 
       /*
        * Move slices slightly through depth.
        */
-      segment.mesh.position.z =
-        wave *
-        bendStrength *
-        0.105;
-
-      /*
-       * Very small vertical movement.
-       */
+      // Gentle vertical movement toward the tail.
       segment.mesh.position.y =
-        wave *
-        bendStrength *
-        0.012;
+        wave * bendStrength * 0.025;
 
-      /*
-       * Rotation creates the visual body
-       * bend without heavily deforming the
-       * original drawing.
-       */
+      // Side-to-side movement through depth.
+      segment.mesh.position.z =
+        wave * bendStrength * 0.09;
+
+      // The tail twists more than the body.
       segment.mesh.rotation.y =
-        wave *
-        bendStrength *
-        0.14;
+        wave * bendStrength * 0.3;
 
+      // Keep vertical rotation subtle.
       segment.mesh.rotation.z =
-        wave *
-        bendStrength *
-        0.006;
+        wave * bendStrength * 0.012;
 
       /*
        * Preserve the source drawing's

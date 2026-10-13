@@ -201,6 +201,7 @@ export function ThreeAquariumView({
         view = await createThreeFish(
           created.image,
           1.3 * created.size,
+          created.headDirection,
         );
       } else {
         view = createThreeModelFish(
@@ -1209,8 +1210,8 @@ export function ThreeAquariumView({
           speedRatio * 0.45,
 
           fish.direction,
-
           fish.velocity.z,
+          aquarium.getNibbleProgress(fish.id),
         );
       }
 

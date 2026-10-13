@@ -200,3 +200,180 @@
         padding: 16px;
     }
 }
+
+/* Mobile Profile redesign */
+@media (max-width: 720px) {
+    .profile-page {
+        width: 100%;
+        padding-bottom: 20px;
+    }
+
+    /* Page title */
+    .profile-header {
+        margin-bottom: 20px;
+    }
+
+    .profile-header h1 {
+        margin-bottom: 5px;
+        font-size: 25px;
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+    }
+
+    .profile-header p {
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    /* User information */
+    .profile-summary {
+        gap: 14px;
+        padding: 16px;
+        margin-bottom: 16px;
+        border-radius: 16px;
+    }
+
+    .profile-avatar {
+        width: 54px;
+        height: 54px;
+        font-size: 22px;
+    }
+
+    .profile-summary > div:last-child {
+        min-width: 0;
+    }
+
+    .profile-summary h2 {
+        margin-bottom: 4px;
+        font-size: 18px;
+        overflow-wrap: anywhere;
+    }
+
+    .profile-summary p {
+        margin-bottom: 5px;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+    }
+
+    .profile-summary span {
+        font-size: 12px;
+    }
+
+    /* Account and statistics cards */
+    .profile-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .profile-card {
+        padding: 18px;
+        border-radius: 16px;
+    }
+
+    .profile-card h2 {
+        margin-bottom: 6px;
+        font-size: 18px;
+    }
+
+    .profile-card > p {
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    /* Account form */
+    .profile-card form {
+        gap: 10px;
+        margin-top: 18px;
+    }
+
+    .profile-card label {
+        font-size: 13px;
+    }
+
+    .profile-card input {
+        min-height: 44px;
+        margin-bottom: 4px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 16px;
+    }
+
+    .profile-card form button {
+        align-self: stretch;
+        min-height: 44px;
+        margin-top: 10px;
+        border-radius: 12px;
+        font-size: 14px;
+    }
+
+    /* Aquarium statistics */
+    .profile-stats {
+        gap: 12px;
+        margin-top: 18px;
+    }
+
+    .profile-stat {
+        align-items: center;
+        gap: 6px;
+        padding: 16px 12px;
+        border-radius: 12px;
+        text-align: center;
+    }
+
+    .profile-stat strong {
+        font-size: 28px;
+        line-height: 1.2;
+    }
+
+    .profile-stat span {
+        font-size: 12px;
+    }
+}
+
+/* Mobile sign out */
+.profile-mobile-signout {
+    display: none;
+}
+
+@media (max-width: 720px) {
+    .profile-mobile-signout {
+        display: block;
+        margin-top: 20px;
+        padding-bottom: 12px;
+    }
+
+    .profile-mobile-signout button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+
+        width: 100%;
+        min-height: 48px;
+        padding: 12px 16px;
+
+        border: 1px solid #874658;
+        border-radius: 12px;
+        background: rgba(150, 45, 65, 0.12);
+        color: #ffb8c4;
+
+        font: inherit;
+        font-size: 14px;
+        font-weight: 650;
+        cursor: pointer;
+    }
+
+    .profile-mobile-signout button:active {
+        background: rgba(150, 45, 65, 0.25);
+    }
+
+    .profile-mobile-signout button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .profile-mobile-signout .profile-error {
+        margin-top: 12px;
+        text-align: center;
+    }
+}

@@ -2,7 +2,11 @@ import { createHash, randomBytes } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { prisma } from '@aquarium/database';
 import { auth } from '../lib/auth.js';
-import { disconnectTvDisplaySession } from '../realtime/socket.js';
+import {
+  disconnectTvDisplaySession,
+  switchTvDisplayAquarium,
+  getOnlineTvDisplaySessionIds
+} from '../realtime/socket.js';
 
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -229,6 +233,114 @@ export async function tvPairingRoutes(app: FastifyInstance) {
           error: 'Texture file not found',
         });
       }
+    },
+  );
+
+  // Owner: list active TV display sessions.
+  app.get('/api/tv/display/sessions', async (request, reply) => {
+    const userId = await authenticatedUserId(request);
+
+    if (!userId) {
+      return reply.code(401).send({
+        error: 'Authentication required',
+      });
+    }
+
+    const sessions = await prisma.tvDisplaySession.findMany({
+      where: {
+        ownerId: userId,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      select: {
+        id: true,
+        aquariumId: true,
+        createdAt: true,
+        expiresAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const onlineSessionIds = getOnlineTvDisplaySessionIds();
+
+    return {
+      sessions: sessions.map((session) => ({
+        id: session.id,
+        aquariumId: session.aquariumId,
+        createdAt: session.createdAt,
+        expiresAt: session.expiresAt,
+        isOnline: onlineSessionIds.has(session.id),
+      })),
+    };
+  });
+
+  // Owner: switch the aquarium displayed on a paired TV.
+  app.post<{
+    Params: { sessionId: string };
+    Body: { aquariumId?: string };
+  }>(
+    '/api/tv/display/sessions/:sessionId/switch',
+    async (request, reply) => {
+      const userId = await authenticatedUserId(request);
+
+      if (!userId) {
+        return reply.code(401).send({
+          error: 'Authentication required',
+        });
+      }
+
+      const { sessionId } = request.params;
+      const aquariumId = request.body?.aquariumId;
+
+      if (
+        typeof sessionId !== 'string' ||
+        !sessionId ||
+        sessionId.length > 256 ||
+        typeof aquariumId !== 'string' ||
+        !aquariumId
+      ) {
+        return reply.code(400).send({
+          error: 'Invalid session or aquarium ID',
+        });
+      }
+
+      // Verify the user owns the destination aquarium.
+      const aquarium = await prisma.aquarium.findFirst({
+        where: {
+          id: aquariumId,
+          ownerId: userId,
+        },
+        select: { id: true },
+      });
+
+      if (!aquarium) {
+        return reply.code(403).send({
+          error: 'Aquarium access denied',
+        });
+      }
+
+      // Update only an active session owned by this user.
+      const result = await prisma.tvDisplaySession.updateMany({
+        where: {
+          id: sessionId,
+          ownerId: userId,
+          revokedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+        data: { aquariumId },
+      });
+
+      if (result.count !== 1) {
+        return reply.code(404).send({
+          error: 'Active display session not found',
+        });
+      }
+
+      switchTvDisplayAquarium(sessionId, aquariumId);
+
+      return { ok: true };
     },
   );
 

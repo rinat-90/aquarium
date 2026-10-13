@@ -7,11 +7,16 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 const trustedOrigins = [
   process.env.WEB_URL ?? 'http://localhost:5173',
+
   ...(!isProduction
     ? [
       'http://localhost:5173',
       'http://127.0.0.1:5173',
       'http://192.168.86.23:5173',
+
+      // HTTPS tunnel for testing the guided fish scanner.
+      'https://productions-jet-gotten-creek.trycloudflare.com'
+
     ]
     : []),
 ]
@@ -39,8 +44,10 @@ export const auth = betterAuth({
 
   advanced: {
     defaultCookieAttributes: {
-      sameSite: isProduction ? 'none' : 'lax',
-      secure: isProduction,
+      sameSite: 'lax',
+      secure:
+        isProduction ||
+        process.env.BETTER_AUTH_URL?.startsWith('https://') === true,
       httpOnly: true,
     },
   },

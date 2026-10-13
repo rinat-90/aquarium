@@ -39,17 +39,18 @@ model Aquarium {
 }
 
 model Fish {
-  id         String   @id @default(cuid())
-  name       String
-  species    String   @default("classic")
-  bodyColor  String   @default("#4F9CF9")
-  finColor   String   @default("#3B82F6")
-  paintKey   String?
-  size       Float    @default(1)
-  ownerId    String
-  aquariumId String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String
+  species       String   @default("classic")
+  bodyColor     String   @default("#4F9CF9")
+  finColor      String   @default("#3B82F6")
+  paintKey      String?
+  headDirection String?
+  size          Float    @default(1)
+  ownerId       String
+  aquariumId    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   owner    User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   aquarium Aquarium? @relation(fields: [aquariumId], references: [id], onDelete: SetNull)

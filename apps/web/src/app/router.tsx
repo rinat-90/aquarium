@@ -12,6 +12,7 @@ import { CreateFishPage } from '../pages/CreateFishPage/CreateFishPage';
 import { DrawFishPage } from '../pages/DrawFishPage/DrawFishPage';
 import { CustomizeFishPage } from '../pages/CustomizeFishPage/CustomizeFishPage';
 import { ProfilePage } from '../pages/ProfilePage/ProfilePage';
+import { TvManagerPage } from '../pages/TvManagerPage/TvManagerPage';
 
 import { ProtectedRoute } from './ProtectedRoute';
 
@@ -46,7 +47,8 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
-      // Dashboard pages share the main sidebar.
+      // Dashboard pages share the main sidebar
+      // and mobile bottom navigation.
       {
         element: <AppLayout />,
         children: [
@@ -57,6 +59,10 @@ export const router = createBrowserRouter([
           {
             path: '/fish/create',
             element: <CreateFishPage />,
+          },
+          {
+            path: '/tv/manage',
+            element: <TvManagerPage />,
           },
           {
             path: '/profile',

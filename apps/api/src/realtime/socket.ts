@@ -4,10 +4,36 @@ import { Server } from 'socket.io';
 import { prisma } from '@aquarium/database';
 import { auth } from '../lib/auth.js';
 
+const FEED_COOLDOWN_MS = 3_000;
+
+const lastFeedByAquarium = new Map<string, number>();
+
 let io: Server | undefined;
 const aquariumRoom = (id: string) => `aquarium:${id}`;
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 type JoinResult = { ok: boolean };
+
+export function getOnlineTvDisplaySessionIds(): Set<string> {
+  const onlineSessionIds = new Set<string>();
+
+  if (!io) {
+    return onlineSessionIds;
+  }
+
+  for (const socket of io.sockets.sockets.values()) {
+    if (!socket.connected) continue;
+
+    const sessionId = socket.data.displaySessionId as
+      | string
+      | null;
+
+    if (sessionId) {
+      onlineSessionIds.add(sessionId);
+    }
+  }
+
+  return onlineSessionIds;
+}
 
 export function disconnectTvDisplaySession(sessionId: string) {
   // Disconnect every connected socket associated with this display session.
@@ -20,6 +46,29 @@ export function disconnectTvDisplaySession(sessionId: string) {
       socket.emit('tv:session-revoked');
       socket.disconnect(true);
     }
+  }
+}
+
+export function switchTvDisplayAquarium(
+  sessionId: string,
+  aquariumId: string,
+) {
+  const server = io;
+  if (!server) return;
+
+  for (const socket of server.sockets.sockets.values()) {
+    if (socket.data.displaySessionId !== sessionId) continue;
+
+    const previousAquariumId = socket.data.displayAquariumId as string | null;
+
+    if (previousAquariumId) {
+      socket.leave(aquariumRoom(previousAquariumId));
+    }
+
+    socket.data.displayAquariumId = aquariumId;
+    void socket.join(aquariumRoom(aquariumId));
+
+    socket.emit('tv:aquarium-switched', { aquariumId });
   }
 }
 
@@ -135,14 +184,40 @@ export function initializeSocket(
         await socket.join(aquariumRoom(aquariumId));
         // A revoke might have happened while the database queries ran.
         const stillValid = await prisma.tvDisplaySession.findFirst({
-          where: { id: sessionId, revokedAt: null, expiresAt: { gt: new Date() } },
-          select: { id: true },
+          where: {
+            id: sessionId,
+            revokedAt: null,
+            expiresAt: { gt: new Date() },
+          },
+          select: {
+            id: true,
+            aquariumId: true,
+          },
         });
+
         if (!stillValid) {
           socket.leave(aquariumRoom(aquariumId));
           socket.disconnect(true);
           return acknowledge?.({ ok: false });
         }
+
+// The aquarium may have changed while tv:join was running.
+        if (
+          stillValid.aquariumId !== aquariumId ||
+          socket.data.displayAquariumId !== aquariumId
+        ) {
+          socket.leave(aquariumRoom(aquariumId));
+
+          // Tell the TV to synchronize with its current session.
+          if (socket.connected) {
+            socket.emit('tv:aquarium-switched', {
+              aquariumId: stillValid.aquariumId,
+            });
+          }
+
+          return acknowledge?.({ ok: false });
+        }
+
         acknowledge?.({ ok: true });
       } catch {
         acknowledge?.({ ok: false });
@@ -153,7 +228,12 @@ export function initializeSocket(
       'aquarium:feed',
       async (
         aquariumId: unknown,
-        acknowledge?: (result: JoinResult) => void,
+        acknowledge?: (
+          result: {
+            ok: boolean;
+            retryAfterMs?: number;
+          },
+        ) => void,
       ) => {
         const userId = socket.data.userId as string | null;
 
@@ -179,6 +259,21 @@ export function initializeSocket(
             acknowledge?.({ ok: false });
             return;
           }
+
+          const now = Date.now();
+          const lastFeed = lastFeedByAquarium.get(aquariumId) ?? 0;
+
+          const remainingMs = FEED_COOLDOWN_MS - (now - lastFeed);
+
+          if (remainingMs > 0) {
+            acknowledge?.({
+              ok: false,
+              retryAfterMs: remainingMs,
+            });
+            return;
+          }
+
+          lastFeedByAquarium.set(aquariumId, now);
 
           io?.to(aquariumRoom(aquariumId)).emit('aquarium:feed', {
             aquariumId,

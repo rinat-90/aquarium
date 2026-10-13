@@ -13,6 +13,7 @@
   "dependencies": {
     "@aquarium/aquarium-engine": "workspace:^",
     "@aquarium/drawing": "workspace:^",
+    "@zxing/browser": "^0.2.1",
     "better-auth": "^1.7.7",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.8",

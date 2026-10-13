@@ -81,4 +81,27 @@ export const tvPairingApi = {
 
     return response.blob();
   },
+  revoke: (sessionId: string) =>
+    request<{ ok: boolean }>(
+      `/api/tv/display/sessions/${encodeURIComponent(sessionId)}/revoke`,
+      { method: 'POST' },
+    ),
+  sessions: () =>
+    request<{
+      sessions: {
+        id: string;
+        aquariumId: string;
+        createdAt: string;
+        expiresAt: string;
+        isOnline: boolean;
+      }[];
+    }>('/api/tv/display/sessions'),
+  switchAquarium: (sessionId: string, aquariumId: string) =>
+    request<{ ok: boolean }>(
+      `/api/tv/display/sessions/${encodeURIComponent(sessionId)}/switch`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ aquariumId }),
+      },
+    ),
 };

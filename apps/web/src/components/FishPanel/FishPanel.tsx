@@ -21,6 +21,7 @@ type FishPanelProps = {
   onMove: (id: string, aquariumId: string) => Promise<void>;
   aquariums: ApiAquarium[];
   currentAquariumId: string;
+  onViewAquarium?: () => void;
 };
 
 function getFishColor(fish: CreatedFish): string {
@@ -348,6 +349,7 @@ export function FishPanel({
                             onSelectFish,
                             onClose,
                             onAddFish,
+                            onViewAquarium,
                             onRename,
                             onRelease,
                             onMove,
@@ -523,6 +525,25 @@ export function FishPanel({
             </div>
           )}
         </div>
+
+        {!selectedFish && onViewAquarium && (
+          <div className="fish-panel__mobile-view">
+            <button
+              type="button"
+              className="fish-panel__view-aquarium"
+              onClick={onViewAquarium}
+            >
+              <span aria-hidden="true">▣</span>
+
+              <span className="fish-panel__view-aquarium-info">
+                <strong>View Aquarium</strong>
+                <small>Open the 3D aquarium in landscape</small>
+              </span>
+
+              <span aria-hidden="true">›</span>
+            </button>
+          </div>
+        )}
 
         {!selectedFish && fish.length > 0 && (
           <footer className="fish-panel__footer">
