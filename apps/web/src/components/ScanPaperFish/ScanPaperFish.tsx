@@ -339,7 +339,13 @@ export function ScanPaperFish({
                 marginTop: 16,
               }}
             >
-              <span>
+              <span
+                style={{
+                  color: '#0f2940',
+                  fontSize: 14,
+                  fontWeight: 500,
+                }}
+              >
                 Head facing: <strong>{orientation}</strong>
               </span>
 

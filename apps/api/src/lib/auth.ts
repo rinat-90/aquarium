@@ -16,6 +16,8 @@ const trustedOrigins = [
 
       // HTTPS tunnel for testing the guided fish scanner.
       'https://afford-traveller-speed-tba.trycloudflare.com',
+      'https://begins-rendered-soccer-incorporated.trycloudflare.com',
+
     ]
     : []),
 ]

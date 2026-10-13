@@ -370,3 +370,8 @@
         font-size: 15px;
     }
 }
+
+
+.aquarium-remote__header {
+    top: env(safe-area-inset-top, 0px);
+}

@@ -46,6 +46,7 @@ export default defineConfig({
     // Allow the current Cloudflare HTTPS tunnel.
     allowedHosts: [
       'afford-traveller-speed-tba.trycloudflare.com',
+      'begins-rendered-soccer-incorporated.trycloudflare.com'
     ],
 
     proxy: createProxy(),

@@ -292,7 +292,7 @@ export function AquariumPage() {
                 `/fish/create?aquariumId=${encodeURIComponent(aquarium.id)}`,
               );
             }}
-            onSelectFish={handleOpenFishProfile}
+            onViewFish={handleOpenFishList}
             onSettings={() => setSettingsOpen(true)}
             onViewAquarium={() => setMobileViewerOpen(true)}
           />
@@ -385,6 +385,10 @@ export function AquariumPage() {
         selectedFishId={selectedFishId}
         onSelectFish={setSelectedFishId}
         onClose={handleCloseFishPanel}
+        onViewAquarium={() => {
+          handleCloseFishPanel();
+          setMobileViewerOpen(true);
+        }}
         onAddFish={() => {
           if (!aquarium?.id) return;
 

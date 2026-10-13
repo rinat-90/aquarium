@@ -312,7 +312,30 @@ export async function createFishSilhouette(
     result.data[offset + 3] = 255;
   }
 
-  ctx.putImageData(result, 0, 0);
+
+  // Smooth only the outer silhouette edges.
+  // Keep the original pencil strokes and interior details sharp.
+  const edgeCanvas = document.createElement('canvas');
+  edgeCanvas.width = width;
+  edgeCanvas.height = height;
+
+  const edgeCtx = edgeCanvas.getContext('2d', {
+    willReadFrequently: true,
+  });
+
+  if (!edgeCtx) {
+    throw new Error('Canvas is not supported');
+  }
+
+  edgeCtx.putImageData(result, 0, 0);
+
+  // Use a very small blur to soften the alpha boundary.
+  ctx.clearRect(0, 0, width, height);
+  ctx.save();
+  ctx.filter = 'blur(0.7px)';
+  ctx.drawImage(edgeCanvas, 0, 0);
+  ctx.restore();
+
 
 // Find the visible fish bounds in the final silhouette.
   let minX = width;

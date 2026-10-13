@@ -16,7 +16,7 @@ type AquariumRemoteProps = {
   onBack: () => void;
   onFeed: () => void;
   onAddFish: () => void;
-  onSelectFish: (id: string) => void;
+  onViewFish: () => void;
   onSettings: () => void;
   onViewAquarium: () => void;
 };
@@ -28,12 +28,10 @@ export function AquariumRemote({
                                  onBack,
                                  onFeed,
                                  onAddFish,
-                                 onSelectFish,
+                                 onViewFish,
                                  onSettings,
-                                 onViewAquarium,
                                }: AquariumRemoteProps) {
   const [isScanning, setIsScanning] = useState(false);
-  const [fishExpanded, setFishExpanded] = useState(false);
 
   if (isScanning) {
     return (
@@ -96,9 +94,8 @@ export function AquariumRemote({
         <button
           type="button"
           className="aquarium-remote__hero-toggle"
-          onClick={() => setFishExpanded((current) => !current)}
-          aria-expanded={fishExpanded}
-          aria-controls="aquarium-remote-fish-panel"
+          onClick={onViewFish}
+          aria-label="View your fish collection"
         >
           <span className="aquarium-remote__hero-icon">
             🐠
@@ -107,87 +104,17 @@ export function AquariumRemote({
           <span className="aquarium-remote__hero-content">
             <strong>Your fish are swimming!</strong>
             <small>
-              {fish.length} {fish.length === 1 ? 'fish' : 'fish'} in
-              your aquarium
+              {fish.length} {fish.length === 1 ? 'fish' : 'fish'} in your aquarium
             </small>
           </span>
 
           <span
-            className={`aquarium-remote__hero-chevron ${
-              fishExpanded
-                ? 'aquarium-remote__hero-chevron--expanded'
-                : ''
-            }`}
+            className="aquarium-remote__hero-chevron"
             aria-hidden="true"
           >
-            ⌄
+            ›
           </span>
         </button>
-
-        {fishExpanded && (
-          <div
-            id="aquarium-remote-fish-panel"
-            className="aquarium-remote__hero-panel"
-          >
-            <div className="aquarium-remote__section-heading">
-              <h2>Your Fish</h2>
-              <span>{fish.length} total</span>
-            </div>
-
-            {fish.length === 0 ? (
-              <div className="aquarium-remote__empty">
-                No fish yet. Add your first fish!
-              </div>
-            ) : (
-              <div className="aquarium-remote__fish-list">
-                {fish.map((item, index) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="aquarium-remote__fish-item"
-                    onClick={() => onSelectFish(item.id)}
-                  >
-                    <span className="aquarium-remote__fish-avatar">
-                      {['🐠', '🐟', '🐡'][index % 3]}
-                    </span>
-
-                    <span className="aquarium-remote__fish-info">
-                      <strong>
-                        {item.name || `Fish ${index + 1}`}
-                      </strong>
-                      <small>Size {item.size}</small>
-                    </span>
-
-                    <span className="aquarium-remote__chevron">
-                      ›
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <button
-              type="button"
-              className="aquarium-remote__view-button"
-              onClick={onViewAquarium}
-            >
-              <span className="aquarium-remote__view-icon">
-                ▣
-              </span>
-
-              <span>
-                <strong>View Aquarium</strong>
-                <small>
-                  Open the 3D aquarium in landscape
-                </small>
-              </span>
-
-              <span className="aquarium-remote__chevron">
-                ›
-              </span>
-            </button>
-          </div>
-        )}
       </section>
 
       <div className="aquarium-remote__actions">
