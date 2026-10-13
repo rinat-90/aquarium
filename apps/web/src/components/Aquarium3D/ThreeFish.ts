@@ -109,7 +109,7 @@ export async function createThreeFish(
      */
     const geometry =
       new THREE.PlaneGeometry(
-        segmentWidth * 1.06,
+        segmentWidth * 1.12,
         height,
       );
 
@@ -171,6 +171,8 @@ export async function createThreeFish(
 
   let currentDirectionScale = 1;
 
+  const swimPhaseOffset = Math.random() * Math.PI * 2;
+
   const update = (
     elapsed: number,
     intensity: number,
@@ -179,14 +181,25 @@ export async function createThreeFish(
       | 'right',
     depthVelocity = 0,
   ) => {
-    const clampedIntensity =
-      Math.max(
-        0.35,
-        Math.min(
-          intensity,
-          1.8,
-        ),
-      );
+    const clampedIntensity = THREE.MathUtils.clamp(
+      intensity,
+      0.35,
+      1.8,
+    );
+
+// Each fish gets its own swimming rhythm.
+    const glideCycle = elapsed * 0.65 + swimPhaseOffset;
+
+// Smooth transition between active swimming and gliding.
+    const glideFactor =
+      0.5 + 0.5 * Math.sin(glideCycle);
+
+// 1 = active swimming, 0.35 = gentle gliding.
+    const swimEffort =
+      THREE.MathUtils.lerp(0.35, 1, glideFactor);
+
+    const effectiveIntensity =
+      clampedIntensity * swimEffort;
 
     /*
      * Smoothly flip the fish instead of
@@ -259,7 +272,7 @@ export async function createThreeFish(
 
       // A wave traveling from head to tail.
       // Swimming faster increases the tail-beat frequency.
-      const swimFrequency = 1.8 + clampedIntensity * 1.2;
+      const swimFrequency = 1.8 + effectiveIntensity * 1.2;
 
       const wave = Math.sin(
         elapsed * swimFrequency -
@@ -267,7 +280,7 @@ export async function createThreeFish(
       );
 
       const bendStrength =
-        tailInfluence * clampedIntensity;
+        tailInfluence * effectiveIntensity;
 
       /*
        * Move slices slightly through depth.

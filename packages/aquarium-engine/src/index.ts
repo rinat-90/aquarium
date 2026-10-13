@@ -823,12 +823,24 @@ export class Aquarium {
      * Responsive fish make tighter turns.
      * Calm fish make broader, slower turns.
      */
+    const currentSpeed = Math.hypot(
+      fish.velocity.x,
+      fish.velocity.y,
+      fish.velocity.z,
+    );
+
+    const isSlowingDown =
+      fish.behavior === 'wandering' &&
+      isIdling &&
+      currentSpeed > targetSpeed;
+
     const steering =
       (
-        fish.behavior ===
-        'seeking-food'
+        fish.behavior === 'seeking-food'
           ? 2.8
-          : 1.45
+          : isSlowingDown
+            ? 0.65
+            : 1.45
       ) *
       personality.turnResponsiveness;
 
