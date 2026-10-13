@@ -1,4 +1,4 @@
-
+import { useNavigate } from 'react-router';
 import { useEffect, useState, type FormEvent } from 'react';
 import { authClient } from '../../lib/auth-client';
 import { aquariumApi } from '../../lib/aquarium-api';
@@ -11,6 +11,11 @@ type ProfileUser = {
 };
 
 export function ProfilePage() {
+  const navigate = useNavigate();
+
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
+
   const [user, setUser] = useState<ProfileUser | null>(null);
   const [name, setName] = useState('');
   const [aquariumCount, setAquariumCount] = useState<number | null>(null);
@@ -152,6 +157,33 @@ export function ProfilePage() {
     })
     : '—';
 
+  async function handleSignOut() {
+    if (signingOut) return;
+
+    setSigningOut(true);
+    setSignOutError(null);
+
+    try {
+      const result = await authClient.signOut({});
+
+      if (result.error) {
+        throw new Error(
+          result.error.message ?? 'Failed to sign out',
+        );
+      }
+
+      navigate('/login', { replace: true });
+    } catch (err) {
+      setSignOutError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to sign out',
+      );
+    } finally {
+      setSigningOut(false);
+    }
+  }
+
   if (loading) {
     return <p className="profile-message">Loading your profile...</p>;
   }
@@ -250,6 +282,23 @@ export function ProfilePage() {
           )}
         </section>
       </div>
+
+      <section className="profile-mobile-signout">
+        <button
+          type="button"
+          onClick={() => void handleSignOut()}
+          disabled={signingOut}
+        >
+          <span aria-hidden="true">↪</span>
+          {signingOut ? 'Signing out...' : 'Sign Out'}
+        </button>
+
+        {signOutError && (
+          <p className="profile-error" role="alert">
+            {signOutError}
+          </p>
+        )}
+      </section>
     </div>
   );
 }

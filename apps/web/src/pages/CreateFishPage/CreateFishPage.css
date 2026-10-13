@@ -220,3 +220,128 @@
         padding: 20px;
     }
 }
+
+
+/* Compact mobile Create Fish page */
+@media (max-width: 720px) {
+    .create-fish-page {
+        width: 100%;
+        padding-bottom: 16px;
+    }
+
+    .create-fish-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .create-fish-header h1 {
+        margin: 0 0 5px;
+        font-size: 25px;
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+    }
+
+    .create-fish-header p {
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    .create-fish-back {
+        padding: 9px 12px;
+        font-size: 13px;
+    }
+
+    /* Aquarium selector */
+    .create-fish-destination {
+        gap: 8px;
+        margin-bottom: 20px;
+        padding: 14px;
+        border-radius: 16px;
+    }
+
+    .create-fish-destination label {
+        font-size: 15px;
+    }
+
+    .create-fish-destination > p {
+        display: none;
+    }
+
+    .create-fish-destination select {
+        max-width: none;
+        min-height: 44px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 16px;
+    }
+
+    /* Compact horizontal cards */
+    .create-fish-options {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .create-fish-card {
+        display: grid;
+        grid-template-columns: 100px minmax(0, 1fr);
+        align-items: stretch;
+        min-height: 150px;
+        border-radius: 16px;
+    }
+
+    .create-fish-card__art {
+        height: 100%;
+        min-height: 150px;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 43px;
+    }
+
+    .create-fish-card__content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        min-width: 0;
+        padding: 14px;
+    }
+
+    .create-fish-card__content h2 {
+        margin: 0 0 7px;
+        font-size: 17px;
+        line-height: 1.25;
+    }
+
+    .create-fish-card__content p {
+        min-height: 0;
+        margin: 0 0 12px;
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    .create-fish-card__action {
+        padding: 9px 12px;
+        border-radius: 9px;
+        font-size: 12px;
+    }
+
+    .create-fish-card:hover:not(:disabled) {
+        transform: none;
+    }
+}
+
+@media (max-width: 360px) {
+    .create-fish-card {
+        grid-template-columns: 82px minmax(0, 1fr);
+    }
+
+    .create-fish-card__art {
+        font-size: 36px;
+    }
+
+    .create-fish-card__content {
+        padding: 12px;
+    }
+}
