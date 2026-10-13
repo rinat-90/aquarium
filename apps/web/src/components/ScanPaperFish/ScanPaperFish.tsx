@@ -7,7 +7,7 @@ import { AQUARIUM_CAPACITY, createFish } from '../../lib/create-fish';
 import { fishApi } from '../../lib/aquarium-api';
 
 import { removePaperBackground } from '../../lib/image-processing/removePaperBackground';
-import { cropDrawing } from '../../lib/image-processing/cropDrawing';
+import { cropDrawingWithBounds } from '../../lib/image-processing/cropDrawing';
 import { createFishSilhouette } from '../../lib/image-processing/createFishSilhouette';
 import {
   detectFishOrientation,
@@ -71,10 +71,14 @@ export function ScanPaperFish({
     try {
       const result = await removePaperBackground(file);
 
-      const croppedResult = await cropDrawing(result);
+      // Get the cropped drawing and its coordinates.
+      const crop = await cropDrawingWithBounds(result);
 
-      const silhouetteResult =
-        await createFishSilhouette(croppedResult);
+      const silhouetteResult = await createFishSilhouette(
+        crop.image,
+        url,
+        crop,
+      );
 
       const detectedOrientation =
         await detectFishOrientation(silhouetteResult);

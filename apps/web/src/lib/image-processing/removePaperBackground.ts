@@ -31,15 +31,24 @@ export async function removePaperBackground(
     const imageData = ctx.getImageData(0, 0, width, height);
     const pixels = imageData.data;
 
-    // Estimate paper brightness locally to compensate for shadows.
     const blockSize = 32;
     const cols = Math.ceil(width / blockSize);
     const rows = Math.ceil(height / blockSize);
-    const brightnessMap = new Float32Array(cols * rows);
+
+    // Estimate the local paper color, not just brightness.
+    // This helps compensate for shadows and warm lighting.
+    const paperR = new Float32Array(cols * rows);
+    const paperG = new Float32Array(cols * rows);
+    const paperB = new Float32Array(cols * rows);
 
     for (let by = 0; by < rows; by++) {
       for (let bx = 0; bx < cols; bx++) {
-        const values: number[] = [];
+        const samples: {
+          brightness: number;
+          r: number;
+          g: number;
+          b: number;
+        }[] = [];
 
         const startX = bx * blockSize;
         const startY = by * blockSize;
@@ -56,20 +65,43 @@ export async function removePaperBackground(
           ) {
             const i = (y * width + x) * 4;
 
-            const brightness =
-              pixels[i] * 0.299 +
-              pixels[i + 1] * 0.587 +
-              pixels[i + 2] * 0.114;
+            const r = pixels[i];
+            const g = pixels[i + 1];
+            const b = pixels[i + 2];
 
-            values.push(brightness);
+            const brightness =
+              r * 0.299 + g * 0.587 + b * 0.114;
+
+            samples.push({ brightness, r, g, b });
           }
         }
 
-        values.sort((a, b) => a - b);
+        samples.sort(
+          (a, b) => b.brightness - a.brightness,
+        );
 
-        // The upper percentile approximates the paper color.
-        brightnessMap[by * cols + bx] =
-          values[Math.floor(values.length * 0.85)] ?? 255;
+        // Use the brightest 25% of each block as
+        // candidates for the paper background.
+        const sampleCount = Math.max(
+          1,
+          Math.ceil(samples.length * 0.25),
+        );
+
+        let sumR = 0;
+        let sumG = 0;
+        let sumB = 0;
+
+        for (let i = 0; i < sampleCount; i++) {
+          sumR += samples[i].r;
+          sumG += samples[i].g;
+          sumB += samples[i].b;
+        }
+
+        const index = by * cols + bx;
+
+        paperR[index] = sumR / sampleCount;
+        paperG[index] = sumG / sampleCount;
+        paperB[index] = sumB / sampleCount;
       }
     }
 
@@ -81,9 +113,6 @@ export async function removePaperBackground(
         const g = pixels[i + 1];
         const b = pixels[i + 2];
 
-        const brightness =
-          r * 0.299 + g * 0.587 + b * 0.114;
-
         const bx = Math.min(
           cols - 1,
           Math.floor(x / blockSize),
@@ -93,25 +122,70 @@ export async function removePaperBackground(
           Math.floor(y / blockSize),
         );
 
-        const paperBrightness =
-          brightnessMap[by * cols + bx];
+        const blockIndex = by * cols + bx;
 
-        const difference = Math.max(
+        const pr = paperR[blockIndex];
+        const pg = paperG[blockIndex];
+        const pb = paperB[blockIndex];
+
+        const brightness =
+          r * 0.299 + g * 0.587 + b * 0.114;
+
+        const paperBrightness =
+          pr * 0.299 + pg * 0.587 + pb * 0.114;
+
+        const brightnessDifference = Math.max(
           0,
           paperBrightness - brightness,
         );
 
-        // Remove the estimated paper background.
-        // Pencil strokes become increasingly opaque.
-        const alpha = Math.max(
-          0,
-          Math.min(255, ((difference - 10) / 55) * 255),
+        // Compare the pixel's color with the local paper.
+        // This catches colored strokes that are relatively light.
+        const colorDifference = Math.sqrt(
+          (r - pr) ** 2 +
+          (g - pg) ** 2 +
+          (b - pb) ** 2,
         );
 
-        pixels[i + 3] = Math.round(alpha);
+        // Measure chromatic differences separately from
+        // overall brightness, reducing shadow sensitivity.
+        const redGreenDifference = Math.abs(
+          (r - g) - (pr - pg),
+        );
 
-        // Keep the original RGB values so colored drawings
-        // retain their colors.
+        const blueGreenDifference = Math.abs(
+          (b - g) - (pb - pg),
+        );
+
+        const chromaDifference = Math.sqrt(
+          redGreenDifference ** 2 +
+          blueGreenDifference ** 2,
+        );
+
+        const brightnessAlpha =
+          ((brightnessDifference - 12) / 45) * 255;
+
+        const colorAlpha =
+          ((colorDifference - 20) / 65) * 255;
+
+        const chromaAlpha =
+          ((chromaDifference - 8) / 35) * 255;
+
+        // Combine evidence from dark pencil strokes and
+        // colored pencil / marker strokes.
+        const alpha = Math.max(
+          brightnessAlpha,
+          colorAlpha,
+          chromaAlpha,
+        );
+
+        pixels[i + 3] = Math.round(
+          Math.max(0, Math.min(255, alpha)),
+        );
+
+        // Preserve original RGB values.
+        // createFishSilhouette() uses the original photograph
+        // for final colors when it is supplied.
       }
     }
 
