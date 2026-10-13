@@ -50,7 +50,10 @@ export default defineConfig({
   },
 
   preview: {
-    allowedHosts: ['.trycloudflare.com'],
+    allowedHosts: [
+      'aquariumweb-production.up.railway.app',
+      '.trycloudflare.com',
+    ],
 
     proxy: createProxy(),
   },
