@@ -42,16 +42,13 @@ export const router = createBrowserRouter([
     path: '/tv/pair/:code',
     element: <TvPairPage />,
   },
-  {
-    path: '/tv/manage',
-    element: <TvManagerPage />,
-  },
 
   // Authenticated application routes.
   {
     element: <ProtectedRoute />,
     children: [
-      // Dashboard pages share the main sidebar.
+      // Dashboard pages share the main sidebar
+      // and mobile bottom navigation.
       {
         element: <AppLayout />,
         children: [
@@ -62,6 +59,10 @@ export const router = createBrowserRouter([
           {
             path: '/fish/create',
             element: <CreateFishPage />,
+          },
+          {
+            path: '/tv/manage',
+            element: <TvManagerPage />,
           },
           {
             path: '/profile',
