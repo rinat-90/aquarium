@@ -13,6 +13,28 @@ const aquariumRoom = (id: string) => `aquarium:${id}`;
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 type JoinResult = { ok: boolean };
 
+export function getOnlineTvDisplaySessionIds(): Set<string> {
+  const onlineSessionIds = new Set<string>();
+
+  if (!io) {
+    return onlineSessionIds;
+  }
+
+  for (const socket of io.sockets.sockets.values()) {
+    if (!socket.connected) continue;
+
+    const sessionId = socket.data.displaySessionId as
+      | string
+      | null;
+
+    if (sessionId) {
+      onlineSessionIds.add(sessionId);
+    }
+  }
+
+  return onlineSessionIds;
+}
+
 export function disconnectTvDisplaySession(sessionId: string) {
   // Disconnect every connected socket associated with this display session.
   // In a multi-instance deployment, use the Socket.IO Redis adapter and

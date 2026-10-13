@@ -1,0 +1,441 @@
+.tv-manager {
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px 16px 110px;
+    color: #eaf6ff;
+}
+
+.tv-manager__header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: #062945;
+}
+
+.tv-manager__header h1 {
+    margin: 0 0 6px;
+    font-size: 26px;
+}
+
+.tv-manager__header p {
+    margin: 0;
+    color: #91b2c8;
+    font-size: 14px;
+}
+
+.tv-manager__card {
+    padding: 22px;
+    border: 1px solid #21465d;
+    border-radius: 20px;
+    background: #0b2b42;
+}
+
+.tv-manager__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.tv-manager__icon {
+    font-size: 52px;
+    margin-bottom: 14px;
+}
+
+.tv-manager__empty h2 {
+    margin: 0 0 8px;
+    font-size: 21px;
+}
+
+.tv-manager__empty p,
+.tv-manager__empty small {
+    color: #9ebdd0;
+}
+
+.tv-manager__empty ol {
+    align-self: stretch;
+    margin: 20px 0;
+    padding-left: 24px;
+    text-align: left;
+    line-height: 1.9;
+    color: #d1e5f1;
+}
+
+.tv-manager__primary {
+    width: 100%;
+    min-height: 48px;
+    border: 0;
+    border-radius: 12px;
+    background: #168fe0;
+    color: white;
+    font-weight: 700;
+}
+
+.tv-manager__primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.tv-manager__empty small {
+    margin-top: 12px;
+    font-size: 12px;
+}
+
+.tv-manager__sessions {
+    display: grid;
+    gap: 14px;
+}
+
+.tv-manager__sessions h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+}
+
+.tv-manager__status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    color: #80e0b2;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.tv-manager__status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4bd994;
+}
+
+.tv-manager__aquarium {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 14px;
+    border: 0;
+    border-radius: 14px;
+    background: #123b55;
+    color: white;
+    text-align: left;
+    cursor: pointer;
+}
+
+.tv-manager__aquarium-icon {
+    font-size: 30px;
+}
+
+.tv-manager__aquarium > span:nth-child(2) {
+    display: grid;
+    flex: 1;
+    gap: 4px;
+}
+
+.tv-manager__aquarium small {
+    color: #9ebdd0;
+}
+
+.tv-manager__end {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 16px;
+    border: 1px solid #8e4055;
+    border-radius: 12px;
+    background: transparent;
+    color: #ffb1bd;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tv-manager__end:disabled {
+    opacity: 0.6;
+}
+
+@media (max-width: 720px) {
+    .tv-manager {
+        padding: 12px 0 110px;
+    }
+
+    .tv-manager__card {
+        padding: 18px 16px;
+    }
+
+    .tv-manager__header h1 {
+        font-size: 23px;
+    }
+}
+
+
+.tv-manager__header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.tv-manager__header-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: #123c58;
+    font-size: 26px;
+}
+
+.tv-manager__header-content {
+    min-width: 0;
+}
+
+.tv-manager__header-content h1 {
+    font-size: 23px;
+}
+
+.tv-manager__control {
+    display: grid;
+    gap: 22px;
+}
+
+.tv-manager__section {
+    display: grid;
+    gap: 12px;
+}
+
+.tv-manager__section h2 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.tv-manager__section label,
+.tv-manager__label {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.tv-manager__section select {
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 12px;
+    border: 1px solid #2c5974;
+    border-radius: 12px;
+    background: #123b55;
+    color: #eaf6ff;
+    font: inherit;
+}
+
+.tv-manager__section > small,
+.tv-manager__description {
+    margin: 0;
+    color: #9ebdd0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.tv-manager__current,
+.tv-manager__aquarium-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px;
+    border: 1px solid #25516a;
+    border-radius: 14px;
+    background: #123b55;
+    color: #eaf6ff;
+    text-align: left;
+    cursor: pointer;
+}
+
+.tv-manager__fish-icon {
+    flex-shrink: 0;
+    font-size: 28px;
+}
+
+.tv-manager__current-info,
+.tv-manager__aquarium-info {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+    gap: 4px;
+}
+
+.tv-manager__current-info strong,
+.tv-manager__aquarium-info strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+}
+
+.tv-manager__current-info small {
+    color: #9ebdd0;
+    font-size: 12px;
+}
+
+.tv-manager__aquarium-list {
+    display: grid;
+    gap: 10px;
+}
+
+.tv-manager__aquarium-option--selected {
+    border-color: #168fe0;
+    background: #16415d;
+}
+
+.tv-manager__on-tv {
+    width: fit-content;
+    color: #80e0b2;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.tv-manager__radio {
+    display: grid;
+    place-items: center;
+    flex: 0 0 22px;
+    height: 22px;
+    border: 2px solid #638aa3;
+    border-radius: 50%;
+    font-size: 12px;
+}
+
+.tv-manager__aquarium-option--selected .tv-manager__radio {
+    border-color: #168fe0;
+    background: #168fe0;
+    color: white;
+}
+
+.tv-manager__actions {
+    display: grid;
+    gap: 12px;
+}
+
+.tv-manager__primary {
+    cursor: pointer;
+}
+
+.tv-manager__error {
+    padding: 14px;
+    border: 1px solid #9b4559;
+    border-radius: 12px;
+    color: #ffb1bd;
+}
+
+.tv-manager__error p {
+    margin: 0 0 10px;
+}
+
+@media (max-width: 720px) {
+    .tv-manager__header {
+        margin-bottom: 20px;
+    }
+
+    .tv-manager__control {
+        gap: 20px;
+    }
+
+    .tv-manager__aquarium-option {
+        min-height: 68px;
+    }
+}
+
+
+
+/* TV manager header */
+.tv-manager-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #062945;
+    padding: 16px 20px;
+}
+
+/* QR scanner */
+.tv-qr-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 12, 28, 0.96);
+}
+
+.tv-qr-panel {
+    width: 100%;
+    max-width: 480px;
+    color: #e5f3ff;
+}
+
+.tv-qr-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.tv-qr-heading h2 {
+    margin: 0;
+}
+
+.tv-qr-heading button {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.tv-qr-camera {
+    position: relative;
+    overflow: hidden;
+    margin-top: 24px;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 20px;
+    background: #000;
+}
+
+.tv-qr-camera video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+
+/* Scanner frame */
+.tv-qr-frame {
+    position: absolute;
+    inset: 20%;
+    border: 3px solid #52c7ff;
+    border-radius: 20px;
+    pointer-events: none;
+    transition: border-color 0.2s ease;
+}
+
+.tv-qr-frame--success {
+    border-color: #42d89a;
+}
+
+/* Scanner status */
+.tv-qr-status {
+    margin: 16px 0;
+    color: #9dc5dd;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Error feedback */
+.tv-qr-error {
+    margin: 12px 0;
+    color: #ffb5b5;
+    font-size: 14px;
+    text-align: center;
+}

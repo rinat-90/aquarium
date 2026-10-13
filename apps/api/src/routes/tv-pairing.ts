@@ -5,6 +5,7 @@ import { auth } from '../lib/auth.js';
 import {
   disconnectTvDisplaySession,
   switchTvDisplayAquarium,
+  getOnlineTvDisplaySessionIds
 } from '../realtime/socket.js';
 
 import { readFile } from 'node:fs/promises';
@@ -262,7 +263,17 @@ export async function tvPairingRoutes(app: FastifyInstance) {
       },
     });
 
-    return { sessions };
+    const onlineSessionIds = getOnlineTvDisplaySessionIds();
+
+    return {
+      sessions: sessions.map((session) => ({
+        id: session.id,
+        aquariumId: session.aquariumId,
+        createdAt: session.createdAt,
+        expiresAt: session.expiresAt,
+        isOnline: onlineSessionIds.has(session.id),
+      })),
+    };
   });
 
   // Owner: switch the aquarium displayed on a paired TV.

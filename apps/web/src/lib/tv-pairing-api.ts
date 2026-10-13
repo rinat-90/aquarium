@@ -93,6 +93,7 @@ export const tvPairingApi = {
         aquariumId: string;
         createdAt: string;
         expiresAt: string;
+        isOnline: boolean;
       }[];
     }>('/api/tv/display/sessions'),
   switchAquarium: (sessionId: string, aquariumId: string) =>

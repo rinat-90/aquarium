@@ -1,3 +1,4 @@
+
 .draw-fish-page, .customize-fish-page { min-height: 100dvh; padding: 28px 24px 60px; color: #f3f9ff; background: radial-gradient(ellipse at 50% 0%, #12476b, #061b2b 65%); }
 .draw-fish-page__header, .customize-fish-page__header { max-width: 1200px; margin: 0 auto 24px; display: flex; align-items: center; gap: 24px; }
 .draw-fish-page__header h1, .customize-fish-page__header h1 { margin: 0 0 5px; font-size: clamp(24px, 3vw, 34px); color: #f3f9ff; }
@@ -9,3 +10,203 @@
 .draw-fish-page__content, .customize-fish-page__editor { position: relative; }
 .draw-fish-page__saving, .customize-fish-page__saving { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; border-radius: 18px; color: white; background: #031522d9; }
 @media (max-width: 650px) { .draw-fish-page, .customize-fish-page { padding: 18px 12px 36px; } .draw-fish-page__header, .customize-fish-page__header { gap: 12px; align-items: flex-start; } }
+/* Mobile Paint Your Fish redesign */
+@media (max-width: 720px) {
+    .customize-fish-page {
+        min-height: 0;
+        padding: 12px 0 100px;
+        background: transparent;
+    }
+
+    /* Compact header */
+    .customize-fish-page__header {
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .customize-fish-page__header > div {
+        min-width: 0;
+    }
+
+    .customize-fish-page__header h1 {
+        margin-bottom: 4px;
+        font-size: 23px;
+        line-height: 1.2;
+    }
+
+    .customize-fish-page__header p {
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .customize-fish-page__back {
+        padding: 9px 12px;
+        border-radius: 10px;
+        font-size: 13px;
+    }
+
+    /* 3D editor layout */
+    .customize-fish-page .fish-editor__workspace {
+        grid-template-columns: minmax(0, 1fr);
+        min-height: 0;
+        border-radius: 16px;
+    }
+
+    .customize-fish-page .fish-editor__stage {
+        min-height: 0;
+        height: 320px;
+        padding: 10px;
+    }
+
+    .customize-fish-page .fish-editor__3d-stage {
+        height: 100%;
+        min-height: 0;
+    }
+
+    /* Compact controls */
+    .customize-fish-page .fish-editor__sidebar {
+        gap: 16px;
+        padding: 16px 14px;
+    }
+
+    .customize-fish-page .fish-editor__section {
+        gap: 9px;
+    }
+
+    .customize-fish-page .fish-editor__section h2 {
+        font-size: 14px;
+    }
+
+    /* Species selector */
+    .customize-fish-page .fish-editor__segmented {
+        padding: 3px;
+        border-radius: 10px;
+    }
+
+    .customize-fish-page .fish-editor__segmented button {
+        min-height: 42px;
+        padding: 8px 4px;
+        font-size: 12px;
+    }
+
+    /* Colors */
+    .customize-fish-page .fish-editor__palette {
+        gap: 10px;
+    }
+
+    .customize-fish-page .fish-editor__swatch {
+        width: 30px;
+        height: 30px;
+    }
+
+    .customize-fish-page .fish-editor__color-input {
+        width: 32px;
+        height: 32px;
+    }
+
+    /* Fish size */
+    .customize-fish-page .fish-editor__capacity {
+        margin-top: 0;
+        gap: 8px;
+    }
+
+    /* Actions */
+    .customize-fish-page .fish-editor__actions {
+        gap: 10px;
+    }
+
+    .customize-fish-page .fish-editor__actions button {
+        min-height: 46px;
+        font-size: 14px;
+    }
+}
+
+/* Keep the 3D canvas inside the mobile preview */
+@media (max-width: 720px) {
+    .customize-fish-page .fish-3d-preview {
+        height: 100%;
+    }
+
+    .customize-fish-page .fish-3d-preview__canvas {
+        height: 100% !important;
+        min-height: 0;
+    }
+
+    .customize-fish-page .fish-editor__3d-stage {
+        min-height: 0;
+        overflow: hidden;
+    }
+}
+
+/* Mobile 3D painting layout */
+@media (max-width: 720px) {
+    .customize-fish-page .fish-editor__stage {
+        height: auto;
+        min-height: 0;
+        padding: 10px;
+    }
+
+    .customize-fish-page .fish-editor__3d-stage {
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+    }
+
+    .customize-fish-page .fish-3d-preview {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* Give the 3D model its own drawing area */
+    .customize-fish-page .fish-3d-preview__canvas {
+        flex: 0 0 auto;
+        height: 300px !important;
+        min-height: 0;
+    }
+
+    /* Keep Paint / Rotate at the top */
+    .customize-fish-page .fish-3d-preview__modes {
+        top: 10px;
+    }
+
+    /* Toolbar participates in layout instead of covering the fish */
+    .customize-fish-page .fish-3d-preview__tools {
+        position: relative;
+        inset: auto;
+        order: 2;
+        width: auto;
+        margin: 0 10px 10px;
+        padding: 12px 10px;
+        gap: 12px;
+        border-radius: 14px;
+    }
+
+    .customize-fish-page .fish-3d-preview__colors {
+        gap: 8px;
+    }
+
+    .customize-fish-page .fish-3d-preview__swatch {
+        width: 28px;
+        height: 28px;
+    }
+
+    .customize-fish-page .fish-3d-preview__actions {
+        gap: 8px;
+    }
+
+    .customize-fish-page .fish-3d-preview__tool {
+        min-height: 40px;
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    /* Hint only appears in Rotate mode */
+    .customize-fish-page .fish-3d-preview__hint {
+        bottom: 12px;
+        font-size: 11px;
+    }
+}

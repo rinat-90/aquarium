@@ -44,19 +44,13 @@ export default defineConfig({
     host: '0.0.0.0',
 
     // Allow the current Cloudflare HTTPS tunnel.
-    allowedHosts: [
-      'afford-traveller-speed-tba.trycloudflare.com',
-      'begins-rendered-soccer-incorporated.trycloudflare.com'
-    ],
+    allowedHosts: ['.trycloudflare.com'],
 
     proxy: createProxy(),
   },
 
   preview: {
-    allowedHosts: [
-      'aquariumweb-production.up.railway.app',
-      'afford-traveller-speed-tba.trycloudflare.com',
-    ],
+    allowedHosts: ['.trycloudflare.com'],
 
     proxy: createProxy(),
   },

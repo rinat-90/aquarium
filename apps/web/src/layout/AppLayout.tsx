@@ -204,7 +204,7 @@ export function AppLayout() {
         </NavLink>
 
         <NavLink
-          to="/tv"
+          to="/tv/manage"
           className={({ isActive }) =>
             `aquariums-mobile-nav__item${isActive ? ' active' : ''}`
           }
