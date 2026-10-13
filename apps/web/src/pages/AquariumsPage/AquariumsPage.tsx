@@ -6,6 +6,7 @@ import {
   aquariumApi,
   type ApiAquarium,
 } from '../../lib/aquarium-api';
+import { tvPairingApi } from '../../lib/tv-pairing-api';
 
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
@@ -13,12 +14,18 @@ import { AquariumCard } from './AquariumCard';
 
 import './AquariumsPage.css';
 
+const BROADCAST_REFRESH_INTERVAL = 10_000;
+
 export function AquariumsPage() {
   const navigate = useNavigate();
 
   const [aquariums, setAquariums] = useState<ApiAquarium[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [broadcastAquariumIds, setBroadcastAquariumIds] = useState<
+    Set<string>
+  >(new Set());
 
   const [createOpen, setCreateOpen] = useState(false);
   const [newAquariumName, setNewAquariumName] = useState('');
@@ -106,6 +113,77 @@ export function AquariumsPage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    let requestInProgress = false;
+
+    async function loadBroadcastStatus() {
+      if (requestInProgress) return;
+
+      requestInProgress = true;
+
+      try {
+        const result = await tvPairingApi.sessions();
+
+        if (cancelled) return;
+
+        const now = Date.now();
+
+        const activeAquariumIds = new Set(
+          result.sessions
+            .filter(
+              (session) =>
+                session.isOnline &&
+                Date.parse(session.expiresAt) > now,
+            )
+            .map((session) => session.aquariumId),
+        );
+
+        setBroadcastAquariumIds(activeAquariumIds);
+      } catch (err) {
+        // Broadcast status is optional metadata.
+        // Don't prevent the aquarium list from loading.
+        console.error('Failed to load TV broadcast status:', err);
+
+        if (!cancelled) {
+          setBroadcastAquariumIds(new Set());
+        }
+      } finally {
+        requestInProgress = false;
+      }
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        void loadBroadcastStatus();
+      }
+    }
+
+    void loadBroadcastStatus();
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void loadBroadcastStatus();
+      }
+    }, BROADCAST_REFRESH_INTERVAL);
+
+    document.addEventListener(
+      'visibilitychange',
+      handleVisibilityChange,
+    );
+
+    return () => {
+      cancelled = true;
+
+      window.clearInterval(intervalId);
+
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibilityChange,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
     const handleOpenCreate = () => {
       openCreateModal();
     };
@@ -113,7 +191,10 @@ export function AquariumsPage() {
     window.addEventListener('aquarium:open-create', handleOpenCreate);
 
     return () => {
-      window.removeEventListener('aquarium:open-create', handleOpenCreate);
+      window.removeEventListener(
+        'aquarium:open-create',
+        handleOpenCreate,
+      );
     };
   }, []);
 
@@ -122,11 +203,14 @@ export function AquariumsPage() {
       <header className="aquariums-header">
         <div>
           <h1>My Aquariums</h1>
+
           <p className="aquariums-header__description">
             Create different underwater worlds
           </p>
+
           <p className="aquariums-header__count">
-            {aquariums.length} {aquariums.length === 1 ? 'aquarium' : 'aquariums'}
+            {aquariums.length}{' '}
+            {aquariums.length === 1 ? 'aquarium' : 'aquariums'}
           </p>
         </div>
 
@@ -152,12 +236,23 @@ export function AquariumsPage() {
         </p>
       ) : (
         <div className="aquariums-grid">
-          {aquariums.map((aquarium) => (
-            <AquariumCard
-              key={aquarium.id}
-              aquarium={aquarium}
-            />
-          ))}
+          {aquariums.map((aquarium) => {
+            const isBroadcasting = broadcastAquariumIds.has(aquarium.id);
+
+            console.log('Aquarium card:', {
+              name: aquarium.name,
+              id: aquarium.id,
+              isBroadcasting,
+            });
+
+            return (
+              <AquariumCard
+                key={aquarium.id}
+                aquarium={aquarium}
+                isBroadcasting={isBroadcasting}
+              />
+            );
+          })}
 
           <button
             type="button"

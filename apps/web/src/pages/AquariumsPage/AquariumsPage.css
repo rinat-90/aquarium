@@ -433,3 +433,74 @@
         display: none;
     }
 }
+
+
+
+.aquarium-card__live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(52, 211, 153, 0.12);
+    border: 1px solid rgba(52, 211, 153, 0.25);
+    color: #6ee7b7;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.aquarium-card__live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #34d399;
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+}
+
+
+
+/* Ensure the card establishes its own positioning context */
+.aquarium-card {
+    position: relative;
+}
+
+/* Place the live badge above the aquarium preview */
+.aquarium-card__live-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 100;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 8px 12px;
+    border-radius: 999px;
+
+    background: #064e3b;
+    border: 1px solid #34d399;
+    color: #ffffff;
+
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: none;
+}
+
+.aquarium-card__live-dot {
+    display: block;
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+
+    border-radius: 50%;
+    background: #34d399;
+    box-shadow: 0 0 8px #34d399;
+}
