@@ -375,3 +375,21 @@
 .aquarium-remote__header {
     top: env(safe-area-inset-top, 0px);
 }
+
+.aquarium-remote__end-broadcast {
+    width: 100%;
+    padding: 14px 18px;
+    margin-top: 20px;
+    border: 1px solid #ef7777;
+    border-radius: 12px;
+    background: transparent;
+    color: #ef7777;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.aquarium-remote__end-broadcast:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

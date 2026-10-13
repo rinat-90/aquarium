@@ -27,6 +27,29 @@ export function disconnectTvDisplaySession(sessionId: string) {
   }
 }
 
+export function switchTvDisplayAquarium(
+  sessionId: string,
+  aquariumId: string,
+) {
+  const server = io;
+  if (!server) return;
+
+  for (const socket of server.sockets.sockets.values()) {
+    if (socket.data.displaySessionId !== sessionId) continue;
+
+    const previousAquariumId = socket.data.displayAquariumId as string | null;
+
+    if (previousAquariumId) {
+      socket.leave(aquariumRoom(previousAquariumId));
+    }
+
+    socket.data.displayAquariumId = aquariumId;
+    void socket.join(aquariumRoom(aquariumId));
+
+    socket.emit('tv:aquarium-switched', { aquariumId });
+  }
+}
+
 export function initializeSocket(
   httpServer: HttpServer,
   webOrigin: string | string[],
@@ -139,14 +162,40 @@ export function initializeSocket(
         await socket.join(aquariumRoom(aquariumId));
         // A revoke might have happened while the database queries ran.
         const stillValid = await prisma.tvDisplaySession.findFirst({
-          where: { id: sessionId, revokedAt: null, expiresAt: { gt: new Date() } },
-          select: { id: true },
+          where: {
+            id: sessionId,
+            revokedAt: null,
+            expiresAt: { gt: new Date() },
+          },
+          select: {
+            id: true,
+            aquariumId: true,
+          },
         });
+
         if (!stillValid) {
           socket.leave(aquariumRoom(aquariumId));
           socket.disconnect(true);
           return acknowledge?.({ ok: false });
         }
+
+// The aquarium may have changed while tv:join was running.
+        if (
+          stillValid.aquariumId !== aquariumId ||
+          socket.data.displayAquariumId !== aquariumId
+        ) {
+          socket.leave(aquariumRoom(aquariumId));
+
+          // Tell the TV to synchronize with its current session.
+          if (socket.connected) {
+            socket.emit('tv:aquarium-switched', {
+              aquariumId: stillValid.aquariumId,
+            });
+          }
+
+          return acknowledge?.({ ok: false });
+        }
+
         acknowledge?.({ ok: true });
       } catch {
         acknowledge?.({ ok: false });

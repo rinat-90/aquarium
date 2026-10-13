@@ -20,6 +20,10 @@ type AquariumRemoteProps = {
   onSettings: () => void;
   feedCooldownSeconds: number;
   feedPending: boolean;
+  onEndBroadcast: () => void;
+  endingBroadcast: boolean;
+  onSwitchAquarium: () => void;
+  switchingAquarium: boolean;
 };
 
 export function AquariumRemote({
@@ -33,6 +37,10 @@ export function AquariumRemote({
                                  onSettings,
                                  feedCooldownSeconds,
                                  feedPending,
+                                 onEndBroadcast,
+                                 endingBroadcast,
+                                 onSwitchAquarium,
+                                 switchingAquarium,
                                }: AquariumRemoteProps) {
   const [isScanning, setIsScanning] = useState(false);
 
@@ -170,6 +178,22 @@ export function AquariumRemote({
           <small>Bring your drawing to life</small>
         </button>
       </div>
+      <button
+        type="button"
+        className="aquarium-remote__end-broadcast"
+        onClick={onSwitchAquarium}
+        disabled={switchingAquarium}
+      >
+        {switchingAquarium ? 'Switching...' : '🔄 Switch Aquarium'}
+      </button>
+      <button
+        type="button"
+        className="aquarium-remote__end-broadcast"
+        onClick={onEndBroadcast}
+        disabled={endingBroadcast}
+      >
+        {endingBroadcast ? 'Ending broadcast...' : '⏹ End Broadcast'}
+      </button>
     </div>
   );
 }

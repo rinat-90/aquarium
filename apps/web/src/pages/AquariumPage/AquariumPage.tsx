@@ -5,6 +5,7 @@ import { socket } from '../../lib/socket';
 import {
   aquariumApi,
   fishApi,
+  type ApiAquarium,
 } from '../../lib/aquarium-api';
 
 import {
@@ -21,6 +22,7 @@ import {AquariumSettingsPanel} from "../../components/FishPanel/AquariumSettings
 import {createFish} from "../../lib/create-fish.ts";
 import { mapApiFish } from '../../lib/mapApiFish';
 import { useLiveAquariumFish } from '../../hooks/useLiveAquariumFish';
+import { tvPairingApi } from '../../lib/tv-pairing-api';
 
 import {
   AquariumRemote,
@@ -55,6 +57,13 @@ export function AquariumPage() {
   const [error, setError] = useState<string | null>(null);
   const [fishCollectionOpen, setFishCollectionOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const [endingBroadcast, setEndingBroadcast] = useState(false);
+
+  const [switchingAquarium, setSwitchingAquarium] = useState(false);
+  const [aquariumChoices, setAquariumChoices] = useState<ApiAquarium[]>([]);
+  const [switchDialogOpen, setSwitchDialogOpen] = useState(false);
+  const [selectedAquariumId, setSelectedAquariumId] = useState('');
 
   const [mobileViewerOpen, setMobileViewerOpen] = useState(false);
 
@@ -316,6 +325,116 @@ export function AquariumPage() {
     };
   }, [aquarium?.id]);
 
+  async function handleEndBroadcast() {
+    if (!aquarium?.id || endingBroadcast) return;
+
+    const confirmed = window.confirm(
+      'End the TV broadcast for this aquarium?',
+    );
+
+    if (!confirmed) return;
+
+    setEndingBroadcast(true);
+
+    try {
+      const { sessions } = await tvPairingApi.sessions();
+
+      const activeSessions = sessions.filter(
+        (session) => session.aquariumId === aquarium.id,
+      );
+
+      if (activeSessions.length === 0) {
+        window.alert('No active TV sessions found for this aquarium.');
+        return;
+      }
+
+      if (activeSessions.length > 1) {
+        window.alert(
+          'Multiple TV sessions found. Individual TV selection is needed before ending a broadcast.',
+        );
+        return;
+      }
+
+      await tvPairingApi.revoke(activeSessions[0].id);
+
+      window.alert('TV broadcast ended.');
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : 'Failed to end TV broadcast.',
+      );
+    } finally {
+      setEndingBroadcast(false);
+    }
+  }
+
+  async function handleOpenSwitchAquarium() {
+    if (switchingAquarium) return;
+
+    setSwitchingAquarium(true);
+
+    try {
+      const aquariums = await aquariumApi.list();
+
+      setAquariumChoices(aquariums);
+      setSelectedAquariumId(
+        aquariums.find((item) => item.id !== aquariumId)?.id ?? '',
+      );
+      setSwitchDialogOpen(true);
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : 'Failed to load aquariums.',
+      );
+    } finally {
+      setSwitchingAquarium(false);
+    }
+  }
+
+  async function handleConfirmSwitchAquarium() {
+    if (!selectedAquariumId || switchingAquarium) return;
+
+    setSwitchingAquarium(true);
+
+    try {
+      const { sessions } = await tvPairingApi.sessions();
+
+      const matchingSessions = sessions.filter(
+        (session) => session.aquariumId === aquariumId,
+      );
+
+      if (matchingSessions.length === 0) {
+        window.alert('No active TV broadcast found for this aquarium.');
+        return;
+      }
+
+      if (matchingSessions.length > 1) {
+        window.alert(
+          'Multiple TV broadcasts found. TV selection is required.',
+        );
+        return;
+      }
+
+      await tvPairingApi.switchAquarium(
+        matchingSessions[0].id,
+        selectedAquariumId,
+      );
+
+      setSwitchDialogOpen(false);
+      navigate(`/aquariums/${encodeURIComponent(selectedAquariumId)}`);
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : 'Failed to switch aquarium.',
+      );
+    } finally {
+      setSwitchingAquarium(false);
+    }
+  }
+
   return (
     <div className="aquarium-page">
       {isMobile ? (
@@ -343,6 +462,10 @@ export function AquariumPage() {
             onSettings={() => setSettingsOpen(true)}
             feedCooldownSeconds={feedCooldownSeconds}
             feedPending={feedPending}
+            onEndBroadcast={handleEndBroadcast}
+            endingBroadcast={endingBroadcast}
+            onSwitchAquarium={handleOpenSwitchAquarium}
+            switchingAquarium={switchingAquarium}
           />
         )
       ) : (
@@ -461,6 +584,78 @@ export function AquariumPage() {
           onDone={handleFishCreated}
           onCancel={() => setDrawing(false)}
         />
+      )}
+
+      {switchDialogOpen && (
+        <div
+          role="presentation"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 10000,
+            background: 'rgba(0, 0, 0, 0.7)',
+            display: 'grid',
+            placeItems: 'center',
+            padding: 20,
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Switch Aquarium"
+            style={{
+              width: '100%',
+              maxWidth: 400,
+              padding: 24,
+              borderRadius: 16,
+              background: '#123746',
+              color: 'white',
+            }}
+          >
+            <h2>Switch Aquarium</h2>
+            <p>Choose which aquarium to display on your TV.</p>
+
+            <select
+              value={selectedAquariumId}
+              onChange={(event) => setSelectedAquariumId(event.target.value)}
+              disabled={switchingAquarium}
+              style={{
+                width: '100%',
+                padding: 12,
+                marginBottom: 20,
+                borderRadius: 8,
+              }}
+            >
+              <option value="">Select aquarium</option>
+
+              {aquariumChoices
+                .filter((item) => item.id !== aquariumId)
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name} ({item.fish.length} fish)
+                  </option>
+                ))}
+            </select>
+
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                type="button"
+                onClick={() => setSwitchDialogOpen(false)}
+                disabled={switchingAquarium}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleConfirmSwitchAquarium()}
+                disabled={!selectedAquariumId || switchingAquarium}
+              >
+                {switchingAquarium ? 'Switching...' : 'Switch Aquarium'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
