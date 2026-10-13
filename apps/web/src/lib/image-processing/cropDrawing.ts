@@ -32,12 +32,31 @@ export async function cropDrawing(
   let maxY = -1;
 
   const alphaThreshold = 160;
+  const minNeighbors = 2;
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const alpha = pixels[(y * width + x) * 4 + 3];
 
       if (alpha <= alphaThreshold) continue;
+
+      // Ignore isolated noise, but preserve connected pencil strokes.
+      let neighbors = 0;
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const alpha = pixels[(y * width + x) * 4 + 3];
+
+          if (alpha <= alphaThreshold) continue;
+
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        }
+      }
+
+      if (neighbors < minNeighbors) continue;
 
       minX = Math.min(minX, x);
       minY = Math.min(minY, y);

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { useNavigate } from 'react-router';
+
 import { AQUARIUM_CAPACITY, createFish } from '../../lib/create-fish';
 import { fishApi } from '../../lib/aquarium-api';
 
@@ -12,8 +13,9 @@ import {
   detectFishOrientation,
   type FishOrientation,
 } from '../../lib/image-processing/detectFishOrientation';
-
 import { flipFishImage } from '../../lib/image-processing/flipFishImage';
+
+import { GuidedFishCamera } from './GuidedFishCamera';
 
 type ScanPaperFishProps = {
   aquariumId: string;
@@ -26,41 +28,40 @@ export function ScanPaperFish({
                               }: ScanPaperFishProps) {
   const navigate = useNavigate();
 
-  // Keep your existing state and refs.
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const savingRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const savingRef = useRef(false);
+
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
   const [orientation, setOrientation] =
     useState<FishOrientation>('right');
 
-  const [isFlipping, setIsFlipping] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isFlipping, setIsFlipping] = useState(false);
+  const [saving, setSaving] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
-      if (imageUrl) URL.revokeObjectURL(imageUrl);
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl);
+      }
     };
   }, [imageUrl]);
 
-  const handlePhotoSelected = async (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-
-    if (!file) return;
-
+  // Both camera methods use the same processing pipeline.
+  const processPhoto = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       setError('Please select an image.');
       return;
     }
 
     setError(null);
+    setSaveError(null);
     setProcessedImage(null);
     setIsProcessing(true);
 
@@ -69,25 +70,58 @@ export function ScanPaperFish({
 
     try {
       const result = await removePaperBackground(file);
+
       const croppedResult = await cropDrawing(result);
-      const silhouetteResult = await createFishSilhouette(croppedResult);
+
+      const silhouetteResult =
+        await createFishSilhouette(croppedResult);
+
       const detectedOrientation =
         await detectFishOrientation(silhouetteResult);
 
       setOrientation(detectedOrientation);
-
       setProcessedImage(silhouetteResult);
     } catch (err) {
-      console.error('Failed to process drawing:', err);
-      setError('Could not process this photo. Please try another.');
+      console.error('[ScanPaperFish] Processing failed:', err);
+
+      const message =
+        err instanceof Error
+          ? `${err.name}: ${err.message}`
+          : String(err);
+
+      setError(`Processing failed: ${message}`);
     } finally {
       setIsProcessing(false);
     }
   };
 
+  // Native camera / photo picker fallback.
+  const handlePhotoSelected = (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (file) {
+      void processPhoto(file);
+    }
+  };
+
+  // Guided browser camera.
+  const handleGuidedCapture = (file: File) => {
+    setCameraOpen(false);
+    void processPhoto(file);
+  };
 
   const handleAddToAquarium = async () => {
-    if (!processedImage || savingRef.current) return;
+    if (
+      !processedImage ||
+      savingRef.current ||
+      isProcessing ||
+      isFlipping
+    ) {
+      return;
+    }
 
     savingRef.current = true;
     setSaving(true);
@@ -107,7 +141,10 @@ export function ScanPaperFish({
 
       const size = 1;
 
-      if (usedCapacity + size * size > AQUARIUM_CAPACITY + 0.0001) {
+      if (
+        usedCapacity + size * size >
+        AQUARIUM_CAPACITY + 0.0001
+      ) {
         throw new Error('Not enough space in this aquarium.');
       }
 
@@ -125,7 +162,9 @@ export function ScanPaperFish({
       if (onSaved) {
         onSaved();
       } else {
-        navigate(`/aquariums/${encodeURIComponent(aquariumId)}`);
+        navigate(
+          `/aquariums/${encodeURIComponent(aquariumId)}`,
+        );
       }
     } catch (err) {
       setSaveError(
@@ -139,9 +178,14 @@ export function ScanPaperFish({
     }
   };
 
-
   const handleFlip = async () => {
-    if (!processedImage || isFlipping || savingRef.current) return;
+    if (
+      !processedImage ||
+      isFlipping ||
+      savingRef.current
+    ) {
+      return;
+    }
 
     setIsFlipping(true);
     setSaveError(null);
@@ -165,13 +209,21 @@ export function ScanPaperFish({
     }
   };
 
-
-
   return (
     <div style={{ padding: 20 }}>
+      {cameraOpen && (
+        <GuidedFishCamera
+          onCapture={handleGuidedCapture}
+          onClose={() => setCameraOpen(false)}
+        />
+      )}
+
       <h2>Scan Paper Fish</h2>
 
-      <p>Take a picture of your fish drawing on white paper.</p>
+      <p>
+        Take a picture of your fish drawing on white paper.
+        Keep the entire fish inside the guide.
+      </p>
 
       <input
         ref={inputRef}
@@ -182,16 +234,40 @@ export function ScanPaperFish({
         style={{ display: 'none' }}
       />
 
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        disabled={isProcessing}
+      <div
+        style={{
+          display: 'flex',
+          gap: 12,
+          flexWrap: 'wrap',
+          marginTop: 16,
+        }}
       >
-        {imageUrl ? 'Retake Photo' : 'Take Photo'}
-      </button>
+        <button
+          type="button"
+          onClick={() => setCameraOpen(true)}
+          disabled={isProcessing || saving}
+        >
+          📷 {imageUrl ? 'Retake with Guide' : 'Scan with Guide'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={isProcessing || saving}
+        >
+          Use Phone Camera
+        </button>
+      </div>
 
       {error && (
-        <p role="alert" style={{ color: '#dc2626' }}>
+        <p
+          role="alert"
+          style={{
+            color: '#ef4444',
+            marginTop: 16,
+            overflowWrap: 'anywhere',
+          }}
+        >
           {error}
         </p>
       )}
@@ -207,13 +283,18 @@ export function ScanPaperFish({
               display: 'block',
               width: '100%',
               maxWidth: 400,
+              height: 'auto',
               borderRadius: 12,
             }}
           />
         </section>
       )}
 
-      {isProcessing && <p>Removing background...</p>}
+      {isProcessing && (
+        <p role="status" style={{ marginTop: 16 }}>
+          Processing your fish drawing...
+        </p>
+      )}
 
       {processedImage && (
         <section style={{ marginTop: 20 }}>
@@ -221,6 +302,7 @@ export function ScanPaperFish({
 
           <div
             style={{
+              boxSizing: 'border-box',
               width: '100%',
               maxWidth: 400,
               padding: 12,
@@ -252,6 +334,7 @@ export function ScanPaperFish({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                flexWrap: 'wrap',
                 gap: 12,
                 marginTop: 16,
               }}
@@ -263,14 +346,20 @@ export function ScanPaperFish({
               <button
                 type="button"
                 onClick={() => void handleFlip()}
-                disabled={isFlipping || saving}
+                disabled={isFlipping || saving || isProcessing}
               >
                 {isFlipping ? 'Flipping...' : '↔ Flip Fish'}
               </button>
             </div>
 
             {saveError && (
-              <p role="alert" style={{ color: '#ef4444' }}>
+              <p
+                role="alert"
+                style={{
+                  color: '#ef4444',
+                  overflowWrap: 'anywhere',
+                }}
+              >
                 {saveError}
               </p>
             )}
@@ -289,9 +378,12 @@ export function ScanPaperFish({
                 background: '#2563eb',
                 color: '#fff',
                 border: 'none',
+                cursor: saving ? 'wait' : 'pointer',
               }}
             >
-              {saving ? 'Adding Fish...' : '🐠 Add to Aquarium'}
+              {saving
+                ? 'Adding Fish...'
+                : '🐠 Add to Aquarium'}
             </button>
           </div>
 

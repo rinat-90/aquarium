@@ -253,54 +253,40 @@ export async function createThreeFish(
           ? 1 - segment.normalizedX
           : segment.normalizedX;
 
-      /*
-       * Non-linear falloff keeps the head
-       * almost stationary while allowing
-       * much more motion near the tail.
-       */
-      const tailInfluence =
-        tailAmount *
-        tailAmount;
+      // The head remains stable while movement increases
+      // progressively toward the tail.
+      const tailInfluence = Math.pow(tailAmount, 2.5);
 
-      /*
-       * Travelling wave.
-       */
-      const wave =
-        Math.sin(
-          elapsed * 1.15 -
-          tailAmount * 3.2,
-        );
+      // A wave traveling from head to tail.
+      // Swimming faster increases the tail-beat frequency.
+      const swimFrequency = 1.8 + clampedIntensity * 1.2;
+
+      const wave = Math.sin(
+        elapsed * swimFrequency -
+        tailAmount * 4.2,
+      );
 
       const bendStrength =
-        tailInfluence *
-        clampedIntensity;
+        tailInfluence * clampedIntensity;
 
       /*
        * Move slices slightly through depth.
        */
-      // Side-to-side tail movement, visible from the front.
+      // Gentle vertical movement toward the tail.
       segment.mesh.position.y =
-        wave *
-        bendStrength *
-        0.035;
+        wave * bendStrength * 0.025;
 
-      // Slight depth movement adds a 3D swimming effect.
+      // Side-to-side movement through depth.
       segment.mesh.position.z =
-        wave *
-        bendStrength *
-        0.065;
+        wave * bendStrength * 0.09;
 
-      // Rotate each segment around its vertical axis.
+      // The tail twists more than the body.
       segment.mesh.rotation.y =
-        wave *
-        bendStrength *
-        0.22;
+        wave * bendStrength * 0.3;
 
-      // Gentle visible bending of the tail.
+      // Keep vertical rotation subtle.
       segment.mesh.rotation.z =
-        wave *
-        bendStrength *
-        0.018;
+        wave * bendStrength * 0.012;
 
       /*
        * Preserve the source drawing's

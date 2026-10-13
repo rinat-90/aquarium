@@ -27,15 +27,22 @@ export async function createFishSilhouette(
   const source = ctx.getImageData(0, 0, width, height);
   const pixels = source.data;
 
-  // Strong pencil strokes form the boundaries.
+  // Detect both dark and light pencil strokes.
+// Background removal has already made paper transparent.
   const ink = new Uint8Array(total);
 
   for (let i = 0; i < total; i++) {
-    ink[i] = pixels[i * 4 + 3] > 115 ? 1 : 0;
+    const alpha = pixels[i * 4 + 3];
+
+    ink[i] = alpha > 35 ? 1 : 0;
   }
 
-  // Dilate the strokes to close small gaps.
-  const radius = 2;
+  // Scale gap closing to the image resolution.
+  // Helps connect thin pencil strokes and small breaks.
+  const radius = Math.max(
+    2,
+    Math.min(6, Math.round(Math.min(width, height) * 0.004)),
+  );
   const dilated = new Uint8Array(total);
 
   for (let y = 0; y < height; y++) {
@@ -59,6 +66,37 @@ export async function createFishSilhouette(
           }
         }
       }
+    }
+  }
+
+  // Morphological closing:
+// Shrink the dilated strokes back toward their original
+// thickness while keeping small gaps connected.
+  const closed = new Uint8Array(total);
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      let filled = true;
+
+      for (let dy = -radius; dy <= radius && filled; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+
+          if (
+            nx < 0 ||
+            ny < 0 ||
+            nx >= width ||
+            ny >= height ||
+            !dilated[ny * width + nx]
+          ) {
+            filled = false;
+            break;
+          }
+        }
+      }
+
+      closed[y * width + x] = filled ? 1 : 0;
     }
   }
 
@@ -157,9 +195,9 @@ export async function createFishSilhouette(
 
   const mainBody = regions[0];
 
-  if (!mainBody || mainBody.length < total * 0.01) {
+  if (!mainBody || mainBody.length < total * 0.003) {
     throw new Error(
-      'Could not detect a closed fish outline.',
+      'Could not detect a sufficiently closed fish outline.',
     );
   }
 
@@ -261,22 +299,73 @@ export async function createFishSilhouette(
     const offset = i * 4;
     const alpha = pixels[offset + 3] / 255;
 
-    result.data[offset] = Math.round(
-      255 * (1 - alpha) + pixels[offset] * alpha,
+    // Reconstruct dark pencil strokes on clean white paper.
+    const inkStrength = Math.min(1, alpha * 1.5);
+
+    const color = Math.round(
+      255 - inkStrength * 225,
     );
 
-    result.data[offset + 1] = Math.round(
-      255 * (1 - alpha) + pixels[offset + 1] * alpha,
-    );
-
-    result.data[offset + 2] = Math.round(
-      255 * (1 - alpha) + pixels[offset + 2] * alpha,
-    );
-
+    result.data[offset] = color;
+    result.data[offset + 1] = color;
+    result.data[offset + 2] = color;
     result.data[offset + 3] = 255;
   }
 
   ctx.putImageData(result, 0, 0);
 
-  return canvas.toDataURL('image/png');
+// Find the visible fish bounds in the final silhouette.
+  let minX = width;
+  let minY = height;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const index = (y * width + x) * 4;
+
+      if (result.data[index + 3] === 0) continue;
+
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+
+  if (maxX < minX || maxY < minY) {
+    throw new Error('No visible fish found');
+  }
+
+// Keep a little transparent padding around the fish.
+  const padding = 12;
+
+  const cropX = Math.max(0, minX - padding);
+  const cropY = Math.max(0, minY - padding);
+  const cropRight = Math.min(width, maxX + padding + 1);
+  const cropBottom = Math.min(height, maxY + padding + 1);
+
+  const croppedCanvas = document.createElement('canvas');
+  croppedCanvas.width = cropRight - cropX;
+  croppedCanvas.height = cropBottom - cropY;
+
+  const croppedCtx = croppedCanvas.getContext('2d');
+
+  if (!croppedCtx) {
+    throw new Error('Canvas is not supported');
+  }
+
+  croppedCtx.drawImage(
+    canvas,
+    cropX,
+    cropY,
+    croppedCanvas.width,
+    croppedCanvas.height,
+    0,
+    0,
+    croppedCanvas.width,
+    croppedCanvas.height,
+  );
+
+  return croppedCanvas.toDataURL('image/png');
 }
