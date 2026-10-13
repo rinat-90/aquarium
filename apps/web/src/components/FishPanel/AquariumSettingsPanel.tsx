@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import '../FishPanel/FishPanel.css';
 import './AquariumSettingsPanel.css';
 
-type BroadcastStatus = 'loading' | 'live' | 'offline' | 'error';
+type BroadcastStatus = 'loading' | 'live' | 'paused' | 'disconnected' | 'offline' | 'error';
 
 type AquariumSettingsPanelProps = {
   open: boolean;
@@ -55,14 +55,14 @@ export function AquariumSettingsPanel({
   async function handleBroadcastAction() {
     if (
       broadcastBusy ||
-      (broadcastStatus !== 'live' && broadcastStatus !== 'offline')
+      !['live', 'paused', 'disconnected', 'offline'].includes(broadcastStatus)
     ) {
       return;
     }
 
     if (
       broadcastStatus === 'live' &&
-      !window.confirm('End the TV broadcast for this aquarium?')
+      !window.confirm('Pause this TV broadcast? You can resume without pairing again.')
     ) {
       return;
     }
@@ -88,9 +88,10 @@ export function AquariumSettingsPanel({
   }
 
 
-  const broadcastLive = broadcastStatus === 'live';
   const broadcastKnown =
     broadcastStatus === 'live' ||
+    broadcastStatus === 'paused' ||
+    broadcastStatus === 'disconnected' ||
     broadcastStatus === 'offline';
 
   const canDelete =
@@ -316,10 +317,10 @@ export function AquariumSettingsPanel({
       </span>
               )}
 
-              {broadcastStatus === 'offline' && (
+              {broadcastStatus !== 'live' && broadcastKnown && (
                 <span className="aquarium-settings__status aquarium-settings__status--offline">
         <span className="aquarium-settings__status-dot" />
-        Offline
+                  {broadcastStatus === 'paused' ? 'Paused' : broadcastStatus === 'disconnected' ? 'Disconnected' : 'Offline'}
       </span>
               )}
             </div>
@@ -327,11 +328,15 @@ export function AquariumSettingsPanel({
             <p>
               {broadcastStatus === 'live'
                 ? 'This aquarium is currently displayed on TV.'
-                : broadcastStatus === 'offline'
-                  ? 'This aquarium is not currently broadcasting.'
-                  : broadcastStatus === 'loading'
-                    ? 'Checking TV broadcast status...'
-                    : 'Unable to check TV broadcast status.'}
+                : broadcastStatus === 'paused'
+                  ? 'Broadcast is paused. Resume without scanning the QR code again.'
+                  : broadcastStatus === 'disconnected'
+                    ? 'The paired TV is disconnected. You can resume the broadcast when it reconnects.'
+                    : broadcastStatus === 'offline'
+                      ? 'No TV is currently assigned to this aquarium.'
+                      : broadcastStatus === 'loading'
+                        ? 'Checking TV broadcast status...'
+                        : 'Unable to check TV broadcast status.'}
             </p>
 
             <button
@@ -344,15 +349,17 @@ export function AquariumSettingsPanel({
               disabled={
                 broadcastBusy ||
                 processing ||
-                !['live', 'offline'].includes(broadcastStatus)
+                !['live', 'paused', 'disconnected', 'offline'].includes(broadcastStatus)
               }
               onClick={() => void handleBroadcastAction()}
             >
               {broadcastBusy
                 ? 'Please wait...'
                 : broadcastStatus === 'live'
-                  ? 'End Broadcast'
-                  : 'Start Broadcast'}
+                  ? 'Pause Broadcast'
+                  : broadcastStatus === 'paused' || broadcastStatus === 'disconnected'
+                    ? 'Resume Broadcast'
+                    : 'Start Broadcast'}
             </button>
 
             {broadcastError && (
@@ -404,9 +411,9 @@ export function AquariumSettingsPanel({
                 Delete Aquarium
               </button>
 
-              {broadcastLive && (
+              {broadcastStatus !== 'offline' && broadcastKnown && (
                 <p role="status">
-                  End the TV broadcast before deleting this aquarium.
+                  Disconnect the paired TV session before deleting this aquarium. Pausing does not remove the pairing.
                 </p>
               )}
 

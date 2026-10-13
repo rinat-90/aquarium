@@ -98,8 +98,16 @@ export function AquariumPage() {
   const [feedSequence, setFeedSequence] = useState(0);
 
   const [broadcastStatus, setBroadcastStatus] = useState<
-    'loading' | 'live' | 'offline' | 'error'
+    'loading' | 'live' | 'paused' | 'disconnected' | 'offline' | 'error'
   >('loading');
+
+  const getBroadcastStatus = (sessions: Array<{ aquariumId: string; isOnline: boolean; pausedAt?: string | null }>, id: string) => {
+    const assigned = sessions.filter((session) => session.aquariumId === id);
+    if (assigned.length === 0) return 'offline' as const;
+    if (assigned.some((session) => session.isOnline && !session.pausedAt)) return 'live' as const;
+    if (assigned.every((session) => Boolean(session.pausedAt))) return 'paused' as const;
+    return 'disconnected' as const;
+  };
 
   useEffect(() => {
     if (!settingsOpen || !aquarium?.id) return;
@@ -114,9 +122,7 @@ export function AquariumPage() {
         if (cancelled) return;
 
         setBroadcastStatus(
-          sessions.some((session) => session.aquariumId === id)
-            ? 'live'
-            : 'offline',
+          getBroadcastStatus(sessions, id),
         );
       } catch {
         if (!cancelled) setBroadcastStatus('error');
@@ -370,101 +376,68 @@ export function AquariumPage() {
   }, [aquarium?.id]);
 
   async function handleEndBroadcast() {
-    if (!aquarium?.id || endingBroadcast) return;
-
-    const confirmed = window.confirm(
-      'End the TV broadcast for this aquarium?',
-    );
-
+    if (endingBroadcast) return;
+    const confirmed = window.confirm('Pause the TV broadcast? You can resume without pairing again.');
     if (!confirmed) return;
 
     setEndingBroadcast(true);
-
     try {
-      const { sessions } = await tvPairingApi.sessions();
-
-      const activeSessions = sessions.filter(
-        (session) => session.aquariumId === aquarium.id,
-      );
-
-      if (activeSessions.length === 0) {
-        window.alert('No active TV sessions found for this aquarium.');
-        return;
-      }
-
-      if (activeSessions.length > 1) {
-        window.alert(
-          'Multiple TV sessions found. Individual TV selection is needed before ending a broadcast.',
-        );
-        return;
-      }
-
-      await tvPairingApi.revoke(activeSessions[0].id);
-      setBroadcastStatus('offline');
-
-      window.alert('TV broadcast ended.');
+      await handleSettingsEndBroadcast();
     } catch (error) {
-      window.alert(
-        error instanceof Error
-          ? error.message
-          : 'Failed to end TV broadcast.',
-      );
+      window.alert(error instanceof Error ? error.message : 'Failed to pause TV broadcast.');
     } finally {
       setEndingBroadcast(false);
     }
   }
 
-  // Settings controls use the existing paired-TV sessions.
   async function handleSettingsStartBroadcast() {
     if (!aquarium?.id) throw new Error('No aquarium selected.');
+    const id = aquarium.id;
     const { sessions } = await tvPairingApi.sessions();
-    const alreadyAssigned = sessions.some(
-      (session) => session.aquariumId === aquarium.id,
-    );
-    if (alreadyAssigned) {
-      setBroadcastStatus('live');
+    const assigned = sessions.filter((session) => session.aquariumId === id);
+
+    if (assigned.length > 1) {
+      throw new Error('Multiple TVs are assigned to this aquarium. Choose a TV before resuming.');
+    }
+
+    if (assigned.length === 1) {
+      // Resume even if the TV is currently offline; it will reconnect
+      // using its existing display token and read the persisted state.
+      await tvPairingApi.resume(assigned[0].id);
+      setBroadcastStatus(assigned[0].isOnline ? 'live' : 'disconnected');
       return;
     }
 
-    const available = sessions.filter(
-      (session) => session.isOnline && session.aquariumId !== aquarium.id,
-    );
+    const available = sessions.filter((session) => session.isOnline);
     if (available.length === 0) {
-      throw new Error('No connected TV is available. Open the TV pairing screen on your TV and pair it with this aquarium.');
+      throw new Error('No paired TV is connected. Open the TV pairing screen and connect a TV first.');
     }
     if (available.length > 1) {
-      throw new Error('Multiple TVs are connected. Use Switch Aquarium to choose which TV to use.');
+      throw new Error('Multiple TVs are connected. Select a TV before starting the broadcast.');
     }
 
-    await tvPairingApi.switchAquarium(available[0].id, aquarium.id);
+    await tvPairingApi.switchAquarium(available[0].id, id);
+    await tvPairingApi.resume(available[0].id);
     setBroadcastStatus('live');
   }
 
   async function handleSettingsEndBroadcast() {
     if (!aquarium?.id) throw new Error('No aquarium selected.');
+    const id = aquarium.id;
     const { sessions } = await tvPairingApi.sessions();
-    const assigned = sessions.filter(
-      (session) => session.aquariumId === aquarium.id,
-    );
+    const assigned = sessions.filter((session) => session.aquariumId === id);
+
     if (assigned.length === 0) {
       setBroadcastStatus('offline');
       return;
     }
-    // Revocation invalidates the TV token: the TV must pair again later.
-    try {
-      for (const session of assigned) {
-        await tvPairingApi.revoke(session.id);
-      }
-    } finally {
-      try {
-        const current = await tvPairingApi.sessions();
-        setBroadcastStatus(current.sessions.some(
-          (session) => session.aquariumId === aquarium.id,
-        ) ? 'live' : 'offline');
-      } catch {
-        setBroadcastStatus('error');
-      }
+    if (assigned.length > 1) {
+      throw new Error('Multiple TVs are assigned to this aquarium. Choose a TV before pausing.');
     }
+
+    // Pausing keeps the TV token valid; revoking would force QR pairing again.
+    await tvPairingApi.pause(assigned[0].id);
+    setBroadcastStatus('paused');
   }
 
   async function handleOpenSwitchAquarium() {
@@ -561,9 +534,9 @@ export function AquariumPage() {
     const { sessions } = await tvPairingApi.sessions();
 
     if (sessions.some((session) => session.aquariumId === id)) {
-      setBroadcastStatus('live');
+      setBroadcastStatus('offline');
       throw new Error(
-        'End the TV broadcast before deleting this aquarium.',
+        'Disconnect the paired TV before deleting this aquarium. Pausing does not revoke its session.',
       );
     }
 
