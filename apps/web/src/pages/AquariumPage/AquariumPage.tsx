@@ -371,26 +371,6 @@ export function AquariumPage() {
         </div>
       )}
 
-      <button
-        type="button"
-        disabled={!aquarium || busy || fishLoading}
-        onClick={() => setDrawing(true)}
-        style={{
-          position: 'fixed',
-          bottom: 30,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 10,
-          padding: '14px 24px',
-          borderRadius: 30,
-          border: 0,
-          fontSize: 18,
-          cursor: 'pointer',
-        }}
-      >
-        ✏️ Draw Fish
-      </button>
-
       <AquariumSettingsPanel
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
