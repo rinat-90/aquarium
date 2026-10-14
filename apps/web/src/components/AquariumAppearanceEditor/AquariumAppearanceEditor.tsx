@@ -519,7 +519,8 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
         {activeTab === 'effects' && (<>
         <section>
           <h3>💡 Set the mood</h3>
-          <div className="aquarium-appearance-options">
+          <p className="aquarium-effects-hint">Choose how your underwater world shines!</p>
+          <div className="aquarium-appearance-options aquarium-effects-grid aquarium-effects-lighting">
             {lighting.map((option) => (
               <button
                 type="button"
@@ -528,7 +529,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
                 aria-pressed={value.lighting === option.id}
                 onClick={() => onChange({ ...value, lighting: option.id })}
               >
-                <span aria-hidden="true">{option.emoji}</span>{option.label}
+                <span className="aquarium-effects-icon" aria-hidden="true">{option.emoji}</span><span className="aquarium-effects-name">{option.label}</span><span className="aquarium-effects-selected" aria-hidden="true">✓</span>
               </button>
             ))}
           </div>
@@ -536,7 +537,8 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
 
         <section>
           <h3>🫧 Add bubbles</h3>
-          <div className="aquarium-appearance-options">
+          <p className="aquarium-effects-hint">How bubbly should your aquarium be?</p>
+          <div className="aquarium-appearance-options aquarium-effects-grid aquarium-effects-bubbles">
             {bubbles.map((option) => (
               <button
                 type="button"
@@ -545,7 +547,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
                 aria-pressed={value.bubbles === option.id}
                 onClick={() => onChange({ ...value, bubbles: option.id })}
               >
-                <span aria-hidden="true">{option.emoji}</span>{option.label}
+                <span className="aquarium-effects-icon" aria-hidden="true">{option.emoji}</span><span className="aquarium-effects-name">{option.label}</span><span className="aquarium-effects-selected" aria-hidden="true">✓</span>
               </button>
             ))}
           </div>

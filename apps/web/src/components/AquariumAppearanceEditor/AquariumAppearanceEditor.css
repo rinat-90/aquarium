@@ -403,3 +403,53 @@
   .aquarium-appearance-editor .aquarium-decorate-steps { font-size: 11px; padding: 8px; }
   .aquarium-appearance-editor .aquarium-decorate-steps strong { width: 18px; height: 18px; }
 }
+
+/* Phase 6.5 — kid-friendly lighting and bubble cards. */
+.aquarium-appearance-editor .aquarium-effects-hint {
+  color: #b8dce6; font-size: 13px; line-height: 1.4; margin: -3px 0 14px;
+}
+.aquarium-appearance-editor .aquarium-effects-grid { gap: 10px; }
+.aquarium-appearance-editor .aquarium-effects-grid button {
+  position: relative; min-width: 0; min-height: 116px; padding: 12px 5px 11px;
+  overflow: hidden; border-radius: 17px; border: 2px solid #366980;
+  background: linear-gradient(160deg, #194d66, #0b2b42);
+  transition: border-color .15s ease, transform .15s ease, background .15s ease;
+}
+.aquarium-appearance-editor .aquarium-effects-grid button:active { transform: scale(.97); }
+.aquarium-appearance-editor .aquarium-effects-grid button:focus-visible { outline: 3px solid #a4f1f4; outline-offset: 2px; }
+.aquarium-appearance-editor .aquarium-effects-grid button.is-selected {
+  border-color: #a4f1f4; background: linear-gradient(160deg, #24687b, #10435c);
+  box-shadow: inset 0 0 0 1px #a4f1f4, 0 0 15px #67dce122;
+}
+.aquarium-appearance-editor .aquarium-effects-grid .aquarium-effects-icon {
+  display: grid; place-items: center; font-size: 31px; line-height: 1;
+  width: 100%; height: 54px; margin-bottom: 3px;
+}
+.aquarium-appearance-editor .aquarium-effects-grid .aquarium-effects-name {
+  font-size: 13px; font-weight: 800; line-height: 1.2;
+}
+.aquarium-appearance-editor .aquarium-effects-grid .aquarium-effects-selected {
+  display: none; position: absolute; right: 6px; top: 6px;
+  width: 21px; height: 21px; border-radius: 50%;
+  background: #a4f1f4; color: #083147; font-size: 13px; font-weight: 900;
+  place-items: center;
+}
+.aquarium-appearance-editor .aquarium-effects-grid button.is-selected .aquarium-effects-selected { display: grid; }
+.aquarium-appearance-editor .aquarium-effects-lighting button:nth-child(1) .aquarium-effects-icon {
+  background: radial-gradient(ellipse at center, #ffdc7470, transparent 75%);
+}
+.aquarium-appearance-editor .aquarium-effects-lighting button:nth-child(2) .aquarium-effects-icon {
+  background: radial-gradient(ellipse at center, #a8d9ed40, transparent 75%);
+}
+.aquarium-appearance-editor .aquarium-effects-lighting button:nth-child(3) .aquarium-effects-icon {
+  background: radial-gradient(ellipse at center, #8b84e650, transparent 75%);
+}
+.aquarium-appearance-editor .aquarium-effects-bubbles button:nth-child(1) .aquarium-effects-icon { opacity: .65; }
+@media (max-width: 390px) {
+ .aquarium-appearance-editor .aquarium-effects-grid { gap: 7px; }
+ .aquarium-appearance-editor .aquarium-effects-grid button { min-height: 104px; padding-inline: 3px; }
+ .aquarium-appearance-editor .aquarium-effects-grid .aquarium-effects-name { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+ .aquarium-appearance-editor .aquarium-effects-grid button { transition: none; }
+}
