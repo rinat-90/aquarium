@@ -1,0 +1,29 @@
+/* Kid-friendly catalog layer; keeps the existing appearance editor layout. */
+.aquarium-catalog { display: grid; gap: 14px; }
+.aquarium-catalog-heading, .aquarium-catalog-owned-heading { display: flex; align-items: start; justify-content: space-between; gap: 10px; }
+.aquarium-catalog-heading h3, .aquarium-catalog-owned-heading h3 { margin: 0 0 5px; }
+.aquarium-catalog-heading p { margin: 0; font-size: 13px; opacity: .76; line-height: 1.4; }
+.aquarium-catalog-counter { padding: 5px 9px; border-radius: 999px; background: rgba(85,169,230,.17); font-size: 12px; white-space: nowrap; }
+.aquarium-catalog-tabs { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; padding: 5px; border-radius: 16px; background: rgba(82,148,207,.12); }
+.aquarium-catalog-tabs button { min-height: 42px; border: 0; border-radius: 12px; padding: 8px 4px; color: inherit; background: transparent; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.aquarium-catalog-tabs button.is-active { color: #092a50; background: #a8e8ff; box-shadow: 0 3px 12px rgba(0,0,0,.13); }
+.aquarium-catalog-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.aquarium-catalog-card { min-width: 0; padding: 8px; border: 2px solid rgba(115,197,244,.28); border-radius: 18px; background: rgba(255,255,255,.09); color: inherit; cursor: pointer; text-align: center; transition: transform .16s ease, border-color .16s ease, background .16s ease; }
+.aquarium-catalog-card:hover:not(:disabled), .aquarium-catalog-card:focus-visible { transform: translateY(-2px); border-color: #77d6ff; background: rgba(255,255,255,.16); }
+.aquarium-catalog-card:disabled { opacity: .45; cursor: not-allowed; }
+.aquarium-catalog-art { display: grid; place-items: center; position: relative; min-height: 100px; border-radius: 12px; overflow: hidden; background: linear-gradient(165deg,#7bd6e8 0%,#348db5 55%,#1a587b 100%); }
+.aquarium-catalog-card--rocks .aquarium-catalog-art { background: linear-gradient(160deg,#b9e3ef,#6388aa 70%,#345d78); }
+.aquarium-catalog-card--seaweed .aquarium-catalog-art { background: linear-gradient(160deg,#b0f3cc,#379c9c 70%,#27637c); }
+.aquarium-catalog-card--coral .aquarium-catalog-art { background: linear-gradient(160deg,#ffd6da,#cb82ba 65%,#7c6ba8); }
+.aquarium-catalog-emoji { font-size: 53px; line-height: 1; filter: drop-shadow(0 8px 6px rgba(0,0,0,.19)); transform: rotate(-5deg); }
+.aquarium-catalog-plus { position: absolute; right: 7px; bottom: 7px; width: 27px; height: 27px; border-radius: 50%; background: #fff; color: #155e91; display: grid; place-items: center; font-size: 22px; font-weight: 800; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+.aquarium-catalog-name { display: block; padding: 8px 2px 3px; font-size: 14px; font-weight: 750; }
+.aquarium-catalog-owned { display: grid; gap: 9px; padding-top: 6px; }
+.aquarium-catalog-owned-heading { flex-wrap: wrap; align-items: baseline; }
+.aquarium-catalog-owned-heading span { font-size: 11px; opacity: .75; }
+.aquarium-catalog-owned-list { display: flex; gap: 7px; flex-wrap: wrap; max-height: 154px; overflow: auto; }
+.aquarium-catalog-owned-item { display: flex; gap: 7px; align-items: center; border: 1px solid rgba(134,204,239,.3); border-radius: 12px; padding: 9px 11px; color: inherit; background: rgba(255,255,255,.07); font: inherit; font-size: 12px; cursor: pointer; }
+.aquarium-catalog-owned-item.is-selected { border-color: #87e4ff; background: rgba(101,211,245,.24); }
+.aquarium-catalog-owned-item:focus-visible, .aquarium-catalog-tabs button:focus-visible { outline: 3px solid #9fe9ff; outline-offset: 2px; }
+@media (max-width: 420px) { .aquarium-catalog-art { min-height: 84px; } .aquarium-catalog-emoji { font-size: 44px; } }
+@media (prefers-reduced-motion: reduce) { .aquarium-catalog-card { transition: none; } }

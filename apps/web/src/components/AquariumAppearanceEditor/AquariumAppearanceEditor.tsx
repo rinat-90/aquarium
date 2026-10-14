@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import './AquariumDecorationCatalog.css';
 import type {
   AquariumDecorationAssetId,
   AquariumDecorationInstance,
@@ -78,8 +80,17 @@ const bubbles: { id: AquariumBubbles; label: string; emoji: string }[] = [
   { id: 'lots', label: 'Lots', emoji: '🫧🫧' },
 ];
 
+const catalogItems = [
+  { id: 'rocks', label: 'Rocks', emoji: '🪨', category: 'rocks' },
+  { id: 'seaweed', label: 'Seaweed', emoji: '🌿', category: 'plants' },
+  { id: 'coral', label: 'Coral', emoji: '🪸', category: 'plants' },
+] as const;
+
+type CatalogCategory = 'all' | 'plants' | 'rocks';
+
 export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSave, saving, saveError, selectedDecorationId = null, onDecorationSelect }: Props) {
 
+  const [catalogCategory, setCatalogCategory] = useState<CatalogCategory>('all');
   const decorationInstances = value.decorationInstances ?? [];
 
   const selectedDecoration = decorationInstances.find(
@@ -204,55 +215,80 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
           </div>
         </section>
 
-        <section className="aquarium-decoration-section">
-          <h3>🪸 Add decorations</h3>
+        <section className="aquarium-decoration-section aquarium-catalog">
+          <div className="aquarium-catalog-heading">
+            <div>
+              <h3>🪸 Pick a decoration</h3>
+              <p>Tap something you love to add it to your aquarium!</p>
+            </div>
+            <span className="aquarium-catalog-counter">{decorationInstances.length}/30</span>
+          </div>
 
-          <p>Pick something fun for your aquarium!</p>
-
-          <div className="aquarium-appearance-options">
+          <div className="aquarium-catalog-tabs" role="group" aria-label="Decoration categories">
             {([
+              ['all', '✨ All'],
+              ['plants', '🌿 Plants'],
               ['rocks', '🪨 Rocks'],
-              ['seaweed', '🌿 Seaweed'],
-              ['coral', '🪸 Coral'],
-            ] as const).map(([assetId, label]) => (
+            ] as const).map(([category, label]) => (
               <button
-                key={assetId}
+                key={category}
                 type="button"
-                disabled={decorationInstances.length >= 30}
-                onClick={() => addDecoration(assetId)}
+                className={catalogCategory === category ? 'is-active' : ''}
+                aria-pressed={catalogCategory === category}
+                onClick={() => setCatalogCategory(category)}
               >
-                {label} +
+                {label}
               </button>
             ))}
           </div>
 
+          <div className="aquarium-catalog-grid">
+            {catalogItems
+              .filter((item) => catalogCategory === 'all' || item.category === catalogCategory)
+              .map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`aquarium-catalog-card aquarium-catalog-card--${item.id}`}
+                  disabled={decorationInstances.length >= 30}
+                  onClick={() => addDecoration(item.id)}
+                  aria-label={`Add ${item.label}`}
+                >
+                  <span className="aquarium-catalog-art" aria-hidden="true">
+                    <span className="aquarium-catalog-emoji">{item.emoji}</span>
+                    <span className="aquarium-catalog-plus">+</span>
+                  </span>
+                  <span className="aquarium-catalog-name">{item.label}</span>
+                </button>
+              ))}
+          </div>
+
           {decorationInstances.length > 0 && (
-            <>
-              <h3>Your decorations</h3>
-
-              <div className="aquarium-appearance-options">
-                {decorationInstances.map((decoration, index) => (
-                  <button
-                    key={decoration.id}
-                    type="button"
-                    className={
-                      selectedDecorationId === decoration.id
-                        ? 'is-selected'
-                        : ''
-                    }
-                    onClick={() =>
-                      onDecorationSelect?.(decoration.id)
-                    }
-                  >
-                    {DECORATION_REGISTRY[decoration.assetId].name}
-                    {' '}
-                    {index + 1}
-                  </button>
-                ))}
+            <div className="aquarium-catalog-owned">
+              <div className="aquarium-catalog-owned-heading">
+                <h3>✨ In your aquarium</h3>
+                <span>Tap to edit · drag in the tank to move</span>
               </div>
-            </>
+              <div className="aquarium-catalog-owned-list">
+                {decorationInstances.map((decoration, index) => {
+                  const item = catalogItems.find((entry) => entry.id === decoration.assetId);
+                  return (
+                    <button
+                      key={decoration.id}
+                      type="button"
+                      className={`aquarium-catalog-owned-item ${selectedDecorationId === decoration.id ? 'is-selected' : ''}`}
+                      aria-pressed={selectedDecorationId === decoration.id}
+                      onClick={() => onDecorationSelect?.(decoration.id)}
+                    >
+                      <span aria-hidden="true">{item?.emoji ?? '🪸'}</span>
+                      <span>{DECORATION_REGISTRY[decoration.assetId].name} {index + 1}</span>
+                      <span aria-hidden="true">{selectedDecorationId === decoration.id ? '✓' : '›'}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           )}
-
 
           {selectedDecoration && (
             <div className="aquarium-decoration-controls">
