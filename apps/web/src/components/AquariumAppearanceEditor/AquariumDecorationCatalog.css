@@ -27,3 +27,23 @@
 .aquarium-catalog-owned-item:focus-visible, .aquarium-catalog-tabs button:focus-visible { outline: 3px solid #9fe9ff; outline-offset: 2px; }
 @media (max-width: 420px) { .aquarium-catalog-art { min-height: 84px; } .aquarium-catalog-emoji { font-size: 44px; } }
 @media (prefers-reduced-motion: reduce) { .aquarium-catalog-card { transition: none; } }
+
+/* Touch-first decoration editing controls (phone and tablet). */
+.aquarium-decoration-controls { display: grid; gap: 16px; }
+.aquarium-decoration-control-group { display: grid; gap: 10px; }
+.aquarium-decoration-label { display: block; font-size: 15px; font-weight: 750; }
+.aquarium-kid-stepper { display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; align-items: center; gap: 8px; }
+.aquarium-kid-stepper > span { text-align: center; font-size: 13px; opacity: .9; }
+.aquarium-kid-stepper button { min-height: 52px; border: 2px solid rgba(139,224,255,.45); border-radius: 15px; background: rgba(119,209,245,.19); color: inherit; font-size: 27px; font-weight: 800; cursor: pointer; touch-action: manipulation; }
+.aquarium-kid-stepper button:disabled { opacity: .35; cursor: default; }
+.aquarium-kid-slider { display: flex; align-items: center; gap: 12px; }
+.aquarium-kid-slider > span { font-size: 17px; }
+.aquarium-kid-slider > span.aquarium-kid-large { font-size: 28px; }
+.aquarium-kid-slider input[type="range"] { width: 100%; min-width: 0; height: 34px; accent-color: #83e4ff; cursor: pointer; touch-action: pan-x; }
+.aquarium-kid-hint { font-size: 12px; opacity: .78; }
+.aquarium-kid-colors { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.aquarium-kid-colors button { display: grid; place-items: center; min-width: 0; height: 58px; border: 3px solid rgba(255,255,255,.32); border-radius: 17px; cursor: pointer; touch-action: manipulation; }
+.aquarium-kid-colors button.is-selected { border-color: white; outline: 3px solid #83e4ff; outline-offset: 2px; }
+.aquarium-kid-colors button span { display: grid; place-items: center; width: 29px; height: 29px; border-radius: 50%; background: rgba(0,25,46,.55); color: white; font-size: 21px; font-weight: 900; }
+.aquarium-kid-colors button:focus-visible, .aquarium-kid-stepper button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+@media (max-width: 767px) { .aquarium-catalog-tabs button { min-height: 48px; } .aquarium-catalog-card { min-height: 132px; } .aquarium-catalog-owned-item { min-height: 48px; font-size: 14px; } .aquarium-kid-colors button { height: 62px; } }

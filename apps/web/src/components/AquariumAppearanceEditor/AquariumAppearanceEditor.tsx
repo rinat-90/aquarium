@@ -89,6 +89,18 @@ const catalogItems = [
 
 type CatalogCategory = 'all' | 'plants' | 'rocks';
 
+const decorationColors = [
+  { name: 'Ocean blue', hex: '#739fc8' },
+  { name: 'Leaf green', hex: '#43ca78' },
+  { name: 'Candy pink', hex: '#ff83a9' },
+  { name: 'Sunshine yellow', hex: '#ffcf64' },
+  { name: 'Magic purple', hex: '#aa8be8' },
+  { name: 'Sunset orange', hex: '#ff9466' },
+] as const;
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
 export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSave, saving, saveError, selectedDecorationId = null, onDecorationSelect }: Props) {
 
   const [catalogCategory, setCatalogCategory] = useState<CatalogCategory>('all');
@@ -309,6 +321,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
               <div className="aquarium-decoration-controls-header">
                 <div>
                   <h3>
+                    {catalogItems.find((item) => item.id === selectedDecoration.assetId)?.emoji ?? '🪸'}{' '}
                     {DECORATION_REGISTRY[selectedDecoration.assetId].name}
                   </h3>
                   <p>Make it just how you like!</p>
@@ -316,136 +329,70 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
                 <span aria-hidden="true">✨</span>
               </div>
 
-              <div className="aquarium-decoration-control-group">
-      <span className="aquarium-decoration-label">
-        ↔️ Move decoration
-      </span>
+                             <div className="aquarium-decoration-control-group">
+                 <span className="aquarium-decoration-label">↔️ Move</span>
+                 <div className="aquarium-kid-stepper" role="group" aria-label="Move decoration">
+                   <button type="button" aria-label="Move left" disabled={selectedDecoration.x <= 0.06}
+                     onClick={() => updateDecoration(selectedDecoration.id, { x: clamp(Number((selectedDecoration.x - 0.05).toFixed(2)), 0.06, 0.94) })}>←</button>
+                   <span>Left / Right</span>
+                   <button type="button" aria-label="Move right" disabled={selectedDecoration.x >= 0.94}
+                     onClick={() => updateDecoration(selectedDecoration.id, { x: clamp(Number((selectedDecoration.x + 0.05).toFixed(2)), 0.06, 0.94) })}>→</button>
+                 </div>
+               </div>
 
-                <div className="aquarium-decoration-stepper">
-                  <button
-                    type="button"
-                    aria-label="Move left"
-                    disabled={selectedDecoration.x <= 0.06}
-                    onClick={() =>
-                      updateDecoration(selectedDecoration.id, {
-                        x: Math.max(
-                          0.06,
-                          Number((selectedDecoration.x - 0.05).toFixed(2)),
-                        ),
-                      })
-                    }
-                  >
-                    ←
-                  </button>
+               <div className="aquarium-decoration-control-group">
+                 <label className="aquarium-decoration-label" htmlFor={`decoration-size-${selectedDecoration.id}`}>📏 How big?</label>
+                 <div className="aquarium-kid-slider">
+                   <span aria-hidden="true">🐟</span>
+                   <input
+                     id={`decoration-size-${selectedDecoration.id}`}
+                     type="range"
+                     min={DECORATION_REGISTRY[selectedDecoration.assetId].minScale}
+                     max={DECORATION_REGISTRY[selectedDecoration.assetId].maxScale}
+                     step="0.05"
+                     value={selectedDecoration.scale}
+                     onChange={(event) => updateDecoration(selectedDecoration.id, { scale: Number(event.target.value) })}
+                     aria-label="Decoration size"
+                   />
+                   <span className="aquarium-kid-large" aria-hidden="true">🐟</span>
+                 </div>
+                 <span className="aquarium-kid-hint">Slide to make it smaller or bigger</span>
+               </div>
 
-                  <span>Position</span>
+               <div className="aquarium-decoration-control-group">
+                 <span className="aquarium-decoration-label">🔄 Turn it</span>
+                 <div className="aquarium-kid-stepper" role="group" aria-label="Rotate decoration">
+                   <button type="button" aria-label="Rotate left" onClick={() => updateDecoration(selectedDecoration.id, {
+                     rotation: clamp(Number((selectedDecoration.rotation - Math.PI / 12).toFixed(3)), -Math.PI, Math.PI),
+                   })}>↶</button>
+                   <span>Rotate</span>
+                   <button type="button" aria-label="Rotate right" onClick={() => updateDecoration(selectedDecoration.id, {
+                     rotation: clamp(Number((selectedDecoration.rotation + Math.PI / 12).toFixed(3)), -Math.PI, Math.PI),
+                   })}>↷</button>
+                 </div>
+               </div>
 
-                  <button
-                    type="button"
-                    aria-label="Move right"
-                    disabled={selectedDecoration.x >= 0.94}
-                    onClick={() =>
-                      updateDecoration(selectedDecoration.id, {
-                        x: Math.min(
-                          0.94,
-                          Number((selectedDecoration.x + 0.05).toFixed(2)),
-                        ),
-                      })
-                    }
-                  >
-                    →
-                  </button>
-                </div>
-              </div>
+               <div className="aquarium-decoration-control-group">
+                 <span className="aquarium-decoration-label">🎨 Pick a color</span>
+                 <div className="aquarium-kid-colors" role="group" aria-label="Decoration colors">
+                   {decorationColors.map(({ name, hex }) => (
+                     <button
+                       key={hex}
+                       type="button"
+                       className={selectedDecoration.color?.toLowerCase() === hex ? 'is-selected' : ''}
+                       style={{ backgroundColor: hex }}
+                       aria-label={name}
+                       title={name}
+                       aria-pressed={selectedDecoration.color?.toLowerCase() === hex}
+                       onClick={() => updateDecoration(selectedDecoration.id, { color: hex })}
+                     >
+                       {selectedDecoration.color?.toLowerCase() === hex && <span aria-hidden="true">✓</span>}
+                     </button>
+                   ))}
+                 </div>
+               </div>
 
-              <div className="aquarium-decoration-control-group">
-      <span className="aquarium-decoration-label">
-        📏 Change size
-      </span>
-
-                <div className="aquarium-decoration-stepper">
-                  <button
-                    type="button"
-                    aria-label="Make smaller"
-                    onClick={() => {
-                      const asset =
-                        DECORATION_REGISTRY[selectedDecoration.assetId];
-
-                      updateDecoration(selectedDecoration.id, {
-                        scale: Math.max(
-                          asset.minScale,
-                          Number((selectedDecoration.scale - 0.1).toFixed(2)),
-                        ),
-                      });
-                    }}
-                  >
-                    −
-                  </button>
-
-                  <span>
-          {selectedDecoration.scale < 0.8
-            ? 'Small'
-            : selectedDecoration.scale > 1.2
-              ? 'Large'
-              : 'Medium'}
-        </span>
-
-                  <button
-                    type="button"
-                    aria-label="Make bigger"
-                    onClick={() => {
-                      const asset =
-                        DECORATION_REGISTRY[selectedDecoration.assetId];
-
-                      updateDecoration(selectedDecoration.id, {
-                        scale: Math.min(
-                          asset.maxScale,
-                          Number((selectedDecoration.scale + 0.1).toFixed(2)),
-                        ),
-                      });
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              <div className="aquarium-decoration-control-group">
-      <span className="aquarium-decoration-label">
-        🎨 Pick a color
-      </span>
-
-                <div className="aquarium-decoration-colors">
-                  {[
-                    '#739fc8',
-                    '#43ca78',
-                    '#ff83a9',
-                    '#ffcf64',
-                    '#aa8be8',
-                    '#ff9466',
-                  ].map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      className={
-                        selectedDecoration.color === color
-                          ? 'is-selected'
-                          : ''
-                      }
-                      style={{ backgroundColor: color }}
-                      aria-label={`Choose color ${color}`}
-                      aria-pressed={selectedDecoration.color === color}
-                      onClick={() =>
-                        updateDecoration(selectedDecoration.id, {
-                          color,
-                        })
-                      }
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <button
+<button
                 type="button"
                 className="aquarium-decoration-remove"
                 onClick={() => removeDecoration(selectedDecoration.id)}
