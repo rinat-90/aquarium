@@ -15,7 +15,8 @@
     "db:seed": "tsx src/seed.ts",
     "db:seed-content": "tsx src/seed-content.ts",
     "db:deploy": "prisma migrate deploy",
-    "build": "pnpm run db:generate"
+    "build": "pnpm run db:generate",
+    "content:publish": "tsx src/publish-content.ts"
   },
   "dependencies": {
     "@aquarium/aquarium-engine": "workspace:^",
