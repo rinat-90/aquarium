@@ -3,7 +3,7 @@ import type { AquariumTheme } from './themeRegistry';
 
 export type PublishedSceneryInstance = {
   id: string;
-  assetId: 'reef-fan' | 'reef-arch' | 'kelp' | 'seagrass';
+  assetId: 'reef-fan' | 'reef-arch' | 'kelp' | 'seagrass' | 'glow-plant';
   x: number;
   depth: number;
   scale: number;
@@ -18,7 +18,7 @@ type CatalogItem = {
   definition?: unknown;
 };
 
-const supportedAssets = new Set(['reef-fan', 'reef-arch', 'kelp', 'seagrass']);
+const supportedAssets = new Set(['reef-fan', 'reef-arch', 'kelp', 'seagrass', 'glow-plant']);
 const listeners = new Set<() => void>();
 const scenery = new Map<string, PublishedSceneryInstance[]>();
 let pending: Promise<void> | null = null;

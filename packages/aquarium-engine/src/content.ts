@@ -15,6 +15,7 @@ export const themeSceneryAssetSchema = z.enum([
   'reef-arch',
   'kelp',
   'seagrass',
+  'glow-plant',
 ]);
 
 export const themeSceneryInstanceSchema = z.strictObject({

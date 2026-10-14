@@ -11,6 +11,11 @@ const createProxy = (): Record<string, string | ProxyOptions> => ({
     changeOrigin: true,
   },
 
+  '/content': {
+    target: API_TARGET,
+    changeOrigin: true,
+  },
+
   '/aquariums': {
     target: API_TARGET,
     changeOrigin: true,
