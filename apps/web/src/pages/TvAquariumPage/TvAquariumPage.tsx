@@ -223,6 +223,8 @@ export function TvAquariumPage() {
     let requestId = 0;
     let joinVersion = 0;
     let broadcastPaused = false;
+    let previewVersion = 0;
+    let previewActive = false;
 
     const { token, expiresAt } = credentials;
     let currentAquariumId = credentials.aquariumId;
@@ -253,6 +255,8 @@ export function TvAquariumPage() {
       broadcastPaused = nextPaused;
       if (nextPaused) joinVersion++;
       requestId++; // Invalidate fish/texture responses already in flight.
+      previewActive = false;
+      previewVersion++;
       setPaused(nextPaused);
       setFish([]);
       setError(null);
@@ -264,18 +268,21 @@ export function TvAquariumPage() {
       if (broadcastPaused) return;
       const id = ++requestId;
       const requestedAquariumId = currentAquariumId;
+      const startedPreviewVersion = previewVersion;
 
       console.log('[TV] Loading aquarium fish');
 
       try {
         const result = await tvPairingApi.fish(token);
 
-        setAppearance({
-          ...DEFAULT_AQUARIUM_CUSTOMIZATION,
-          ...(result.appearance ?? {}),
-        });
-
         if (!active || broadcastPaused || id !== requestId) return;
+        // Do not overwrite a more recent live preview with a stale fetch.
+        if (!previewActive && startedPreviewVersion === previewVersion) {
+          setAppearance({
+            ...DEFAULT_AQUARIUM_CUSTOMIZATION,
+            ...(result.appearance ?? {}),
+          });
+        }
 
         console.log('[TV] Fish API succeeded', {
           aquariumId: result.aquariumId,
@@ -407,8 +414,20 @@ export function TvAquariumPage() {
       if (!active) return;
 
       if (!broadcastPaused && event.aquariumId === currentAquariumId) {
+        previewActive = false;
+        previewVersion++;
         void reload();
       }
+    };
+
+    const previewAppearance = (event: {
+      aquariumId: string;
+      appearance: AquariumCustomization;
+    }) => {
+      if (!active || broadcastPaused || event.aquariumId !== currentAquariumId) return;
+      previewActive = true;
+      previewVersion++;
+      setAppearance({ ...DEFAULT_AQUARIUM_CUSTOMIZATION, ...event.appearance });
     };
 
     const handleFeed = (event: {
@@ -434,6 +453,7 @@ export function TvAquariumPage() {
 
     socket.on('connect', join);
     socket.on('aquarium:changed', changed);
+    socket.on('aquarium:appearance-preview', previewAppearance);
 
     socket.on('connect_error', (err: Error) => {
       if (!active) return;
@@ -467,6 +487,8 @@ export function TvAquariumPage() {
         console.log('[TV] Switching aquarium:', event.aquariumId);
 
         currentAquariumId = event.aquariumId;
+        previewActive = false;
+        previewVersion++;
 
         setFish([]);
         setFeedSequence(0);
@@ -531,6 +553,8 @@ export function TvAquariumPage() {
         clearTimeout(expirationTimer);
       }
 
+      socket.off('aquarium:changed', changed);
+      socket.off('aquarium:appearance-preview', previewAppearance);
       socket.disconnect();
     };
   }, [credentials?.token, credentials?.expiresAt]);

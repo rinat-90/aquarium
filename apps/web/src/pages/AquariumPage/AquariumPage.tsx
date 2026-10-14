@@ -66,6 +66,27 @@ export function AquariumPage() {
   const [appearanceSaving, setAppearanceSaving] = useState(false);
   const [appearanceSaveError, setAppearanceSaveError] = useState<string | null>(null);
   const hydratedAppearanceId = useRef<string | null>(null);
+  const lastSavedAppearanceRef = useRef<AquariumCustomization>(DEFAULT_AQUARIUM_CUSTOMIZATION);
+
+  // Preview edits on paired TVs without persisting every tap to PostgreSQL.
+  // This is deliberately separate from the existing Done/save flow.
+  useEffect(() => {
+    if (!aquarium?.id || !appearanceOpen) return;
+    const aquariumId = aquarium.id;
+    const timeout = window.setTimeout(() => {
+      socket.emit('aquarium:appearance-preview', { aquariumId, appearance });
+    }, 120);
+    return () => window.clearTimeout(timeout);
+  }, [aquarium?.id, appearance, appearanceOpen]);
+
+  const stopAppearancePreview = () => {
+    if (!aquarium?.id) return;
+    socket.emit('aquarium:appearance-preview', {
+      aquariumId: aquarium.id,
+      appearance: lastSavedAppearanceRef.current,
+    });
+  };
+
 
   // Hydrate only when switching aquariums; avoid overwriting live edits
   // when another request refreshes the current aquarium.
@@ -73,10 +94,12 @@ export function AquariumPage() {
     if (!aquarium) return;
     if (hydratedAppearanceId.current === aquarium.id) return;
     hydratedAppearanceId.current = aquarium.id;
-    setAppearance({
+    const hydrated = {
       ...DEFAULT_AQUARIUM_CUSTOMIZATION,
       ...(aquarium.appearance ?? {}),
-    });
+    };
+    lastSavedAppearanceRef.current = hydrated;
+    setAppearance(hydrated);
     setAppearanceSaveError(null);
     setAppearanceOpen(false);
   }, [aquarium]);
@@ -88,7 +111,10 @@ export function AquariumPage() {
     setAppearanceSaveError(null);
     try {
       await saveAquariumAppearance(id, appearance);
-      if (activeAquariumId.current === id) setAppearanceOpen(false);
+      if (activeAquariumId.current === id) {
+        lastSavedAppearanceRef.current = appearance;
+        setAppearanceOpen(false);
+      }
     } catch (err) {
       if (activeAquariumId.current === id) {
         setAppearanceSaveError(err instanceof Error ? err.message : 'Could not save aquarium appearance.');
@@ -415,6 +441,34 @@ export function AquariumPage() {
     };
   }, [aquarium?.id]);
 
+  useEffect(() => {
+    if (!aquarium?.id || !appearanceOpen) return;
+
+    const join = () => {
+      socket.emit(
+        'aquarium:join',
+        aquarium.id,
+        (result: { ok: boolean }) => {
+          if (!result.ok) {
+            console.warn('[Aquarium] Socket join rejected');
+          }
+        },
+      );
+    };
+
+    socket.on('connect', join);
+
+    if (!socket.connected) {
+      socket.connect();
+    } else {
+      join();
+    }
+
+    return () => {
+      socket.off('connect', join);
+    };
+  }, [aquarium?.id, appearanceOpen]);
+
   async function handleEndBroadcast() {
     if (endingBroadcast) return;
     const confirmed = window.confirm('Pause the TV broadcast? You can resume without pairing again.');
@@ -691,7 +745,10 @@ export function AquariumPage() {
           setAppearance(next);
           setAppearanceSaveError(null);
         }}
-        onClose={() => setAppearanceOpen(false)}
+        onClose={() => {
+          stopAppearancePreview();
+          setAppearanceOpen(false);
+        }}
         onSave={() => void handleSaveAppearance()}
         saving={appearanceSaving}
         saveError={appearanceSaveError}

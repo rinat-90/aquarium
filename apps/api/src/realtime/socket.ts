@@ -287,6 +287,71 @@ export function initializeSocket(
         }
       },
     );
+    socket.on(
+      'aquarium:appearance-preview',
+      async (
+        payload: unknown,
+        acknowledge?: (result: { ok: boolean }) => void,
+      ) => {
+        const userId = socket.data.userId as string | null;
+
+        if (
+          !userId ||
+          !payload ||
+          typeof payload !== 'object' ||
+          !('aquariumId' in payload) ||
+          !('appearance' in payload)
+        ) {
+          acknowledge?.({ ok: false });
+          return;
+        }
+
+        const { aquariumId, appearance } = payload as {
+          aquariumId: unknown;
+          appearance: unknown;
+        };
+
+        if (
+          typeof aquariumId !== 'string' ||
+          !appearance ||
+          typeof appearance !== 'object' ||
+          Array.isArray(appearance)
+        ) {
+          acknowledge?.({ ok: false });
+          return;
+        }
+
+        try {
+          const aquarium = await prisma.aquarium.findFirst({
+            where: {
+              id: aquariumId,
+              ownerId: userId,
+            },
+            select: { id: true },
+          });
+
+          if (!aquarium || !socket.connected) {
+            acknowledge?.({ ok: false });
+            return;
+          }
+
+          // Forward the live preview to the TV.
+          // Do not persist it to PostgreSQL.
+          socket.to(aquariumRoom(aquariumId)).emit(
+            'aquarium:appearance-preview',
+            {
+              aquariumId,
+              appearance,
+            },
+          );
+
+          acknowledge?.({ ok: true });
+        } catch (error) {
+          console.error('[Socket] Appearance preview failed:', error);
+          acknowledge?.({ ok: false });
+        }
+      },
+    );
     socket.on('aquarium:leave', (aquariumId: unknown) => {
       if (typeof aquariumId === 'string' && socket.data.userId) {
         void socket.leave(aquariumRoom(aquariumId));
