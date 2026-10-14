@@ -13,8 +13,7 @@ export type ThreeFish = {
   destroy: () => void;
 };
 
-// A single textured plane replaces the previous 18 independently rendered strips.
-// Its subdivisions are vertices, not separate meshes or draw calls.
+// One subdivided mesh: the tail animates without additional draw calls.
 const BODY_SEGMENTS = 24;
 
 export async function createThreeFish(
@@ -68,12 +67,12 @@ export async function createThreeFish(
       0,
       1,
     );
+    // The tail is opposite the head in the unflipped source texture.
     const tailAmount = orientation === 'right' ? 1 - normalizedX : normalizedX;
     tailDistances[i] = tailAmount;
     tailWeights[i] = Math.pow(tailAmount, 2.5);
   }
 
-  let currentDirectionScale = 1;
   let lastElapsed: number | undefined;
   let swimPhase = Math.random() * Math.PI * 2;
   const glideOffset = Math.random() * Math.PI * 2;
@@ -90,8 +89,6 @@ export async function createThreeFish(
     const swimEffort = THREE.MathUtils.lerp(0.35, 1, glideFactor);
     const effectiveIntensity = clampedIntensity * swimEffort;
 
-    // Integrate frequency instead of multiplying it by absolute elapsed time;
-    // this prevents tail phase jumps as swimming speed changes.
     const delta = lastElapsed === undefined
       ? 0
       : THREE.MathUtils.clamp(elapsed - lastElapsed, 0, 0.1);
@@ -99,14 +96,13 @@ export async function createThreeFish(
     swimPhase += delta * (1.8 + effectiveIntensity * 1.2);
     if (swimPhase > Math.PI * 2) swimPhase %= Math.PI * 2;
 
-    const targetScale = direction === orientation ? 1 : -1;
-    currentDirectionScale = THREE.MathUtils.lerp(
-      currentDirectionScale,
-      targetScale,
-      0.12,
-    );
-    directionGroup.scale.x = currentDirectionScale;
+    // A PlaneGeometry displays its texture with the same left/right orientation
+    // as the original image. Only mirror it when travel and head differ.
+    // Switch the sign directly: interpolating through zero squashes the fish
+    // into a line and makes it appear to swim edge-on during turns.
+    directionGroup.scale.x = direction === orientation ? 1 : -1;
 
+    // Keep the flat drawing readable while moving through depth.
     const depthTurn = THREE.MathUtils.clamp(depthVelocity * 0.16, -0.16, 0.16);
     body.rotation.y = THREE.MathUtils.lerp(body.rotation.y, depthTurn, 0.08);
 
@@ -118,8 +114,6 @@ export async function createThreeFish(
     body.position.x = -Math.abs(nibble) * 0.12;
     body.position.y = Math.sin(elapsed * 0.55) * 0.012;
 
-    // Bend a continuous mesh. Head vertices remain nearly fixed, while
-    // the tail bends through depth. No separate texture or mesh per strip.
     for (let i = 0; i < vertexCount; i += 1) {
       const offset = i * 3;
       const wave = Math.sin(swimPhase - tailDistances[i] * 4.2);

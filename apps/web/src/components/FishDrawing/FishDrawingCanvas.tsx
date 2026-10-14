@@ -118,6 +118,9 @@ export function FishDrawingCanvas({
     setFishSize,
   ] = useState(1);
 
+  const [headDirection, setHeadDirection] =
+    useState<'left' | 'right'>('right');
+
   const fishSizeLabel =
     fishSize < 0.75
       ? 'Tiny'
@@ -475,6 +478,7 @@ export function FishDrawingCanvas({
       type: 'drawn',
       image,
       size: fishSize,
+      headDirection,
     });
   };
 
@@ -621,6 +625,30 @@ export function FishDrawingCanvas({
             </>
           )}
 
+          {mode === 'draw' && (
+            <div className="fish-editor__section">
+              <h2>Which way is your fish looking?</h2>
+              <div className="fish-editor__segmented" role="group" aria-label="Fish head direction">
+                <button
+                  type="button"
+                  className={headDirection === 'left' ? 'is-active' : ''}
+                  aria-pressed={headDirection === 'left'}
+                  onClick={() => setHeadDirection('left')}
+                >
+                  ← Left
+                </button>
+                <button
+                  type="button"
+                  className={headDirection === 'right' ? 'is-active' : ''}
+                  aria-pressed={headDirection === 'right'}
+                  onClick={() => setHeadDirection('right')}
+                >
+                  Right →
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="fish-editor__section fish-editor__capacity">
             <div className="fish-editor__size-header"><h2>Fish Size</h2><span>{fishSizeLabel}</span></div>
             <input
@@ -650,3 +678,4 @@ export function FishDrawingCanvas({
     </div>
   );
 }
+
