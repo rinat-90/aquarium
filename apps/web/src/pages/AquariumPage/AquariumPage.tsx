@@ -619,6 +619,7 @@ export function AquariumPage() {
             endingBroadcast={endingBroadcast}
             onSwitchAquarium={handleOpenSwitchAquarium}
             switchingAquarium={switchingAquarium}
+            onDecorate={() => setAppearanceOpen(true)}
           />
         ) : null
       ) : (
@@ -664,20 +665,18 @@ export function AquariumPage() {
         </button>
       )}
 
-      {!isMobile && (
-        <AquariumAppearanceEditor
-          open={appearanceOpen}
-          value={appearance}
-          onChange={(next) => {
-            setAppearance(next);
-            setAppearanceSaveError(null);
-          }}
-          onClose={() => setAppearanceOpen(false)}
-          onSave={() => void handleSaveAppearance()}
-          saving={appearanceSaving}
-          saveError={appearanceSaveError}
-        />
-      )}
+      <AquariumAppearanceEditor
+        open={appearanceOpen}
+        value={appearance}
+        onChange={(next) => {
+          setAppearance(next);
+          setAppearanceSaveError(null);
+        }}
+        onClose={() => setAppearanceOpen(false)}
+        onSave={() => void handleSaveAppearance()}
+        saving={appearanceSaving}
+        saveError={appearanceSaveError}
+      />
 
       {!isMobile && (
         <button

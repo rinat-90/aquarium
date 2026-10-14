@@ -24,6 +24,7 @@ type AquariumRemoteProps = {
   endingBroadcast: boolean;
   onSwitchAquarium: () => void;
   switchingAquarium: boolean;
+  onDecorate: () => void;
 };
 
 export function AquariumRemote({
@@ -41,6 +42,7 @@ export function AquariumRemote({
                                  endingBroadcast,
                                  onSwitchAquarium,
                                  switchingAquarium,
+                                 onDecorate,
                                }: AquariumRemoteProps) {
   const [isScanning, setIsScanning] = useState(false);
 
@@ -176,6 +178,17 @@ export function AquariumRemote({
           </span>
           <strong>Scan Drawing</strong>
           <small>Bring your drawing to life</small>
+        </button>
+        <button
+          type="button"
+          className="aquarium-remote__action aquarium-remote__action--scan"
+          onClick={onDecorate}
+        >
+          <span className="aquarium-remote__action-icon">
+            🎨
+          </span>
+          <strong>Decorate Aquarium</strong>
+          <small>Make your own underwater world</small>
         </button>
       </div>
       <button
