@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './AquariumDecorationCatalog.css';
+import './AquariumWorkspace.css';
 import type {
   AquariumDecorationAssetId,
   AquariumDecorationInstance,
@@ -91,6 +92,7 @@ type CatalogCategory = 'all' | 'plants' | 'rocks';
 export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSave, saving, saveError, selectedDecorationId = null, onDecorationSelect }: Props) {
 
   const [catalogCategory, setCatalogCategory] = useState<CatalogCategory>('all');
+  const [sheetCollapsed, setSheetCollapsed] = useState(false);
   const decorationInstances = value.decorationInstances ?? [];
 
   const selectedDecoration = decorationInstances.find(
@@ -152,8 +154,9 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
   if (!open) return null;
 
   return (
-    <aside className="aquarium-appearance-editor" aria-label="Decorate your aquarium">
+    <aside className={`aquarium-appearance-editor aquarium-workspace ${sheetCollapsed ? 'is-collapsed' : ''}`} aria-label="Decorate your aquarium">
       <header className="aquarium-appearance-header">
+        <button type="button" className="aquarium-workspace-sheet-toggle" aria-expanded={!sheetCollapsed} aria-label={sheetCollapsed ? "Expand decoration panel" : "Collapse decoration panel"} onClick={() => setSheetCollapsed((current) => !current)}><span className="aquarium-workspace-grip" aria-hidden="true" /><span className="aquarium-workspace-sheet-label">{sheetCollapsed ? "🎨 Tap to decorate" : "Drag decorations in the aquarium"}</span><span aria-hidden="true">{sheetCollapsed ? "⌃" : "⌄"}</span></button>
         <div>
           <div className="aquarium-appearance-eyebrow">MY AQUARIUM</div>
           <h2>🎨 Let's decorate!</h2>
