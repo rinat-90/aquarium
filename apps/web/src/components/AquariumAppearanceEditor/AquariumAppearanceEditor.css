@@ -358,3 +358,48 @@
   background: repeating-conic-gradient(from 15deg at 50% 100%, #6af9c5 0 12deg, transparent 14deg 38deg);
   filter: drop-shadow(0 0 7px #63edb4);
 }
+
+/* Phase 6.4 — kid-friendly decoration guidance and larger controls. */
+.aquarium-appearance-editor .aquarium-decorate-steps {
+  display: flex; align-items: center; justify-content: space-between; gap: 5px;
+  padding: 10px 11px; margin: 12px 0 14px;
+  background: #17475a; border: 1px solid #3b8190; border-radius: 13px;
+  color: #e7fbff; font-size: 12px; font-weight: 750;
+}
+.aquarium-appearance-editor .aquarium-decorate-steps span { white-space: nowrap; }
+.aquarium-appearance-editor .aquarium-decorate-steps strong {
+  display: inline-grid; place-items: center; width: 21px; height: 21px;
+  border-radius: 50%; background: #a4f1f4; color: #092b3e; margin-right: 3px;
+}
+.aquarium-appearance-editor .aquarium-decorate-limit {
+  color: #ffdfad; font-size: 13px; line-height: 1.4;
+  background: #65452166; border-radius: 10px; padding: 10px;
+}
+.aquarium-appearance-editor .aquarium-catalog-grid { gap: 12px; }
+.aquarium-appearance-editor .aquarium-catalog-card {
+  min-height: 136px; padding: 12px 7px;
+  border-radius: 17px; position: relative;
+}
+.aquarium-appearance-editor .aquarium-catalog-card:focus-visible,
+.aquarium-appearance-editor .aquarium-catalog-owned-item:focus-visible {
+  outline: 3px solid #a4f1f4; outline-offset: 2px;
+}
+.aquarium-appearance-editor .aquarium-decorate-add-label {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-top: 7px; padding: 5px 13px; border-radius: 999px;
+  background: #a4f1f4; color: #083047; font-size: 12px; font-weight: 850;
+}
+.aquarium-appearance-editor .aquarium-catalog-card:disabled .aquarium-decorate-add-label { opacity: .45; }
+.aquarium-appearance-editor .aquarium-decoration-controls {
+  border: 2px solid #83dfe9; box-shadow: 0 0 0 3px #83dfe91a;
+}
+.aquarium-appearance-editor .aquarium-kid-stepper button { min-width: 52px; min-height: 52px; }
+.aquarium-appearance-editor .aquarium-kid-colors button { min-width: 43px; min-height: 43px; }
+.aquarium-appearance-editor .aquarium-catalog-owned-item { min-height: 54px; }
+.aquarium-appearance-editor .aquarium-decorate-owned-action {
+  font-size: 12px; font-weight: 800; color: #a4f1f4;
+}
+@media (max-width: 390px) {
+  .aquarium-appearance-editor .aquarium-decorate-steps { font-size: 11px; padding: 8px; }
+  .aquarium-appearance-editor .aquarium-decorate-steps strong { width: 18px; height: 18px; }
+}
