@@ -665,6 +665,10 @@ export function AquariumPage() {
               handleOpenFishProfile(selectedFish.id);
             }}
             feedSequence={feedSequence}
+            onAppearanceChange={(next) => {
+              setAppearance(next);
+              setAppearanceSaveError(null);
+            }}
           />
         </>
       )}

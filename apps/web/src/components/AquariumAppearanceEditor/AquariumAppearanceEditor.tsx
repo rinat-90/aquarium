@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './AquariumDecorationCatalog.css';
 import './AquariumWorkspace.css';
 import type {
@@ -93,11 +93,49 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
 
   const [catalogCategory, setCatalogCategory] = useState<CatalogCategory>('all');
   const [sheetCollapsed, setSheetCollapsed] = useState(false);
+  const [localSelectedId, setLocalSelectedId] = useState<string | null>(selectedDecorationId);
+  const controlsRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const decorationInstances = value.decorationInstances ?? [];
 
+  // The panel responds immediately to taps, even if its parent does not
+  // update selectedDecorationId. External tank selections still sync here.
+  useEffect(() => {
+    setLocalSelectedId(selectedDecorationId);
+  }, [selectedDecorationId]);
+
+  const activeSelectedId = localSelectedId;
   const selectedDecoration = decorationInstances.find(
-    (decoration) => decoration.id === selectedDecorationId,
+    (decoration) => decoration.id === activeSelectedId,
   );
+
+  const selectDecoration = (id: string | null) => {
+    setLocalSelectedId(id);
+    if (id) setSheetCollapsed(false);
+    onDecorationSelect?.(id);
+  };
+
+  // Selecting a decoration in the list (or directly in the tank) should
+  // reveal its controls immediately, even when the panel is scrolled above them.
+  useEffect(() => {
+    if (!open || !selectedDecoration) return;
+
+    setSheetCollapsed(false);
+    const frame = requestAnimationFrame(() => {
+      const controls = controlsRef.current;
+      const scroller = scrollRef.current;
+      if (!controls || !scroller) return;
+
+      // Scroll only the editor, not the entire aquarium page.
+      const controlsTop = controls.getBoundingClientRect().top;
+      const scrollTop = scroller.getBoundingClientRect().top;
+      scroller.scrollTo({
+        top: scroller.scrollTop + controlsTop - scrollTop - 12,
+        behavior: 'smooth',
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [open, activeSelectedId]);
 
   const addDecoration = (assetId: AquariumDecorationAssetId) => {
     if (decorationInstances.length >= 30) return;
@@ -122,7 +160,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
       ],
     });
 
-    onDecorationSelect?.(instance.id);
+    selectDecoration(instance.id);
   };
 
   const updateDecoration = (
@@ -148,7 +186,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
       ),
     });
 
-    onDecorationSelect?.(null);
+    selectDecoration(null);
   };
 
   if (!open) return null;
@@ -165,7 +203,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
         <button type="button" className="aquarium-appearance-close" onClick={onClose} disabled={saving} aria-label="Close editor">×</button>
       </header>
 
-      <div className="aquarium-appearance-scroll">
+      <div className="aquarium-appearance-scroll" ref={scrollRef}>
         <section>
           <h3>🌊 Pick your world</h3>
           <div className="aquarium-appearance-worlds">
@@ -266,35 +304,8 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
               ))}
           </div>
 
-          {decorationInstances.length > 0 && (
-            <div className="aquarium-catalog-owned">
-              <div className="aquarium-catalog-owned-heading">
-                <h3>✨ In your aquarium</h3>
-                <span>Tap to edit · drag in the tank to move</span>
-              </div>
-              <div className="aquarium-catalog-owned-list">
-                {decorationInstances.map((decoration, index) => {
-                  const item = catalogItems.find((entry) => entry.id === decoration.assetId);
-                  return (
-                    <button
-                      key={decoration.id}
-                      type="button"
-                      className={`aquarium-catalog-owned-item ${selectedDecorationId === decoration.id ? 'is-selected' : ''}`}
-                      aria-pressed={selectedDecorationId === decoration.id}
-                      onClick={() => onDecorationSelect?.(decoration.id)}
-                    >
-                      <span aria-hidden="true">{item?.emoji ?? '🪸'}</span>
-                      <span>{DECORATION_REGISTRY[decoration.assetId].name} {index + 1}</span>
-                      <span aria-hidden="true">{selectedDecorationId === decoration.id ? '✓' : '›'}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {selectedDecoration && (
-            <div className="aquarium-decoration-controls">
+            <div className="aquarium-decoration-controls" ref={controlsRef}>
               <div className="aquarium-decoration-controls-header">
                 <div>
                   <h3>
@@ -443,6 +454,35 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
               </button>
             </div>
           )}
+
+          {decorationInstances.length > 0 && (
+            <div className="aquarium-catalog-owned">
+              <div className="aquarium-catalog-owned-heading">
+                <h3>✨ In your aquarium</h3>
+                <span>Tap to edit · drag in the tank to move</span>
+              </div>
+              <div className="aquarium-catalog-owned-list">
+                {decorationInstances.map((decoration, index) => {
+                  const item = catalogItems.find((entry) => entry.id === decoration.assetId);
+                  return (
+                    <button
+                      key={decoration.id}
+                      type="button"
+                      className={`aquarium-catalog-owned-item ${activeSelectedId === decoration.id ? 'is-selected' : ''}`}
+                      aria-pressed={activeSelectedId === decoration.id}
+                      onClick={() => selectDecoration(decoration.id)}
+                    >
+                      <span aria-hidden="true">{item?.emoji ?? '🪸'}</span>
+                      <span>{DECORATION_REGISTRY[decoration.assetId].name} {index + 1}</span>
+                      <span aria-hidden="true">{activeSelectedId === decoration.id ? '✓' : '›'}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+
 
         </section>
 

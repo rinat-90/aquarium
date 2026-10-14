@@ -4,6 +4,7 @@ import {
 } from 'react';
 
 import * as THREE from 'three';
+import './AquariumQuickActions.css';
 
 import {
   Aquarium,
@@ -46,6 +47,7 @@ import {
 type ThreeAquariumViewProps = {
   createdFish: CreatedFish[];
   appearance?: AquariumCustomization;
+  onAppearanceChange?: (next: AquariumCustomization) => void;
   /** Increment to drop a handful of pellets from the water surface. */
   feedSequence?: number;
 
@@ -70,6 +72,7 @@ type RenderedFish = {
 export function ThreeAquariumView({
                                     createdFish,
                                     appearance,
+                                    onAppearanceChange,
                                     feedSequence = 0,
                                     onFishSelect,
                                     interactive = true,
@@ -87,11 +90,9 @@ export function ThreeAquariumView({
   const onDecorationMoveRef = useRef(onDecorationMove);
   const onDecorationSelectRef = useRef(onDecorationSelect);
 
-  useEffect(() => {
-    decorationEditingRef.current = decorationEditing;
-    onDecorationMoveRef.current = onDecorationMove;
-    onDecorationSelectRef.current = onDecorationSelect;
-  }, [decorationEditing, onDecorationMove, onDecorationSelect]);
+  decorationEditingRef.current = decorationEditing;
+  onDecorationMoveRef.current = onDecorationMove;
+  onDecorationSelectRef.current = onDecorationSelect;
 
   useEffect(() => {
     environmentRef.current?.setSelectedDecoration(selectedDecorationId);
@@ -716,6 +717,7 @@ export function ThreeAquariumView({
     ): boolean => {
       if (!decorationEditingRef.current) return false;
       if (activeDragPointerId !== null) return true;
+      if (event.button !== 0 && event.pointerType === 'mouse') return true;
 
       // While decorating, prevent feeding and fish selection.
       const normalizedX = updatePointerRay(event);
@@ -734,7 +736,10 @@ export function ThreeAquariumView({
       draggedDecorationId = id;
       activeDragPointerId = event.pointerId;
 
-      renderer.domElement.setPointerCapture(event.pointerId);
+      // Keep receiving moves even when the pointer leaves the decoration.
+      if (renderer.domElement.isConnected) {
+        renderer.domElement.setPointerCapture(event.pointerId);
+      }
 
       event.preventDefault();
 
@@ -796,6 +801,7 @@ export function ThreeAquariumView({
     };
 
     const handleDecorationPointerCancel = (event: PointerEvent) => {
+      if (activeDragPointerId !== event.pointerId) return;
       finishDecorationDrag(event, false);
       environmentRef.current?.setAppearance(appearanceRef.current);
     };
@@ -825,7 +831,7 @@ export function ThreeAquariumView({
     const spawnFood = (x: number, y: number, z: number) => {
       const id = THREE.MathUtils.generateUUID();
 
-      aquarium.addFood({id, position: {x, y, z}});
+      aquarium.addFood({ id, position: { x, y, z } });
 
       const pellet = new THREE.Mesh(foodGeometry, foodMaterial);
       pellet.position.set(x, y, z);
@@ -853,6 +859,9 @@ export function ThreeAquariumView({
       event: PointerEvent,
     ) => {
 
+      if ((event.target as Element).closest?.('.aquarium-quick-actions')) {
+        return;
+      }
       if (handleDecorationPointerDown(event)) {
         return;
       }
@@ -906,7 +915,7 @@ export function ThreeAquariumView({
         Array.from(
           threeFishRef.current.values(),
         ).map(
-          ({view}) =>
+          ({ view }) =>
             view.group,
         );
 
@@ -999,24 +1008,30 @@ export function ThreeAquariumView({
     };
 
     if (interactive) {
-      renderer.domElement.addEventListener(
+      // Listen on the tank container so decorative DOM layers cannot
+      // accidentally block interaction with the WebGL canvas.
+      container.addEventListener(
         'pointerdown',
         handlePointerDown,
+        true,
       );
 
-      renderer.domElement.addEventListener(
+      container.addEventListener(
         'pointermove',
         handleDecorationPointerMove,
+        true,
       );
 
-      renderer.domElement.addEventListener(
+      container.addEventListener(
         'pointerup',
         handleDecorationPointerUp,
+        true,
       );
 
-      renderer.domElement.addEventListener(
+      container.addEventListener(
         'pointercancel',
         handleDecorationPointerCancel,
+        true,
       );
     }
 
@@ -1338,21 +1353,25 @@ export function ThreeAquariumView({
         handleResize,
       );
 
-      renderer.domElement.removeEventListener(
+      container.removeEventListener(
         'pointerdown',
         handlePointerDown,
+        true,
       );
-      renderer.domElement.removeEventListener(
+      container.removeEventListener(
         'pointermove',
         handleDecorationPointerMove,
+        true,
       );
-      renderer.domElement.removeEventListener(
+      container.removeEventListener(
         'pointerup',
         handleDecorationPointerUp,
+        true,
       );
-      renderer.domElement.removeEventListener(
+      container.removeEventListener(
         'pointercancel',
         handleDecorationPointerCancel,
+        true,
       );
 
       sceneRef.current =
@@ -1403,6 +1422,31 @@ export function ThreeAquariumView({
     };
   }, [interactive, showDebugStats]);
 
+  const selectedDecoration = (appearance?.decorationInstances ?? []).find(
+    (item) => item.id === selectedDecorationId,
+  );
+
+  const updateSelectedDecoration = (changes: Partial<NonNullable<typeof selectedDecoration>>) => {
+    if (!selectedDecoration || !appearance || !onAppearanceChange) return;
+    onAppearanceChange({
+      ...appearance,
+      decorationInstances: (appearance.decorationInstances ?? []).map((item) =>
+        item.id === selectedDecoration.id ? { ...item, ...changes } : item,
+      ),
+    });
+  };
+
+  const removeSelectedDecoration = () => {
+    if (!selectedDecoration || !appearance || !onAppearanceChange) return;
+    onAppearanceChange({
+      ...appearance,
+      decorationInstances: (appearance.decorationInstances ?? []).filter(
+        (item) => item.id !== selectedDecoration.id,
+      ),
+    });
+    onDecorationSelect?.(null);
+  };
+
   return (
     <div
       ref={containerRef}
@@ -1414,6 +1458,43 @@ export function ThreeAquariumView({
         overflow: 'hidden',
         backgroundColor: '#04132f',
       }}
-    />
+    >
+      {decorationEditing && selectedDecoration && onAppearanceChange && (
+        <div
+          className="aquarium-quick-actions"
+          role="toolbar"
+          aria-label="Selected decoration actions"
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <span className="aquarium-quick-actions__label">✨ Edit decoration</span>
+          <button type="button" aria-label="Make smaller" title="Smaller"
+            disabled={selectedDecoration.scale <= 0.3}
+            onClick={() => updateSelectedDecoration({
+              scale: Math.max(0.3, Number((selectedDecoration.scale - 0.1).toFixed(2))),
+            })}>−</button>
+          <button type="button" aria-label="Make bigger" title="Bigger"
+            disabled={selectedDecoration.scale >= 2}
+            onClick={() => updateSelectedDecoration({
+              scale: Math.min(2, Number((selectedDecoration.scale + 0.1).toFixed(2))),
+            })}>+</button>
+          <span className="aquarium-quick-actions__divider" aria-hidden="true" />
+          <button type="button" aria-label="Rotate left" title="Rotate left"
+            onClick={() => updateSelectedDecoration({
+              rotation: Math.max(-Math.PI, Number((selectedDecoration.rotation - Math.PI / 12).toFixed(3))),
+            })}>↶</button>
+          <button type="button" aria-label="Rotate right" title="Rotate right"
+            onClick={() => updateSelectedDecoration({
+              rotation: Math.min(Math.PI, Number((selectedDecoration.rotation + Math.PI / 12).toFixed(3))),
+            })}>↷</button>
+          <span className="aquarium-quick-actions__divider" aria-hidden="true" />
+          <button type="button" className="aquarium-quick-actions__delete"
+            aria-label="Remove decoration" title="Remove decoration"
+            onClick={removeSelectedDecoration}>🗑️</button>
+          <button type="button" className="aquarium-quick-actions__close"
+            aria-label="Deselect decoration" title="Done editing"
+            onClick={() => onDecorationSelect?.(null)}>×</button>
+        </div>
+      )}
+    </div>
   );
 }
