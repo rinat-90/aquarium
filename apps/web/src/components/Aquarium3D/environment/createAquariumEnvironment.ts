@@ -42,6 +42,8 @@ export type AquariumEnvironmentController = {
   moveDecoration(id: string, normalizedX: number): void;
 
   destroy(): void;
+  setSelectedDecoration: (id: string | null) => void;
+  setDraggingDecoration: (id: string | null) => void;
 };
 
 const MAX_DECORATIONS = 30;
@@ -274,6 +276,13 @@ export function createAquariumEnvironment(options: {
       underwaterEffects.update(deltaTime, elapsed);
       sandCaustics.update(elapsed);
       decorations.update(elapsed);
+    },
+    setSelectedDecoration(id: string | null) {
+      decorations.setSelectedDecoration(id);
+    },
+
+    setDraggingDecoration(id: string | null) {
+      decorations.setDraggingDecoration(id);
     },
 
     setQuality(quality) {

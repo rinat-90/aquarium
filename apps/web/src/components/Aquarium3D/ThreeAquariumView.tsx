@@ -59,6 +59,8 @@ type ThreeAquariumViewProps = {
 
   decorationEditing?: boolean;
   onDecorationMove?: (id: string, normalizedX: number) => void;
+  selectedDecorationId?: string | null;
+  onDecorationSelect?: (id: string | null) => void;
 };
 
 type RenderedFish = {
@@ -74,6 +76,8 @@ export function ThreeAquariumView({
                                     showDebugStats = import.meta.env.DEV,
                                     decorationEditing = false,
                                     onDecorationMove,
+                                    selectedDecorationId = null,
+                                    onDecorationSelect,
                                   }: ThreeAquariumViewProps) {
   const environmentRef = useRef<AquariumEnvironmentController | null>(null);
   const appearanceRef = useRef(appearance ?? DEFAULT_AQUARIUM_CUSTOMIZATION);
@@ -81,11 +85,17 @@ export function ThreeAquariumView({
 
   const decorationEditingRef = useRef(decorationEditing);
   const onDecorationMoveRef = useRef(onDecorationMove);
+  const onDecorationSelectRef = useRef(onDecorationSelect);
 
   useEffect(() => {
     decorationEditingRef.current = decorationEditing;
     onDecorationMoveRef.current = onDecorationMove;
-  }, [decorationEditing, onDecorationMove]);
+    onDecorationSelectRef.current = onDecorationSelect;
+  }, [decorationEditing, onDecorationMove, onDecorationSelect]);
+
+  useEffect(() => {
+    environmentRef.current?.setSelectedDecoration(selectedDecorationId);
+  }, [selectedDecorationId]);
 
   useEffect(() => {
     environmentRef.current?.setAppearance(
@@ -648,6 +658,7 @@ export function ThreeAquariumView({
       sandCaustics,
     });
     environmentRef.current = environment;
+    environment.setSelectedDecoration(selectedDecorationId);
 
     /*
      * Shared food rendering resources.
@@ -715,8 +726,11 @@ export function ThreeAquariumView({
         raycaster,
       );
 
+      onDecorationSelectRef.current?.(id ?? null);
+      environmentRef.current?.setSelectedDecoration(id ?? null);
       if (!id) return true;
 
+      environmentRef.current?.setDraggingDecoration(id);
       draggedDecorationId = id;
       activeDragPointerId = event.pointerId;
 
@@ -767,6 +781,7 @@ export function ThreeAquariumView({
         );
       }
 
+      environmentRef.current?.setDraggingDecoration(null);
       draggedDecorationId = null;
       activeDragPointerId = null;
 
@@ -810,7 +825,7 @@ export function ThreeAquariumView({
     const spawnFood = (x: number, y: number, z: number) => {
       const id = THREE.MathUtils.generateUUID();
 
-      aquarium.addFood({ id, position: { x, y, z } });
+      aquarium.addFood({id, position: {x, y, z}});
 
       const pellet = new THREE.Mesh(foodGeometry, foodMaterial);
       pellet.position.set(x, y, z);
@@ -891,7 +906,7 @@ export function ThreeAquariumView({
         Array.from(
           threeFishRef.current.values(),
         ).map(
-          ({ view }) =>
+          ({view}) =>
             view.group,
         );
 

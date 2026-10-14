@@ -1,4 +1,3 @@
-
 import * as THREE from 'three';
 
 export type DecorationType = 'rocks' | 'seaweed' | 'coral';
@@ -401,6 +400,29 @@ export function createAquariumDecorations(scene: THREE.Scene) {
   };
 
   const objects = new Map<string, ManagedDecoration>();
+  let selectedId: string | null = null;
+  let draggingId: string | null = null;
+
+  function updateHighlight(id: string) {
+    const managed = objects.get(id);
+    if (!managed) return;
+
+    const selected = selectedId === id;
+    const dragging = draggingId === id;
+
+    managed.object.group.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return;
+      const materials = Array.isArray(child.material)
+        ? child.material
+        : [child.material];
+
+      for (const item of materials) {
+        if (!(item instanceof THREE.MeshLambertMaterial)) continue;
+        item.emissive.set(selected ? 0x5ca9ff : 0x000000);
+        item.emissiveIntensity = dragging ? 0.42 : selected ? 0.22 : 0;
+      }
+    });
+  }
 
   function removeDecoration(id: string) {
     const managed = objects.get(id);
@@ -409,6 +431,8 @@ export function createAquariumDecorations(scene: THREE.Scene) {
     root.remove(managed.object.group);
     disposeObject(managed.object.group);
     objects.delete(id);
+    if (selectedId === id) selectedId = null;
+    if (draggingId === id) draggingId = null;
   }
 
   function setDecorations(instances: DecorationInstance[]) {
@@ -447,6 +471,7 @@ export function createAquariumDecorations(scene: THREE.Scene) {
 
         objects.set(instance.id, managed);
         root.add(object.group);
+        updateHighlight(instance.id);
       }
 
       // Position, scale and rotation are cheap to update.
@@ -462,6 +487,20 @@ export function createAquariumDecorations(scene: THREE.Scene) {
 
   return {
     setDecorations,
+
+    setSelectedDecoration(id: string | null) {
+      const previousId = selectedId;
+      selectedId = id && objects.has(id) ? id : null;
+      if (previousId) updateHighlight(previousId);
+      if (selectedId) updateHighlight(selectedId);
+    },
+
+    setDraggingDecoration(id: string | null) {
+      const previousId = draggingId;
+      draggingId = id && objects.has(id) ? id : null;
+      if (previousId) updateHighlight(previousId);
+      if (draggingId) updateHighlight(draggingId);
+    },
 
     getDecorationAtPoint(
       raycaster: THREE.Raycaster,
@@ -525,4 +564,3 @@ export function createAquariumDecorations(scene: THREE.Scene) {
     },
   };
 }
-

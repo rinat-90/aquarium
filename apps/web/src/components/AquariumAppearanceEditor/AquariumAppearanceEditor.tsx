@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 import type {
   AquariumDecorationAssetId,
   AquariumDecorationInstance,
@@ -25,6 +23,8 @@ type Props = {
   onSave: () => void;
   saving: boolean;
   saveError: string | null;
+  selectedDecorationId?: string | null;
+  onDecorationSelect?: (id: string | null) => void;
 };
 
 const backgrounds: { id: AquariumBackground; label: string; emoji: string; gradient: string }[] = [
@@ -78,9 +78,7 @@ const bubbles: { id: AquariumBubbles; label: string; emoji: string }[] = [
   { id: 'lots', label: 'Lots', emoji: '🫧🫧' },
 ];
 
-export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSave, saving, saveError }: Props) {
-  const [selectedDecorationId, setSelectedDecorationId] =
-    useState<string | null>(null);
+export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSave, saving, saveError, selectedDecorationId = null, onDecorationSelect }: Props) {
 
   const decorationInstances = value.decorationInstances ?? [];
 
@@ -111,7 +109,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
       ],
     });
 
-    setSelectedDecorationId(instance.id);
+    onDecorationSelect?.(instance.id);
   };
 
   const updateDecoration = (
@@ -137,7 +135,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
       ),
     });
 
-    setSelectedDecorationId(null);
+    onDecorationSelect?.(null);
   };
 
   if (!open) return null;
@@ -243,7 +241,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
                         : ''
                     }
                     onClick={() =>
-                      setSelectedDecorationId(decoration.id)
+                      onDecorationSelect?.(decoration.id)
                     }
                   >
                     {DECORATION_REGISTRY[decoration.assetId].name}
