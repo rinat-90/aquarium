@@ -10,15 +10,44 @@ const appearanceSchema = z.strictObject({
   bubbles: z.enum(['none', 'some', 'lots']),
 });
 
-export const themeDefinitionSchema = z.strictObject({
-  schemaVersion: z.literal(1),
+export const themeSceneryAssetSchema = z.enum([
+  'reef-fan',
+  'reef-arch',
+  'kelp',
+  'seagrass',
+]);
+
+export const themeSceneryInstanceSchema = z.strictObject({
+  id: z.string().min(1),
+  assetId: themeSceneryAssetSchema,
+  x: z.number().min(0).max(1),
+  depth: z.number().min(0).max(1),
+  scale: z.number().positive().max(5),
+  rotation: z.number().finite(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+});
+
+const themeBaseSchema = {
   id: z.string().min(1),
   name: z.string().min(1),
   emoji: z.string().min(1),
   appearance: appearanceSchema,
-  // Theme-owned scenery is still rendered from the existing local registry.
-  // We will move it into catalog definitions in the next milestone.
-});
+};
+
+export const themeDefinitionSchema = z.discriminatedUnion(
+  'schemaVersion',
+  [
+    z.strictObject({
+      schemaVersion: z.literal(1),
+      ...themeBaseSchema,
+    }),
+    z.strictObject({
+      schemaVersion: z.literal(2),
+      ...themeBaseSchema,
+      scenery: z.array(themeSceneryInstanceSchema).max(30),
+    }),
+  ],
+);
 
 export const fishSpeciesDefinitionSchema = z.strictObject({
   schemaVersion: z.literal(1),
