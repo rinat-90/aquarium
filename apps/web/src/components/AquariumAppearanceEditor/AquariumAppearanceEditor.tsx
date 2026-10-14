@@ -91,6 +91,7 @@ const catalogItems = [
 ] as const;
 
 type CatalogCategory = 'all' | 'plants' | 'rocks';
+type EditorTab = 'worlds' | 'decorate' | 'effects';
 
 const decorationColors = [
   { name: 'Ocean blue', hex: '#739fc8' },
@@ -107,6 +108,7 @@ const clamp = (value: number, min: number, max: number) =>
 export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSave, saving, saveError, themes, selectedDecorationId = null, onDecorationSelect }: Props) {
 
   const [catalogCategory, setCatalogCategory] = useState<CatalogCategory>('all');
+  const [activeTab, setActiveTab] = useState<EditorTab>('worlds');
   const [sheetCollapsed, setSheetCollapsed] = useState(false);
   const [localSelectedId, setLocalSelectedId] = useState<string | null>(selectedDecorationId);
   const controlsRef = useRef<HTMLDivElement>(null);
@@ -126,7 +128,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
 
   const selectDecoration = (id: string | null) => {
     setLocalSelectedId(id);
-    if (id) setSheetCollapsed(false);
+    if (id) { setSheetCollapsed(false); setActiveTab('decorate'); }
     onDecorationSelect?.(id);
   };
 
@@ -136,6 +138,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
     if (!open || !selectedDecoration) return;
 
     setSheetCollapsed(false);
+    setActiveTab('decorate');
     const frame = requestAnimationFrame(() => {
       const controls = controlsRef.current;
       const scroller = scrollRef.current;
@@ -218,7 +221,26 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
         <button type="button" className="aquarium-appearance-close" onClick={onClose} disabled={saving} aria-label="Close editor">×</button>
       </header>
 
+      <nav className="aquarium-editor-tabs" aria-label="Aquarium customization" role="tablist">
+        {([
+          ['worlds', '🌎', 'Worlds'],
+          ['decorate', '🎨', 'Decorate'],
+          ['effects', '✨', 'Effects'],
+        ] as const).map(([id, emoji, label]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === id}
+            className={activeTab === id ? 'is-active' : ''}
+            onClick={() => { setActiveTab(id); scrollRef.current?.scrollTo({ top: 0 }); }}
+          >
+            <span aria-hidden="true">{emoji}</span> {label}
+          </button>
+        ))}
+      </nav>
       <div className="aquarium-appearance-scroll" ref={scrollRef}>
+        {activeTab === 'worlds' && (<>
         <section className="aquarium-theme-section" aria-label="Starter aquarium themes">
           <div className="aquarium-theme-heading">
             <div>
@@ -303,6 +325,8 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
           </div>
         </section>
 
+        </>)}
+        {activeTab === 'decorate' && (<>
         <section className="aquarium-decoration-section aquarium-catalog">
           <div className="aquarium-catalog-heading">
             <div>
@@ -468,6 +492,8 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
 
         </section>
 
+        </>)}
+        {activeTab === 'effects' && (<>
         <section>
           <h3>💡 Set the mood</h3>
           <div className="aquarium-appearance-options">
@@ -501,6 +527,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
             ))}
           </div>
         </section>
+        </>)}
       </div>
       <footer className="aquarium-appearance-footer">
         <p>Changes appear instantly. Tap Done to save them.</p>
