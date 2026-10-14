@@ -86,5 +86,19 @@ export function getAquariumThemeScenery(appearance: AquariumCustomization): Them
     { id: 'garden-grass-right', assetId: 'seagrass', x: 0.7, depth: 0.5, scale: 1.2, rotation: 0.1, color: '#55c9a0' },
     { id: 'garden-kelp-right', assetId: 'kelp', x: 0.87, depth: 0.5, scale: 1.4, rotation: 0.12, color: '#3ab28c' },
   ];
+  if (themeId === 'midnight-sea') return [
+    { id: 'midnight-kelp-left', assetId: 'kelp', x: 0.12, depth: 0.5, scale: 1.3, rotation: -0.1, color: '#276b85' },
+    { id: 'midnight-glow-left', assetId: 'glow-plant', x: 0.28, depth: 0.5, scale: 1.2, rotation: 0.1, color: '#4de4db' },
+    { id: 'midnight-glow-center', assetId: 'glow-plant', x: 0.55, depth: 0.5, scale: 1.5, rotation: -0.12, color: '#7b8dff' },
+    { id: 'midnight-grass-right', assetId: 'seagrass', x: 0.72, depth: 0.5, scale: 1.1, rotation: 0.1, color: '#387f98' },
+    { id: 'midnight-glow-right', assetId: 'glow-plant', x: 0.89, depth: 0.5, scale: 1.4, rotation: 0.12, color: '#56d6e9' },
+  ];
+  if (themeId === 'magic-lagoon') return [
+    { id: 'lagoon-mushroom-left', assetId: 'glow-mushroom', x: 0.13, depth: 0.5, scale: 1.4, rotation: -0.08, color: '#ff7bbd' },
+    { id: 'lagoon-glow-left', assetId: 'glow-plant', x: 0.29, depth: 0.5, scale: 1.2, rotation: 0.1, color: '#6af5e3' },
+    { id: 'lagoon-mushroom-center', assetId: 'glow-mushroom', x: 0.52, depth: 0.5, scale: 1.6, rotation: 0, color: '#e68bff' },
+    { id: 'lagoon-glow-right', assetId: 'glow-plant', x: 0.72, depth: 0.5, scale: 1.3, rotation: -0.1, color: '#8fe8ff' },
+    { id: 'lagoon-mushroom-right', assetId: 'glow-mushroom', x: 0.88, depth: 0.5, scale: 1.2, rotation: 0.12, color: '#ff9cda' },
+  ];
   return [];
 }
