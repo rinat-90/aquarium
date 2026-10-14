@@ -335,3 +335,26 @@
 .aquarium-appearance-editor .aquarium-theme-mini-tank > .aquarium-theme-mini-scene {
   display: block;
 }
+
+/* Phase 6.3: distinctive, lightweight scenery cues for published starter themes. */
+.aquarium-appearance-editor .aquarium-theme-mini-scene--glow {
+  filter: drop-shadow(0 0 8px #dbb1ff) drop-shadow(0 2px 2px #00182790);
+}
+.aquarium-appearance-editor .aquarium-theme-mini-accent {
+  position: absolute;
+  z-index: 1;
+  bottom: 13px;
+  right: 8%;
+  width: 24px;
+  height: 34px;
+  border-radius: 55% 55% 35% 35%;
+  pointer-events: none;
+}
+.aquarium-appearance-editor .aquarium-theme-mini-accent--lagoon {
+  background: radial-gradient(ellipse at 50% 18%, #dca5ff 0 26%, transparent 28%), linear-gradient(90deg, transparent 43%, #a5f6f2 44% 56%, transparent 57%);
+  filter: drop-shadow(0 0 7px #d18aff);
+}
+.aquarium-appearance-editor .aquarium-theme-mini-accent--midnight {
+  background: repeating-conic-gradient(from 15deg at 50% 100%, #6af9c5 0 12deg, transparent 14deg 38deg);
+  filter: drop-shadow(0 0 7px #63edb4);
+}

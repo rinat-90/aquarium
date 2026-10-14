@@ -268,7 +268,12 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
                     <span className="aquarium-theme-mini-bubble aquarium-theme-mini-bubble--three" aria-hidden="true" />
                     <span className="aquarium-theme-mini-fish" aria-hidden="true">🐠</span>
                     <span className="aquarium-theme-mini-fish aquarium-theme-mini-fish--small" aria-hidden="true">🐟</span>
-                    <span className="aquarium-theme-mini-scene" aria-hidden="true">{theme.emoji}</span>
+                    <span className={`aquarium-theme-mini-scene ${theme.id === 'magic-lagoon' || theme.id === 'midnight-sea' ? 'aquarium-theme-mini-scene--glow' : ''}`} aria-hidden="true">
+                      {theme.id === 'magic-lagoon' ? '🍄' : theme.id === 'midnight-sea' ? '🌿' : theme.id === 'ocean-garden' ? '🌱' : theme.id === 'sunny-reef' ? '🪸' : theme.emoji}
+                    </span>
+                    {(theme.id === 'magic-lagoon' || theme.id === 'midnight-sea') && (
+                      <span className={`aquarium-theme-mini-accent ${theme.id === 'magic-lagoon' ? 'aquarium-theme-mini-accent--lagoon' : 'aquarium-theme-mini-accent--midnight'}`} aria-hidden="true" />
+                    )}
                     <span className="aquarium-theme-mini-floor" aria-hidden="true" />
                     {selected && <span className="aquarium-theme-check" aria-hidden="true">✓</span>}
                   </span>
@@ -281,7 +286,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
           <p className="aquarium-theme-hint">Choose a world, then make it your own below.</p>
         </section>
         <section>
-          <h3>🌊 Pick your world</h3>
+          <h3>🌊 Change the water color</h3>
           <div className="aquarium-appearance-worlds">
             {backgrounds.map((option) => (
               <button
