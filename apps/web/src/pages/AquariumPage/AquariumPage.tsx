@@ -68,9 +68,18 @@ export function AquariumPage() {
 
   useEffect(() => {
     let active = true;
+
     void fetchPublishedThemes()
-      .then((themes) => { if (active) setAvailableThemes(themes); })
-      .catch(() => { if (active) setAvailableThemes(FALLBACK_THEMES); });
+      .then((themes) => {
+        if (!active) return;
+        // Keep bundled starter themes available when nothing is published yet.
+        setAvailableThemes(themes.length > 0 ? themes : FALLBACK_THEMES);
+      })
+      .catch((error) => {
+        console.warn('Failed to load published themes:', error);
+        if (active) setAvailableThemes(FALLBACK_THEMES);
+      });
+
     return () => { active = false; };
   }, []);
 
