@@ -1,4 +1,7 @@
-import type { AquariumCustomization, AquariumDecorationInstance } from './types.ts';
+import type { AquariumCustomization } from './types';
+import type { ThemeAsset } from '../../components/Aquarium3D/environment/createThemeScenery.ts';
+
+type ThemeInstance = { id: string; assetId: ThemeAsset; x: number; depth: number; scale: number; rotation: number; color?: string };
 
 // Themes are content definitions, not rendering logic. Future packs can be
 // delivered through the same registry without changing the editor UI.
@@ -62,18 +65,22 @@ export function isAquariumThemeSelected(
   );
 }
 
-export function getSunnyReefScenery(
-  appearance: AquariumCustomization,
-): AquariumDecorationInstance[] {
-  const reef = AQUARIUM_THEMES.find((theme) => theme.id === 'sunny-reef');
-  if (!reef || !isAquariumThemeSelected(appearance, reef)) return [];
-
-  return [
-    { id: 'theme-sunny-reef-rock-left', assetId: 'rocks', x: 0.11, depth: 0.5, scale: 1.12, rotation: -0.25, color: '#8cabc2' },
-    { id: 'theme-sunny-reef-coral-left', assetId: 'coral', x: 0.19, depth: 0.5, scale: 1.08, rotation: 0.22, color: '#ff839b' },
-    { id: 'theme-sunny-reef-seaweed-left', assetId: 'seaweed', x: 0.29, depth: 0.5, scale: 0.88, rotation: -0.1, color: '#43ca78' },
-    { id: 'theme-sunny-reef-rock-right', assetId: 'rocks', x: 0.86, depth: 0.5, scale: 1.22, rotation: 0.32, color: '#a3a9d5' },
-    { id: 'theme-sunny-reef-coral-right', assetId: 'coral', x: 0.79, depth: 0.5, scale: 1.1, rotation: -0.28, color: '#ffb16e' },
-    { id: 'theme-sunny-reef-seaweed-right', assetId: 'seaweed', x: 0.7, depth: 0.5, scale: 0.92, rotation: 0.12, color: '#55d6a0' },
+export function getAquariumThemeScenery(appearance: AquariumCustomization): ThemeInstance[] {
+  const themeId = appearance.themeId === undefined
+    ? (isAquariumThemeSelected(appearance, AQUARIUM_THEMES[0]) ? 'sunny-reef' : null)
+    : appearance.themeId;
+  if (themeId === 'sunny-reef') return [
+    { id: 'reef-arch-left', assetId: 'reef-arch', x: 0.17, depth: 0.5, scale: 1.3, rotation: -0.12, color: '#9e94a4' },
+    { id: 'reef-fan-pink', assetId: 'reef-fan', x: 0.32, depth: 0.5, scale: 1.4, rotation: 0.12, color: '#ff729e' },
+    { id: 'reef-fan-orange', assetId: 'reef-fan', x: 0.72, depth: 0.5, scale: 1.2, rotation: -0.2, color: '#ffab5d' },
+    { id: 'reef-arch-right', assetId: 'reef-arch', x: 0.88, depth: 0.5, scale: 1.1, rotation: 0.15, color: '#b7a1ad' },
   ];
+  if (themeId === 'ocean-garden') return [
+    { id: 'garden-kelp-left', assetId: 'kelp', x: 0.13, depth: 0.5, scale: 1.35, rotation: -0.08, color: '#2ca986' },
+    { id: 'garden-grass-left', assetId: 'seagrass', x: 0.29, depth: 0.5, scale: 1.1, rotation: 0, color: '#75d99d' },
+    { id: 'garden-kelp-center', assetId: 'kelp', x: 0.49, depth: 0.5, scale: 1.12, rotation: 0.1, color: '#278a7a' },
+    { id: 'garden-grass-right', assetId: 'seagrass', x: 0.7, depth: 0.5, scale: 1.2, rotation: 0.1, color: '#55c9a0' },
+    { id: 'garden-kelp-right', assetId: 'kelp', x: 0.87, depth: 0.5, scale: 1.4, rotation: 0.12, color: '#3ab28c' },
+  ];
+  return [];
 }

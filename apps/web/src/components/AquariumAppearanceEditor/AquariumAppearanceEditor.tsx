@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import './AquariumDecorationCatalog.css';
 import './AquariumWorkspace.css';
-import { AQUARIUM_THEMES, applyAquariumTheme, isAquariumThemeSelected } from '../../features/aquarium-customization/themeRegistry.ts';
+import { AQUARIUM_THEMES, applyAquariumTheme, isAquariumThemeSelected } from '../../features/aquarium-customization/themeRegistry';
 import type {
   AquariumDecorationAssetId,
   AquariumDecorationInstance,
-} from '../../features/aquarium-customization/types.ts';
+} from '../../features/aquarium-customization/types';
 
 import {
   DECORATION_REGISTRY,
@@ -17,7 +17,7 @@ import type {
   AquariumSubstrate,
   AquariumLighting,
   AquariumBubbles,
-} from '../../features/aquarium-customization/types.ts';
+} from '../../features/aquarium-customization/types';
 
 type Props = {
   open: boolean;
@@ -220,13 +220,13 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
         <section className="aquarium-theme-section" aria-label="Starter aquarium themes">
           <div className="aquarium-theme-heading">
             <div>
-              <h3>🐠 3D Reef Theme</h3>
-              <p>Add a colorful 3D reef! Your own decorations stay right where you put them.</p>
+              <h3>🐠 Choose a 3D theme</h3>
+              <p>Choose a world with its own scenery. Your decorations stay right where you put them.</p>
             </div>
             <span className="aquarium-theme-free">Free</span>
           </div>
           <div className="aquarium-theme-grid">
-            {AQUARIUM_THEMES.filter((theme) => theme.id === 'sunny-reef').map((theme) => {
+            {AQUARIUM_THEMES.filter((theme) => theme.id === 'sunny-reef' || theme.id === 'ocean-garden').map((theme) => {
               const selected = isAquariumThemeSelected(value, theme);
               return (
                 <button
@@ -247,7 +247,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
               );
             })}
           </div>
-          <p className="aquarium-theme-hint">The reef comes with coral, rocks, and plants. Change individual settings below to customize the environment.</p>
+          <p className="aquarium-theme-hint">Sunny Reef has colorful coral; Ocean Garden has tall seaweed and natural stones. Customize either theme below.</p>
         </section>
         <section>
           <h3>🌊 Pick your world</h3>

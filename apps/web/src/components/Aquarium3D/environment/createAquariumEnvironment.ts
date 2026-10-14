@@ -12,7 +12,8 @@ import type { createSandCaustics } from '../createSandCaustics';
 
 import { createBackground } from './createBackground';
 import { ENVIRONMENT_PRESETS, LIGHTING_PRESETS } from './presets';
-import { getSunnyReefScenery } from '../../../../../../../../Downloads/aquarium-sunny-reef-3d/apps/web/src/features/aquarium-customization/themeRegistry.ts';
+import { getAquariumThemeScenery } from '../../../features/aquarium-customization/themeRegistry';
+import { createThemeScenery, type ThemeSceneryInstance } from './createThemeScenery.ts';
 import {
   createAquariumDecorations,
   type DecorationInstance,
@@ -76,7 +77,7 @@ export function createAquariumEnvironment(options: {
 
   const decorations = createAquariumDecorations(scene);
   // Non-interactive theme scenery: intentionally separate from kids' decorations.
-  const themeScenery = createAquariumDecorations(scene);
+  const themeScenery = createThemeScenery(scene);
   let previousThemeSignature = '';
 
   let activeCamera = options.camera;
@@ -188,7 +189,7 @@ export function createAquariumEnvironment(options: {
   };
 
   const syncThemeScenery = (force = false) => {
-    const instances = getSunnyReefScenery(currentAppearance);
+    const instances = getAquariumThemeScenery(currentAppearance);
     const signature = JSON.stringify({
       instances,
       aspect: activeCamera.aspect,
@@ -197,7 +198,7 @@ export function createAquariumEnvironment(options: {
     });
     if (!force && signature === previousThemeSignature) return;
     previousThemeSignature = signature;
-    themeScenery.setDecorations(getDecorationLayout(instances));
+    themeScenery.setDecorations(getDecorationLayout(instances as unknown as AquariumDecorationInstance[]) as unknown as ThemeSceneryInstance[]);
   };
 
   const setAppearance = (appearance: AquariumCustomization) => {
