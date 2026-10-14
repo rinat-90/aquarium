@@ -525,8 +525,8 @@ export function ThreeAquariumView({
     renderer.toneMappingExposure =
       1.05;
 
-    // Layer order: background -> sand caustics -> 3D fish.
-    container.appendChild(sandCaustics.element);
+    // The 2D substrate is rendered inside the main Three.js scene,
+    // behind the fish. No separate canvas is needed.
     sandCaustics.resize(camera);
 
     renderer.domElement.style.position = 'absolute';

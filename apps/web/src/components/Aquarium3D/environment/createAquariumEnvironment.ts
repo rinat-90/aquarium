@@ -56,7 +56,8 @@ export function createAquariumEnvironment(options: {
     lighting.frontFill.intensity = 0.32 * (light.sunlightIntensity / 1.65);
 
     underwaterEffects.setBubbles(appearance.bubbles);
-    // Substrate and decorations are intentionally not applied yet.
+    sandCaustics.setSubstrate(appearance.substrate);
+    // Decorations will be implemented separately.
   };
 
   setAppearance(options.appearance);
@@ -66,6 +67,7 @@ export function createAquariumEnvironment(options: {
     update(deltaTime, elapsed) {
       waterEffects.update(deltaTime, elapsed);
       underwaterEffects.update(deltaTime, elapsed);
+      sandCaustics.update(elapsed);
     },
     setQuality(quality) {
       waterEffects.setQuality(quality);
