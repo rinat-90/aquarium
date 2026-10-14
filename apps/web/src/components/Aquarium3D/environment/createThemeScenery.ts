@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { DecorationInstance } from '../decorations/createAquariumDecorations';
 
-export type ThemeAsset = 'reef-fan' | 'reef-arch' | 'kelp' | 'seagrass' | 'glow-plant';
+export type ThemeAsset = 'reef-fan' | 'reef-arch' | 'kelp' | 'seagrass' | 'glow-plant' | 'glow-mushroom';
 export type ThemeSceneryInstance = Omit<DecorationInstance, 'type'> & { type: ThemeAsset };
 
 type Animated = { group: THREE.Group; update?: (time: number) => void };
@@ -136,8 +136,57 @@ function glowPlant(color: string): Animated {
   };
 }
 
+function glowMushroom(color: string): Animated {
+  const group = new THREE.Group();
+  // Shared low-poly geometry/materials; emissive caps require no extra lights.
+  const stemGeometry = new THREE.CylinderGeometry(0.055, 0.085, 1, 6);
+  const capGeometry = new THREE.SphereGeometry(1, 9, 5, 0, Math.PI * 2, 0, Math.PI / 2);
+  const dotGeometry = new THREE.SphereGeometry(1, 5, 4);
+  const stemMaterial = new THREE.MeshLambertMaterial({ color: '#a5a4ca' });
+  const capColor = new THREE.Color(color);
+  const capMaterial = new THREE.MeshLambertMaterial({
+    color: capColor,
+    emissive: capColor,
+    emissiveIntensity: 0.9,
+    side: THREE.DoubleSide,
+  });
+  const dotMaterial = new THREE.MeshBasicMaterial({ color: '#fff2ff' });
+  const mushrooms: Array<{ pivot: THREE.Group; phase: number }> = [];
+  for (let i = 0; i < 3; i++) {
+    const pivot = new THREE.Group();
+    pivot.position.x = (i - 1) * 0.3;
+    const height = i === 1 ? 0.94 : 0.62 + i * 0.06;
+    const stem = new THREE.Mesh(stemGeometry, stemMaterial);
+    stem.scale.y = height;
+    stem.position.y = height * 0.5;
+    pivot.add(stem);
+    const cap = new THREE.Mesh(capGeometry, capMaterial);
+    cap.position.y = height;
+    cap.scale.set(i === 1 ? 0.31 : 0.24, 0.2, i === 1 ? 0.31 : 0.24);
+    pivot.add(cap);
+    // Tiny luminous spots are attached to the cap, not independent particles.
+    for (let j = 0; j < 3; j++) {
+      const a = j * Math.PI * 2 / 3 + i * 0.3;
+      const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+      dot.position.set(Math.cos(a) * 0.11, height + 0.14, Math.sin(a) * 0.11);
+      dot.scale.setScalar(0.028);
+      pivot.add(dot);
+    }
+    group.add(pivot);
+    mushrooms.push({ pivot, phase: i * 1.7 });
+  }
+  return {
+    group,
+    update(time) {
+      for (const { pivot, phase } of mushrooms) {
+        pivot.rotation.z = Math.sin(time * 0.5 + phase) * 0.035;
+      }
+    },
+  };
+}
+
 const factories: Record<ThemeAsset, (color: string) => Animated> = {
-  'reef-fan': reefFan, 'reef-arch': reefArch, kelp, seagrass, 'glow-plant': glowPlant,
+  'reef-fan': reefFan, 'reef-arch': reefArch, kelp, seagrass, 'glow-plant': glowPlant, 'glow-mushroom': glowMushroom,
 };
 
 function dispose(group: THREE.Group) {
