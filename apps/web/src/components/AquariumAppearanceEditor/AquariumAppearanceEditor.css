@@ -252,3 +252,86 @@
   .aquarium-editor-tabs { padding: 8px 12px 12px; }
   .aquarium-editor-tabs button { min-height: 58px; font-size: 14px; }
 }
+
+/* Phase 6.2: illustrated, CSS-only theme thumbnails (no new textures or WebGL work). */
+.aquarium-theme-mini-tank {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  isolation: isolate;
+  min-height: 110px;
+}
+.aquarium-theme-mini-tank .aquarium-theme-mini-rays {
+  position: absolute;
+  inset: -35% 0 12%;
+  background: repeating-conic-gradient(from 200deg at 50% -15%, transparent 0deg 13deg, #ffffff16 14deg 23deg, transparent 24deg 42deg);
+  opacity: .85;
+  pointer-events: none;
+}
+.aquarium-theme-mini-floor {
+  position: absolute;
+  z-index: 1;
+  bottom: -14px;
+  left: -12%;
+  width: 124%;
+  height: 33px;
+  border-radius: 50% 50% 0 0;
+  background: linear-gradient(180deg, #f6e4ba, #b69d77);
+  box-shadow: 0 -5px 12px #001c2c30;
+}
+.aquarium-theme-mini-scene {
+  position: absolute;
+  z-index: 2;
+  left: 9%;
+  bottom: 10px;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1;
+  filter: drop-shadow(0 3px 2px #00182770);
+}
+.aquarium-theme-mini-fish {
+  position: absolute;
+  z-index: 3;
+  top: 20%;
+  left: 48%;
+  font-size: 29px;
+  line-height: 1;
+  filter: drop-shadow(0 3px 3px #00182760);
+}
+.aquarium-theme-mini-fish--small {
+  top: 52%;
+  left: 70%;
+  font-size: 19px;
+  transform: scaleX(-1);
+}
+.aquarium-theme-mini-bubble {
+  position: absolute;
+  z-index: 2;
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid #dcfaffbb;
+  border-radius: 50%;
+  background: #ffffff16;
+}
+.aquarium-theme-mini-bubble--one { top: 17%; left: 23%; }
+.aquarium-theme-mini-bubble--two { top: 42%; left: 32%; width: 6px; height: 6px; }
+.aquarium-theme-mini-bubble--three { top: 12%; left: 77%; width: 7px; height: 7px; }
+.aquarium-theme-card:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+@media (max-width: 767px) {
+  .aquarium-theme-mini-tank { min-height: 100px; }
+  .aquarium-theme-mini-scene { font-size: 30px; }
+}
+
+/* Keep theme names readable in the narrow editor panel. */
+.aquarium-appearance-editor .aquarium-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.aquarium-appearance-editor .aquarium-theme-card { min-width: 0; }
+.aquarium-appearance-editor .aquarium-theme-name {
+  overflow-wrap: anywhere;
+}
+.aquarium-appearance-editor .aquarium-theme-mini-tank > .aquarium-theme-mini-fish,
+.aquarium-appearance-editor .aquarium-theme-mini-tank > .aquarium-theme-mini-scene {
+  display: block;
+}

@@ -261,8 +261,15 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
                   aria-label={`Use ${theme.name} theme`}
                   onClick={() => onChange(applyAquariumTheme(value, theme))}
                 >
-                  <span className="aquarium-theme-art" style={{ background: theme.gradient }}>
-                    <span aria-hidden="true">{theme.emoji}</span>
+<span className="aquarium-theme-art aquarium-theme-mini-tank" style={{ background: theme.gradient }}>
+                    <span className="aquarium-theme-mini-rays" aria-hidden="true" />
+                    <span className="aquarium-theme-mini-bubble aquarium-theme-mini-bubble--one" aria-hidden="true" />
+                    <span className="aquarium-theme-mini-bubble aquarium-theme-mini-bubble--two" aria-hidden="true" />
+                    <span className="aquarium-theme-mini-bubble aquarium-theme-mini-bubble--three" aria-hidden="true" />
+                    <span className="aquarium-theme-mini-fish" aria-hidden="true">🐠</span>
+                    <span className="aquarium-theme-mini-fish aquarium-theme-mini-fish--small" aria-hidden="true">🐟</span>
+                    <span className="aquarium-theme-mini-scene" aria-hidden="true">{theme.emoji}</span>
+                    <span className="aquarium-theme-mini-floor" aria-hidden="true" />
                     {selected && <span className="aquarium-theme-check" aria-hidden="true">✓</span>}
                   </span>
                   <span className="aquarium-theme-name">{theme.name}</span>
