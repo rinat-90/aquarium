@@ -646,6 +646,21 @@ export function AquariumPage() {
           <ThreeAquariumView
             createdFish={fish}
             appearance={appearance}
+            decorationEditing={appearanceOpen}
+            onDecorationMove={(id, normalizedX) => {
+              setAppearance((previous) => ({
+                ...previous,
+                decorationInstances: (
+                  previous.decorationInstances ?? []
+                ).map((decoration) =>
+                  decoration.id === id
+                    ? { ...decoration, x: normalizedX }
+                    : decoration,
+                ),
+              }));
+
+              setAppearanceSaveError(null);
+            }}
             onFishSelect={(selectedFish) => {
               handleOpenFishProfile(selectedFish.id);
             }}

@@ -1,3 +1,14 @@
+import { useState } from 'react';
+
+import type {
+  AquariumDecorationAssetId,
+  AquariumDecorationInstance,
+} from '../../features/aquarium-customization/types';
+
+import {
+  DECORATION_REGISTRY,
+} from '../../features/aquarium-customization/decorationRegistry';
+
 import type {
   AquariumCustomization,
   AquariumBackground,
@@ -68,6 +79,67 @@ const bubbles: { id: AquariumBubbles; label: string; emoji: string }[] = [
 ];
 
 export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSave, saving, saveError }: Props) {
+  const [selectedDecorationId, setSelectedDecorationId] =
+    useState<string | null>(null);
+
+  const decorationInstances = value.decorationInstances ?? [];
+
+  const selectedDecoration = decorationInstances.find(
+    (decoration) => decoration.id === selectedDecorationId,
+  );
+
+  const addDecoration = (assetId: AquariumDecorationAssetId) => {
+    if (decorationInstances.length >= 30) return;
+
+    const asset = DECORATION_REGISTRY[assetId];
+
+    const instance: AquariumDecorationInstance = {
+      id: crypto.randomUUID(),
+      assetId,
+      x: 0.5,
+      depth: 0.5,
+      scale: asset.defaultScale,
+      rotation: 0,
+      color: asset.defaultColor,
+    };
+
+    onChange({
+      ...value,
+      decorationInstances: [
+        ...decorationInstances,
+        instance,
+      ],
+    });
+
+    setSelectedDecorationId(instance.id);
+  };
+
+  const updateDecoration = (
+    id: string,
+    changes: Partial<AquariumDecorationInstance>,
+  ) => {
+    onChange({
+      ...value,
+      decorationInstances: decorationInstances.map(
+        (decoration) =>
+          decoration.id === id
+            ? { ...decoration, ...changes }
+            : decoration,
+      ),
+    });
+  };
+
+  const removeDecoration = (id: string) => {
+    onChange({
+      ...value,
+      decorationInstances: decorationInstances.filter(
+        (decoration) => decoration.id !== id,
+      ),
+    });
+
+    setSelectedDecorationId(null);
+  };
+
   if (!open) return null;
 
   return (
@@ -132,6 +204,209 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
               </button>
             ))}
           </div>
+        </section>
+
+        <section className="aquarium-decoration-section">
+          <h3>🪸 Add decorations</h3>
+
+          <p>Pick something fun for your aquarium!</p>
+
+          <div className="aquarium-appearance-options">
+            {([
+              ['rocks', '🪨 Rocks'],
+              ['seaweed', '🌿 Seaweed'],
+              ['coral', '🪸 Coral'],
+            ] as const).map(([assetId, label]) => (
+              <button
+                key={assetId}
+                type="button"
+                disabled={decorationInstances.length >= 30}
+                onClick={() => addDecoration(assetId)}
+              >
+                {label} +
+              </button>
+            ))}
+          </div>
+
+          {decorationInstances.length > 0 && (
+            <>
+              <h3>Your decorations</h3>
+
+              <div className="aquarium-appearance-options">
+                {decorationInstances.map((decoration, index) => (
+                  <button
+                    key={decoration.id}
+                    type="button"
+                    className={
+                      selectedDecorationId === decoration.id
+                        ? 'is-selected'
+                        : ''
+                    }
+                    onClick={() =>
+                      setSelectedDecorationId(decoration.id)
+                    }
+                  >
+                    {DECORATION_REGISTRY[decoration.assetId].name}
+                    {' '}
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+
+          {selectedDecoration && (
+            <div className="aquarium-decoration-controls">
+              <div className="aquarium-decoration-controls-header">
+                <div>
+                  <h3>
+                    {DECORATION_REGISTRY[selectedDecoration.assetId].name}
+                  </h3>
+                  <p>Make it just how you like!</p>
+                </div>
+                <span aria-hidden="true">✨</span>
+              </div>
+
+              <div className="aquarium-decoration-control-group">
+      <span className="aquarium-decoration-label">
+        ↔️ Move decoration
+      </span>
+
+                <div className="aquarium-decoration-stepper">
+                  <button
+                    type="button"
+                    aria-label="Move left"
+                    disabled={selectedDecoration.x <= 0.06}
+                    onClick={() =>
+                      updateDecoration(selectedDecoration.id, {
+                        x: Math.max(
+                          0.06,
+                          Number((selectedDecoration.x - 0.05).toFixed(2)),
+                        ),
+                      })
+                    }
+                  >
+                    ←
+                  </button>
+
+                  <span>Position</span>
+
+                  <button
+                    type="button"
+                    aria-label="Move right"
+                    disabled={selectedDecoration.x >= 0.94}
+                    onClick={() =>
+                      updateDecoration(selectedDecoration.id, {
+                        x: Math.min(
+                          0.94,
+                          Number((selectedDecoration.x + 0.05).toFixed(2)),
+                        ),
+                      })
+                    }
+                  >
+                    →
+                  </button>
+                </div>
+              </div>
+
+              <div className="aquarium-decoration-control-group">
+      <span className="aquarium-decoration-label">
+        📏 Change size
+      </span>
+
+                <div className="aquarium-decoration-stepper">
+                  <button
+                    type="button"
+                    aria-label="Make smaller"
+                    onClick={() => {
+                      const asset =
+                        DECORATION_REGISTRY[selectedDecoration.assetId];
+
+                      updateDecoration(selectedDecoration.id, {
+                        scale: Math.max(
+                          asset.minScale,
+                          Number((selectedDecoration.scale - 0.1).toFixed(2)),
+                        ),
+                      });
+                    }}
+                  >
+                    −
+                  </button>
+
+                  <span>
+          {selectedDecoration.scale < 0.8
+            ? 'Small'
+            : selectedDecoration.scale > 1.2
+              ? 'Large'
+              : 'Medium'}
+        </span>
+
+                  <button
+                    type="button"
+                    aria-label="Make bigger"
+                    onClick={() => {
+                      const asset =
+                        DECORATION_REGISTRY[selectedDecoration.assetId];
+
+                      updateDecoration(selectedDecoration.id, {
+                        scale: Math.min(
+                          asset.maxScale,
+                          Number((selectedDecoration.scale + 0.1).toFixed(2)),
+                        ),
+                      });
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="aquarium-decoration-control-group">
+      <span className="aquarium-decoration-label">
+        🎨 Pick a color
+      </span>
+
+                <div className="aquarium-decoration-colors">
+                  {[
+                    '#739fc8',
+                    '#43ca78',
+                    '#ff83a9',
+                    '#ffcf64',
+                    '#aa8be8',
+                    '#ff9466',
+                  ].map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      className={
+                        selectedDecoration.color === color
+                          ? 'is-selected'
+                          : ''
+                      }
+                      style={{ backgroundColor: color }}
+                      aria-label={`Choose color ${color}`}
+                      aria-pressed={selectedDecoration.color === color}
+                      onClick={() =>
+                        updateDecoration(selectedDecoration.id, {
+                          color,
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="aquarium-decoration-remove"
+                onClick={() => removeDecoration(selectedDecoration.id)}
+              >
+                🗑️ Remove decoration
+              </button>
+            </div>
+          )}
+
         </section>
 
         <section>

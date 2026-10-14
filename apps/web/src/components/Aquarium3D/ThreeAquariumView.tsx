@@ -56,6 +56,9 @@ type ThreeAquariumViewProps = {
   interactive?: boolean;
   /** Show renderer performance statistics. */
   showDebugStats?: boolean;
+
+  decorationEditing?: boolean;
+  onDecorationMove?: (id: string, normalizedX: number) => void;
 };
 
 type RenderedFish = {
@@ -69,8 +72,20 @@ export function ThreeAquariumView({
                                     onFishSelect,
                                     interactive = true,
                                     showDebugStats = import.meta.env.DEV,
+                                    decorationEditing = false,
+                                    onDecorationMove,
                                   }: ThreeAquariumViewProps) {
   const environmentRef = useRef<AquariumEnvironmentController | null>(null);
+  const appearanceRef = useRef(appearance ?? DEFAULT_AQUARIUM_CUSTOMIZATION);
+  appearanceRef.current = appearance ?? DEFAULT_AQUARIUM_CUSTOMIZATION;
+
+  const decorationEditingRef = useRef(decorationEditing);
+  const onDecorationMoveRef = useRef(onDecorationMove);
+
+  useEffect(() => {
+    decorationEditingRef.current = decorationEditing;
+    onDecorationMoveRef.current = onDecorationMove;
+  }, [decorationEditing, onDecorationMove]);
 
   useEffect(() => {
     environmentRef.current?.setAppearance(
@@ -532,6 +547,7 @@ export function ThreeAquariumView({
     renderer.domElement.style.position = 'absolute';
     renderer.domElement.style.inset = '0';
     renderer.domElement.style.zIndex = '1';
+    renderer.domElement.style.touchAction = 'none';
 
     container.appendChild(
       renderer.domElement,
@@ -619,6 +635,7 @@ export function ThreeAquariumView({
     // One controller owns the appearance and lifecycle of scene effects.
     const environment = createAquariumEnvironment({
       scene,
+      camera,
       appearance: appearance ?? DEFAULT_AQUARIUM_CUSTOMIZATION,
       lighting: {
         hemisphere: waterLight,
@@ -657,8 +674,116 @@ export function ThreeAquariumView({
     const raycaster =
       new THREE.Raycaster();
 
-    const pointer =
-      new THREE.Vector2();
+    const pointer = new THREE.Vector2();
+
+    let draggedDecorationId: string | null = null;
+    let activeDragPointerId: number | null = null;
+
+    const updatePointerRay = (event: PointerEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+
+      if (rect.width === 0 || rect.height === 0) return null;
+
+      const normalizedX = THREE.MathUtils.clamp(
+        (event.clientX - rect.left) / rect.width,
+        0.06,
+        0.94,
+      );
+
+      pointer.set(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1,
+      );
+
+      raycaster.setFromCamera(pointer, camera);
+
+      return normalizedX;
+    };
+
+    const handleDecorationPointerDown = (
+      event: PointerEvent,
+    ): boolean => {
+      if (!decorationEditingRef.current) return false;
+      if (activeDragPointerId !== null) return true;
+
+      // While decorating, prevent feeding and fish selection.
+      const normalizedX = updatePointerRay(event);
+
+      if (normalizedX === null) return true;
+
+      const id = environmentRef.current?.getDecorationAtPoint(
+        raycaster,
+      );
+
+      if (!id) return true;
+
+      draggedDecorationId = id;
+      activeDragPointerId = event.pointerId;
+
+      renderer.domElement.setPointerCapture(event.pointerId);
+
+      event.preventDefault();
+
+      return true;
+    };
+
+    const handleDecorationPointerMove = (event: PointerEvent) => {
+      if (
+        !decorationEditingRef.current ||
+        draggedDecorationId === null ||
+        activeDragPointerId !== event.pointerId
+      ) {
+        return;
+      }
+
+      const normalizedX = updatePointerRay(event);
+
+      if (normalizedX === null) return;
+
+      environmentRef.current?.moveDecoration(
+        draggedDecorationId,
+        normalizedX,
+      );
+
+      // Persist the final position on pointer-up rather than
+      // updating React state on every pointer movement.
+      event.preventDefault();
+    };
+
+    const finishDecorationDrag = (event: PointerEvent, commit: boolean) => {
+      if (
+        draggedDecorationId === null ||
+        activeDragPointerId !== event.pointerId
+      ) {
+        return;
+      }
+
+      const normalizedX = updatePointerRay(event);
+
+      if (commit && normalizedX !== null) {
+        onDecorationMoveRef.current?.(
+          draggedDecorationId,
+          normalizedX,
+        );
+      }
+
+      draggedDecorationId = null;
+      activeDragPointerId = null;
+
+      if (renderer.domElement.hasPointerCapture(event.pointerId)) {
+        renderer.domElement.releasePointerCapture(event.pointerId);
+      }
+    };
+
+
+    const handleDecorationPointerUp = (event: PointerEvent) => {
+      finishDecorationDrag(event, true);
+    };
+
+    const handleDecorationPointerCancel = (event: PointerEvent) => {
+      finishDecorationDrag(event, false);
+      environmentRef.current?.setAppearance(appearanceRef.current);
+    };
 
     /*
      * Intersect the pointer ray with
@@ -712,6 +837,11 @@ export function ThreeAquariumView({
     const handlePointerDown = (
       event: PointerEvent,
     ) => {
+
+      if (handleDecorationPointerDown(event)) {
+        return;
+      }
+
       const rect =
         renderer.domElement
           .getBoundingClientRect();
@@ -857,6 +987,21 @@ export function ThreeAquariumView({
       renderer.domElement.addEventListener(
         'pointerdown',
         handlePointerDown,
+      );
+
+      renderer.domElement.addEventListener(
+        'pointermove',
+        handleDecorationPointerMove,
+      );
+
+      renderer.domElement.addEventListener(
+        'pointerup',
+        handleDecorationPointerUp,
+      );
+
+      renderer.domElement.addEventListener(
+        'pointercancel',
+        handleDecorationPointerCancel,
       );
     }
 
@@ -1178,11 +1323,22 @@ export function ThreeAquariumView({
         handleResize,
       );
 
-      renderer.domElement
-        .removeEventListener(
-          'pointerdown',
-          handlePointerDown,
-        );
+      renderer.domElement.removeEventListener(
+        'pointerdown',
+        handlePointerDown,
+      );
+      renderer.domElement.removeEventListener(
+        'pointermove',
+        handleDecorationPointerMove,
+      );
+      renderer.domElement.removeEventListener(
+        'pointerup',
+        handleDecorationPointerUp,
+      );
+      renderer.domElement.removeEventListener(
+        'pointercancel',
+        handleDecorationPointerCancel,
+      );
 
       sceneRef.current =
         null;

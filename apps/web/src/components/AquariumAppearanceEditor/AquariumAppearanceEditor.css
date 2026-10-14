@@ -81,3 +81,140 @@
     font-size: 17px;
   }
 }
+
+
+/* Decoration editor */
+
+.aquarium-decoration-section > p {
+  margin: 0 0 14px;
+  color: #afd4e0;
+  font-size: 13px;
+}
+
+.aquarium-decoration-controls {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #366c82;
+  border-radius: 18px;
+  background: #10384d;
+}
+
+.aquarium-decoration-controls-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.aquarium-decoration-controls-header h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.aquarium-decoration-controls-header p {
+  margin: 0;
+  color: #a9cdd9;
+  font-size: 12px;
+}
+
+.aquarium-decoration-controls-header > span {
+  font-size: 26px;
+}
+
+.aquarium-decoration-control-group {
+  margin-bottom: 20px;
+}
+
+.aquarium-decoration-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #e8faff;
+}
+
+.aquarium-decoration-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.aquarium-decoration-stepper button {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 48px;
+  flex-shrink: 0;
+  border: 1px solid #5d98ab;
+  border-radius: 13px;
+  background: #1b5269;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.aquarium-decoration-stepper button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.aquarium-decoration-stepper > span {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c5e6ee;
+}
+
+.aquarium-decoration-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.aquarium-decoration-colors button {
+  width: 40px;
+  height: 40px;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 3px 8px #001a3060;
+}
+
+.aquarium-decoration-colors button.is-selected {
+  border-color: #fff;
+  outline: 2px solid #80edf5;
+  outline-offset: 2px;
+}
+
+.aquarium-decoration-remove {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 4px;
+  border: 1px solid #bc677a;
+  border-radius: 12px;
+  background: #512b43;
+  color: #ffe6ec;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.aquarium-decoration-remove:hover {
+  background: #69364f;
+}
+
+@media (max-width: 767px) {
+  .aquarium-decoration-stepper button {
+    width: 60px;
+    height: 54px;
+  }
+
+  .aquarium-decoration-colors button {
+    width: 46px;
+    height: 46px;
+  }
+}
