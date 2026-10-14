@@ -51,6 +51,9 @@ importers:
         specifier: ^4.6.5
         version: 4.6.5
     devDependencies:
+      '@aquarium/aquarium-engine':
+        specifier: workspace:*
+        version: link:../../packages/aquarium-engine
       '@types/node':
         specifier: ^24.0.0
         version: 24.19.1
@@ -142,6 +145,9 @@ importers:
       '@aquarium/types':
         specifier: workspace:*
         version: link:../types
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
 
   packages/database:
     dependencies:
