@@ -176,9 +176,16 @@ export function CreateFishPage() {
           disabled={!canCreate}
           onClick={handleDrawFish}
         >
-          <div className="create-fish-card__art create-fish-card__art--draw">
-            <span>🎨</span>
-            <span>🐠</span>
+          <div className="create-fish-card__art create-fish-card__art--draw" aria-hidden="true">
+            <div className="create-fish-art__leaf create-fish-art__leaf--one">🌿</div>
+            <div className="create-fish-art__paper">
+              <span className="create-fish-art__paper-fish">🐠</span>
+              <span className="create-fish-art__paper-scribble">My fish!</span>
+            </div>
+            <span className="create-fish-art__crayon create-fish-art__crayon--red" />
+            <span className="create-fish-art__crayon create-fish-art__crayon--blue" />
+            <span className="create-fish-art__crayon create-fish-art__crayon--yellow" />
+            <span className="create-fish-art__crayon create-fish-art__crayon--green" />
           </div>
 
           <div className="create-fish-card__content">
@@ -201,9 +208,14 @@ export function CreateFishPage() {
           disabled={!canCreate}
           onClick={handleCustomizeFish}
         >
-          <div className="create-fish-card__art create-fish-card__art--3d">
-            <span>🐟</span>
-            <span>✨</span>
+          <div className="create-fish-card__art create-fish-card__art--3d" aria-hidden="true">
+            <span className="create-fish-art__sparkle create-fish-art__sparkle--one">✦</span>
+            <span className="create-fish-art__hero-fish">🐠</span>
+            <span className="create-fish-art__sparkle create-fish-art__sparkle--two">✧</span>
+            <div className="create-fish-art__palette">
+              <i /><i /><i /><i /><i />
+              <span>＋</span>
+            </div>
           </div>
 
           <div className="create-fish-card__content">

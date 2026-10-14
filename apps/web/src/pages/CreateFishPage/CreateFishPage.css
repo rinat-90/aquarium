@@ -345,3 +345,55 @@
         padding: 12px;
     }
 }
+/* CREATE FISH DESKTOP REDESIGN v1 */
+@media (min-width: 721px) {
+  .create-fish-page { position: relative; isolation: isolate; max-width: 1200px; margin: 0 auto; padding: 12px 0 80px; }
+  .create-fish-header { margin-bottom: 25px; }
+  .create-fish-header h1 { font-size: clamp(32px, 3.4vw, 46px); letter-spacing: -.035em; line-height: 1.12; }
+  .create-fish-header p { color: #d0eaff; font-size: 15px; }
+  .create-fish-destination { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 18px; row-gap: 7px; margin-bottom: 25px; padding: 13px 18px; border-color: #3c85a5; background: rgba(5,35,60,.55); box-shadow: inset 0 1px 0 rgba(255,255,255,.07); }
+  .create-fish-destination label { white-space: nowrap; }
+  .create-fish-destination > p { display: none; }
+  .create-fish-destination select { flex: 1; min-width: 180px; max-width: 370px; margin-left: auto; }
+  .create-fish-options { gap: clamp(16px,2vw,26px); }
+  .create-fish-card { border: 1px solid #3b9bd0; border-radius: 18px; background: linear-gradient(180deg,#10456d,#071f35); box-shadow: 0 18px 40px rgba(0,8,24,.25); }
+  .create-fish-card__art { height: clamp(240px,25vw,340px); position: relative; isolation: isolate; }
+  .create-fish-card__art--draw { background: radial-gradient(circle at 50% 28%,#f9d4a4,#e8ad6b 95%); }
+  .create-fish-card__art--3d { background: radial-gradient(ellipse at 50% 25%,#2daae5 0%,#096eaf 58%,#05386f 100%); }
+  .create-fish-card__content { padding: 21px 23px 24px; }
+  .create-fish-card__content h2 { font-size: clamp(20px,2vw,25px); margin-bottom: 8px; }
+  .create-fish-card__content p { min-height: 49px; margin-bottom: 17px; font-size: 14px; }
+  .create-fish-card__action { background: linear-gradient(135deg,#1fb2ff,#087cf2); border: 1px solid #59c9ff; box-shadow: 0 6px 16px rgba(0,92,193,.28); }
+}
+.create-fish-art__paper { position: absolute; width: 65%; height: 72%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: #fffdf5; border-radius: 5px; box-shadow: 0 14px 25px rgba(77,37,14,.25); transform: rotate(-8deg); }
+.create-fish-art__paper-fish { font-size: clamp(74px,9vw,130px); filter: saturate(1.35) drop-shadow(2px 3px 0 #f1b1ca); }
+.create-fish-art__paper-scribble { color: #317bc0; font: 700 18px cursive; transform: rotate(4deg); }
+.create-fish-art__leaf { position: absolute; top: -25px; left: -17px; font-size: 75px; z-index: 2; transform: rotate(30deg); }
+.create-fish-art__crayon { position: absolute; z-index: 3; width: 18px; height: 95px; border-radius: 5px 5px 3px 3px; box-shadow: 2px 4px 6px rgba(0,0,0,.2); background: var(--crayon); transform: rotate(var(--tilt)); }
+.create-fish-art__crayon::before { content: ''; position: absolute; top: -17px; left: 1px; width: 16px; height: 20px; background: var(--crayon); clip-path: polygon(50% 0,100% 100%,0 100%); }
+.create-fish-art__crayon::after { content: ''; position: absolute; top: 35%; width: 100%; height: 18px; background: rgba(255,255,255,.4); }
+.create-fish-art__crayon--red { --crayon:#fa4b4b; --tilt:-48deg; left: 7%; bottom: -19px; }
+.create-fish-art__crayon--blue { --crayon:#267ce6; --tilt:32deg; left: 21%; bottom: -35px; }
+.create-fish-art__crayon--yellow { --crayon:#ffd339; --tilt:-30deg; right: 18%; bottom: -32px; }
+.create-fish-art__crayon--green { --crayon:#23c780; --tilt:45deg; right: 5%; bottom: -14px; }
+.create-fish-art__hero-fish { position: relative; z-index: 1; font-size: clamp(110px,14vw,205px); filter: drop-shadow(0 18px 12px rgba(0,23,62,.3)); transform: rotate(-9deg); }
+.create-fish-art__sparkle { position: absolute; color: #ffdc4a; font-size: 48px; text-shadow: 0 0 16px #fff2a0; }
+.create-fish-art__sparkle--one { top: 13%; right: 17%; }
+.create-fish-art__sparkle--two { bottom: 25%; left: 16%; }
+.create-fish-art__palette { position: absolute; bottom: 15px; display: flex; align-items: center; gap: 10px; }
+.create-fish-art__palette i { width: 22px; height: 22px; border-radius: 50%; background: var(--color); box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.create-fish-art__palette i:nth-child(1) { --color:#ffd744; }
+.create-fish-art__palette i:nth-child(2) { --color:#2daaf0; }
+.create-fish-art__palette i:nth-child(3) { --color:#a95ae9; }
+.create-fish-art__palette i:nth-child(4) { --color:#ff735e; }
+.create-fish-art__palette i:nth-child(5) { --color:#2fe078; }
+.create-fish-art__palette span { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: #073457; color: white; font-size: 18px; }
+@media (max-width: 720px) {
+  .create-fish-art__paper { width: 80%; height: 72%; }
+  .create-fish-art__paper-fish { font-size: 48px; }
+  .create-fish-art__paper-scribble, .create-fish-art__leaf, .create-fish-art__crayon, .create-fish-art__palette { display: none; }
+  .create-fish-art__hero-fish { font-size: 75px; }
+  .create-fish-art__sparkle { font-size: 23px; }
+}
+@media (prefers-reduced-motion: reduce) { .create-fish-card { transition: none; } }
+
