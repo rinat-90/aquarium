@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { AquariumLighting } from '../../features/aquarium-customization/types';
 
 export type WaterEffects = {
   setCamera: (
@@ -15,6 +16,8 @@ export type WaterEffects = {
   ) => void;
 
   setQuality: (quality: WaterQuality) => void;
+
+  setMood: (mood: AquariumLighting) => void;
 
   destroy: () => void;
 };
@@ -43,6 +46,7 @@ varying vec2 vUv;
 
 uniform float uTime;
 uniform float uAspect;
+uniform float uMoodIntensity;
 
 void main() {
   float fromTop = 1.0 - vUv.y;
@@ -75,7 +79,7 @@ void main() {
     -pow((vUv.x - 0.52) / 0.30, 2.0)
   );
 
-  float alpha = surfaceMask * (
+  float alpha = uMoodIntensity * surfaceMask * (
     0.07 + highlight * 0.28 + centerGlow * 0.08
   );
 
@@ -115,6 +119,8 @@ void main() {
           value: 1,
         },
 
+        uMoodIntensity: { value: 1 },
+
         uCenterGlow: {
           value: 1,
         },
@@ -144,6 +150,7 @@ varying vec2 vUv;
 
 uniform float uTime;
 uniform float uAspect;
+uniform float uMoodIntensity;
 
 vec2 hash22(vec2 p) {
   p = vec2(
@@ -521,8 +528,7 @@ void main() {
 
   float alpha =
     clamp(
-      ceilingFill +
-      networkAlpha,
+      (ceilingFill + networkAlpha) * uMoodIntensity,
       0.0,
       0.88
     );
@@ -655,6 +661,8 @@ void main() {
         uAspect: {
           value: 1,
         },
+
+        uMoodIntensity: { value: 1 },
       },
 
       vertexShader: `
@@ -677,6 +685,7 @@ varying vec2 vUv;
 
 uniform float uTime;
 uniform float uAspect;
+uniform float uMoodIntensity;
 
 /*
  * One soft ray. The width grows with depth,
@@ -898,7 +907,7 @@ void main() {
     vec4(
       rayColor,
       clamp(
-        light,
+        light * uMoodIntensity,
         0.0,
         0.15
       )
@@ -924,6 +933,13 @@ void main() {
     9999;
 
   scene.add(rays);
+
+  const setMood = (mood: AquariumLighting) => {
+    const surfaceIntensity = mood === 'sunny' ? 1.25 : mood === 'night' ? 0.12 : 0.7;
+    const raysIntensity = mood === 'sunny' ? 1.5 : mood === 'night' ? 0.04 : 0.65;
+    material.uniforms.uMoodIntensity.value = surfaceIntensity;
+    rayMaterial.uniforms.uMoodIntensity.value = raysIntensity;
+  };
 
   const setAspect = (
     camera: THREE.PerspectiveCamera,
@@ -979,6 +995,7 @@ void main() {
     resize,
     update,
     setQuality,
+    setMood,
     destroy,
   };
 }

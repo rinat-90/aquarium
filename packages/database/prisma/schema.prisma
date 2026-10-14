@@ -24,13 +24,14 @@ model User {
 }
 
 model Aquarium {
-  id        String   @id @default(cuid())
-  name      String   @default("My Aquarium")
-  ownerId   String
-  themeId   String?
-  isDefault Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  name       String   @default("My Aquarium")
+  ownerId    String
+  themeId    String?
+  appearance Json     @default("{}")
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   owner User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   fish  Fish[]

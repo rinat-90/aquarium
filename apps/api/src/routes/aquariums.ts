@@ -1,4 +1,3 @@
-
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 
@@ -8,12 +7,7 @@ import { prisma } from '@aquarium/database';
 import { getAuthenticatedUser } from '../lib/get-authenticated-user.js';
 import { notifyAquariumChanged } from '../realtime/socket.js';
 import { ensureDefaultAquarium } from '../services/aquarium.service.js';
-
-import {
-  aquariumIdParamsSchema,
-  createAquariumSchema,
-  updateAquariumSchema,
-} from '../schemas/aquarium.schema.js';
+import {aquariumIdParamsSchema, createAquariumSchema, updateAquariumSchema} from "../schemas/aquarium.schema.js";
 
 // DELETE requests can have an optional JSON body.
 // Validate it manually to support both empty and non-empty aquariums.
@@ -119,7 +113,7 @@ export async function aquariumRoutes(app: FastifyInstance) {
     },
   );
 
-  // Rename an aquarium.
+  // Update aquarium name and/or appearance.
   api.patch(
     '/aquariums/:id',
     {
@@ -143,7 +137,12 @@ export async function aquariumRoutes(app: FastifyInstance) {
           ownerId: user.id,
         },
         data: {
-          name: request.body.name,
+          ...(request.body.name !== undefined
+            ? { name: request.body.name }
+            : {}),
+          ...(request.body.appearance !== undefined
+            ? { appearance: request.body.appearance }
+            : {}),
         },
       });
 

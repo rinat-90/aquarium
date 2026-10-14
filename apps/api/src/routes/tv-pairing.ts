@@ -132,14 +132,21 @@ export async function tvPairingRoutes(app: FastifyInstance) {
     }
     const aquarium = await prisma.aquarium.findFirst({
       where: { id: session.aquariumId, ownerId: session.ownerId },
-      select: { id: true },
+      select: {
+        id: true,
+        appearance: true,
+      },
     });
     if (!aquarium) return reply.code(403).send({ error: 'Aquarium access revoked' });
     const fish = await prisma.fish.findMany({
       where: { aquariumId: aquarium.id, ownerId: session.ownerId },
       orderBy: { createdAt: 'asc' },
     });
-    return { aquariumId: aquarium.id, fish };
+    return {
+      aquariumId: aquarium.id,
+      appearance: aquarium.appearance,
+      fish,
+    };
   });
 
   app.get<{ Params: { fishId: string } }>(

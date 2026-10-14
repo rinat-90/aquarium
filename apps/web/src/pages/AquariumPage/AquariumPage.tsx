@@ -13,16 +13,20 @@ import {
   type FishCreation,
 } from '../../components/FishDrawing/FishDrawingCanvas';
 import { ThreeAquariumView } from '../../components/Aquarium3D/ThreeAquariumView';
+import { AquariumAppearanceEditor } from '../../components/AquariumAppearanceEditor/AquariumAppearanceEditor';
+import { DEFAULT_AQUARIUM_CUSTOMIZATION, type AquariumCustomization } from '../../features/aquarium-customization/types';
 import { useAquarium } from '../../hooks/useAquarium';
 import { AquariumHUD } from '../../components/AquariumHUD/AquariumHUD';
 import { FishPanel } from '../../components/FishPanel/FishPanel';
 
 import './AquariumPage.css';
+import '../../components/AquariumAppearanceEditor/AquariumAppearanceEditor.css';
 import { AquariumSettingsPanel } from '../../components/FishPanel/AquariumSettingsPanel';
 import { createFish } from '../../lib/create-fish';
 import { mapApiFish } from '../../lib/mapApiFish';
 import { useLiveAquariumFish } from '../../hooks/useLiveAquariumFish';
 import { tvPairingApi } from '../../lib/tv-pairing-api';
+import { saveAquariumAppearance } from '../../lib/save-aquarium-appearance';
 
 import {
   AquariumRemote,
@@ -57,6 +61,42 @@ export function AquariumPage() {
   const [error, setError] = useState<string | null>(null);
   const [fishCollectionOpen, setFishCollectionOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const [appearance, setAppearance] = useState<AquariumCustomization>(DEFAULT_AQUARIUM_CUSTOMIZATION);
+  const [appearanceSaving, setAppearanceSaving] = useState(false);
+  const [appearanceSaveError, setAppearanceSaveError] = useState<string | null>(null);
+  const hydratedAppearanceId = useRef<string | null>(null);
+
+  // Hydrate only when switching aquariums; avoid overwriting live edits
+  // when another request refreshes the current aquarium.
+  useEffect(() => {
+    if (!aquarium) return;
+    if (hydratedAppearanceId.current === aquarium.id) return;
+    hydratedAppearanceId.current = aquarium.id;
+    setAppearance({
+      ...DEFAULT_AQUARIUM_CUSTOMIZATION,
+      ...(aquarium.appearance ?? {}),
+    });
+    setAppearanceSaveError(null);
+    setAppearanceOpen(false);
+  }, [aquarium]);
+
+  const handleSaveAppearance = async () => {
+    if (!aquarium?.id || appearanceSaving) return;
+    const id = aquarium.id;
+    setAppearanceSaving(true);
+    setAppearanceSaveError(null);
+    try {
+      await saveAquariumAppearance(id, appearance);
+      if (activeAquariumId.current === id) setAppearanceOpen(false);
+    } catch (err) {
+      if (activeAquariumId.current === id) {
+        setAppearanceSaveError(err instanceof Error ? err.message : 'Could not save aquarium appearance.');
+      }
+    } finally {
+      setAppearanceSaving(false);
+    }
+  };
 
   const [endingBroadcast, setEndingBroadcast] = useState(false);
 
@@ -604,12 +644,39 @@ export function AquariumPage() {
 
           <ThreeAquariumView
             createdFish={fish}
+            appearance={appearance}
             onFishSelect={(selectedFish) => {
               handleOpenFishProfile(selectedFish.id);
             }}
             feedSequence={feedSequence}
           />
         </>
+      )}
+
+      {!isMobile && !appearanceOpen && (
+        <button
+          type="button"
+          className="aquarium-appearance-launch"
+          onClick={() => setAppearanceOpen(true)}
+          aria-label="Customize aquarium appearance"
+        >
+          <span aria-hidden="true">🎨</span> Decorate
+        </button>
+      )}
+
+      {!isMobile && (
+        <AquariumAppearanceEditor
+          open={appearanceOpen}
+          value={appearance}
+          onChange={(next) => {
+            setAppearance(next);
+            setAppearanceSaveError(null);
+          }}
+          onClose={() => setAppearanceOpen(false)}
+          onSave={() => void handleSaveAppearance()}
+          saving={appearanceSaving}
+          saveError={appearanceSaveError}
+        />
       )}
 
       {!isMobile && (

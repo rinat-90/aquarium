@@ -1,5 +1,8 @@
 
 import { apiFetch } from './api-client';
+import type {
+  AquariumCustomization,
+} from '../features/aquarium-customization/types';
 
 const API_URL =
   import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
@@ -26,6 +29,7 @@ export type ApiAquarium = {
   name: string;
   ownerId: string;
   themeId: string | null;
+  appearance: Partial<AquariumCustomization> | null;
   isDefault: boolean;
   createdAt: string;
   updatedAt: string;

@@ -35,8 +35,17 @@ import {
   createGraphicsQualityController,
 } from './createGraphicsQualityController';
 
+import { createAquariumEnvironment } from './environment/createAquariumEnvironment';
+import type { AquariumEnvironmentController } from './environment/createAquariumEnvironment';
+
+import {
+  DEFAULT_AQUARIUM_CUSTOMIZATION,
+  type AquariumCustomization,
+} from '../../features/aquarium-customization/types';
+
 type ThreeAquariumViewProps = {
   createdFish: CreatedFish[];
+  appearance?: AquariumCustomization;
   /** Increment to drop a handful of pellets from the water surface. */
   feedSequence?: number;
 
@@ -55,11 +64,20 @@ type RenderedFish = {
 
 export function ThreeAquariumView({
                                     createdFish,
+                                    appearance,
                                     feedSequence = 0,
                                     onFishSelect,
                                     interactive = true,
                                     showDebugStats = import.meta.env.DEV,
                                   }: ThreeAquariumViewProps) {
+  const environmentRef = useRef<AquariumEnvironmentController | null>(null);
+
+  useEffect(() => {
+    environmentRef.current?.setAppearance(
+      appearance ?? DEFAULT_AQUARIUM_CUSTOMIZATION,
+    );
+  }, [appearance]);
+
   const containerRef =
     useRef<HTMLDivElement>(null);
 
@@ -402,20 +420,6 @@ export function ThreeAquariumView({
     scene.background = null;
 
     /*
-     * Gentle underwater depth.
-     *
-     * Keep fog subtle so the child's
-     * drawing stays crisp while objects
-     * toward the back lose a little
-     * contrast.
-     */
-    scene.fog =
-      new THREE.FogExp2(
-        0x2f8999,
-        0.032,
-      );
-
-    /*
  * Underwater environment
  */
     const underwaterEffects =
@@ -482,114 +486,6 @@ export function ThreeAquariumView({
       );
 
     /*
-     * Foreground occlusion layer.
-     *
-     * This is the transparent coral/rock PNG
-     * placed inside the real 3D scene.
-     *
-     * Fish with a larger Z than this plane are
-     * closer to the camera and render in front.
-     * Fish with a smaller Z swim behind it and
-     * are naturally hidden by the opaque parts
-     * of the PNG.
-     */
-    const foregroundDepth = 2.2;
-
-    const foregroundTexture =
-      new THREE.TextureLoader().load(
-        '/aquarium-foreground.png',
-      );
-
-    foregroundTexture.colorSpace =
-      THREE.SRGBColorSpace;
-
-    foregroundTexture.minFilter =
-      THREE.LinearFilter;
-
-    foregroundTexture.magFilter =
-      THREE.LinearFilter;
-
-    /*
-     * Place the plane on the camera's viewing
-     * axis so it lines up with the fullscreen
-     * illustrated background.
-     */
-    const cameraDirection =
-      new THREE.Vector3();
-
-    camera.getWorldDirection(
-      cameraDirection,
-    );
-
-    const distanceToForeground =
-      (
-        foregroundDepth -
-        camera.position.z
-      ) /
-      cameraDirection.z;
-
-    const foregroundCenter =
-      camera.position
-        .clone()
-        .add(
-          cameraDirection
-            .clone()
-            .multiplyScalar(
-              distanceToForeground,
-            ),
-        );
-
-    const foregroundHeight =
-      2 *
-      distanceToForeground *
-      Math.tan(
-        THREE.MathUtils.degToRad(
-          camera.fov / 2,
-        ),
-      );
-
-    const foregroundWidth =
-      foregroundHeight *
-      camera.aspect;
-
-    const foregroundGeometry =
-      new THREE.PlaneGeometry(
-        foregroundWidth,
-        foregroundHeight,
-      );
-
-    const foregroundMaterial =
-      new THREE.MeshBasicMaterial({
-        map: foregroundTexture,
-        transparent: true,
-        alphaTest: 0.08,
-        depthTest: true,
-        depthWrite: true,
-        side: THREE.DoubleSide,
-        toneMapped: false,
-      });
-
-    const foregroundLayer =
-      new THREE.Mesh(
-        foregroundGeometry,
-        foregroundMaterial,
-      );
-
-    foregroundLayer.position.copy(
-      foregroundCenter,
-    );
-
-    foregroundLayer.quaternion.copy(
-      camera.quaternion,
-    );
-
-    foregroundLayer.renderOrder = 1;
-
-    scene.add(
-      foregroundLayer,
-    );
-
-    /*
      * Renderer
      */
     const renderer =
@@ -629,7 +525,7 @@ export function ThreeAquariumView({
     renderer.toneMappingExposure =
       1.05;
 
-    // Layer order: background -> sand caustics -> 3D fish and foreground.
+    // Layer order: background -> sand caustics -> 3D fish.
     container.appendChild(sandCaustics.element);
     sandCaustics.resize(camera);
 
@@ -719,6 +615,22 @@ export function ThreeAquariumView({
     scene.add(
       frontFill,
     );
+
+    // One controller owns the appearance and lifecycle of scene effects.
+    const environment = createAquariumEnvironment({
+      scene,
+      appearance: appearance ?? DEFAULT_AQUARIUM_CUSTOMIZATION,
+      lighting: {
+        hemisphere: waterLight,
+        ambient: ambientLight,
+        sunlight,
+        frontFill,
+      },
+      underwaterEffects,
+      waterEffects,
+      sandCaustics,
+    });
+    environmentRef.current = environment;
 
     /*
      * Shared food rendering resources.
@@ -1046,27 +958,19 @@ export function ThreeAquariumView({
 
       if (quality !== currentQuality) {
         currentQuality = quality;
-        waterEffects.setQuality(quality);
+        environment.setQuality(quality);
         renderer.setPixelRatio(
           quality === 'low' ? lowPixelRatio : highPixelRatio,
         );
       }
 
-      waterEffects.update(deltaTime, elapsed);
+      environment.update(deltaTime, elapsed);
 
       /*
        * Update the real 3D simulation.
        */
       aquarium.update(
         deltaTime,
-      );
-
-      /*
- * Bubbles + suspended particles
- */
-      underwaterEffects.update(
-        deltaTime,
-        elapsed,
       );
 
       /*
@@ -1245,36 +1149,7 @@ export function ThreeAquariumView({
 
       camera.updateProjectionMatrix();
 
-      waterEffects.resize(
-        camera,
-      );
-
-      sandCaustics.resize(camera);
-
-      /*
-       * Keep the transparent foreground aligned
-       * with the fullscreen camera after resize.
-       */
-      const resizedForegroundHeight =
-        2 *
-        distanceToForeground *
-        Math.tan(
-          THREE.MathUtils.degToRad(
-            camera.fov / 2,
-          ),
-        );
-
-      const resizedForegroundWidth =
-        resizedForegroundHeight *
-        camera.aspect;
-
-      foregroundLayer.scale.set(
-        resizedForegroundWidth /
-        foregroundWidth,
-        resizedForegroundHeight /
-        foregroundHeight,
-        1,
-      );
+      environment.resize(camera);
 
       renderer.setSize(
         width,
@@ -1326,17 +1201,10 @@ export function ThreeAquariumView({
 
       loadingFishRef.current.clear();
 
-      underwaterEffects.destroy();
-      waterEffects.destroy();
-      sandCaustics.destroy();
-
-      scene.remove(
-        foregroundLayer,
-      );
-
-      foregroundGeometry.dispose();
-      foregroundMaterial.dispose();
-      foregroundTexture.dispose();
+      if (environmentRef.current === environment) {
+        environmentRef.current = null;
+      }
+      environment.destroy();
 
       /*
        * Food meshes share geometry and
@@ -1373,12 +1241,7 @@ export function ThreeAquariumView({
         width: '100vw',
         height: '100dvh',
         overflow: 'hidden',
-        backgroundImage:
-          "url('/aquarium-background.png')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center center',
-        backgroundRepeat: 'no-repeat',
-        backgroundColor: '#087fc4',
+        backgroundColor: '#04132f',
       }}
     />
   );

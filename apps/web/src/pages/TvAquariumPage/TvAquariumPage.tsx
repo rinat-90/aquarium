@@ -12,6 +12,11 @@ import { createTvSocket } from '../../lib/tv-socket';
 import type { CreatedFish } from '../../types/fish';
 import type { ApiFish } from '../../lib/aquarium-api';
 
+import {
+  DEFAULT_AQUARIUM_CUSTOMIZATION,
+  type AquariumCustomization,
+} from '../../features/aquarium-customization/types';
+
 const STORAGE_KEY = 'aquarium-tv-display';
 const MAX_TIMEOUT_MS = 2_147_483_647;
 
@@ -152,6 +157,9 @@ export function TvAquariumPage() {
     useState<TvDisplayCredentials | null>(restore);
 
   const [fish, setFish] = useState<CreatedFish[]>([]);
+  const [appearance, setAppearance] = useState<AquariumCustomization>(
+    DEFAULT_AQUARIUM_CUSTOMIZATION,
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [paused, setPaused] = useState(false);
@@ -261,6 +269,11 @@ export function TvAquariumPage() {
 
       try {
         const result = await tvPairingApi.fish(token);
+
+        setAppearance({
+          ...DEFAULT_AQUARIUM_CUSTOMIZATION,
+          ...(result.appearance ?? {}),
+        });
 
         if (!active || broadcastPaused || id !== requestId) return;
 
@@ -538,6 +551,7 @@ export function TvAquariumPage() {
       {!paused && (
         <ThreeAquariumView
           createdFish={fish}
+          appearance={appearance}
           feedSequence={feedSequence}
           interactive={false}
           showDebugStats={false}

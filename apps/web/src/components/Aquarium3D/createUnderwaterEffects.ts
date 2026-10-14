@@ -1,11 +1,13 @@
-
 import * as THREE from 'three';
+import type { AquariumBubbles } from '../../features/aquarium-customization/types';
+import { BUBBLE_PRESETS } from './environment/presets';
 
 export type UnderwaterEffects = {
   update: (
     deltaTime: number,
     elapsed: number,
   ) => void;
+  setBubbles: (preset: AquariumBubbles) => void;
   destroy: () => void;
 };
 
@@ -140,7 +142,8 @@ export function createUnderwaterEffects(
     });
 
   const bubbles: Bubble[] = [];
-  const bubbleCount = 65;
+  const bubbleCount = BUBBLE_PRESETS.lots;
+  let activeBubbleCount = BUBBLE_PRESETS.some;
 
   // One mesh renders all 65 bubbles.
   const bubbleMesh =
@@ -157,6 +160,7 @@ export function createUnderwaterEffects(
   // Bubbles move around the aquarium,
   // so avoid stale bounding-volume culling.
   bubbleMesh.frustumCulled = false;
+  bubbleMesh.count = activeBubbleCount;
 
   scene.add(bubbleMesh);
 
@@ -349,6 +353,22 @@ export function createUnderwaterEffects(
 
   scene.add(particles);
 
+  const setBubbles = (preset: AquariumBubbles) => {
+    const nextCount = BUBBLE_PRESETS[preset];
+    if (nextCount === activeBubbleCount) return;
+
+    if (nextCount > activeBubbleCount) {
+      for (let index = activeBubbleCount; index < nextCount; index++) {
+        resetBubble(bubbles[index], true);
+        writeBubbleMatrix(bubbles[index], index);
+      }
+      bubbleMesh.instanceMatrix.needsUpdate = true;
+    }
+
+    activeBubbleCount = nextCount;
+    bubbleMesh.count = nextCount;
+  };
+
   const update = (
     deltaTime: number,
     elapsed: number,
@@ -360,7 +380,7 @@ export function createUnderwaterEffects(
 
     for (
       let index = 0;
-      index < bubbles.length;
+      index < activeBubbleCount;
       index++
     ) {
       const bubble = bubbles[index];
@@ -415,7 +435,9 @@ export function createUnderwaterEffects(
     }
 
     // Upload all updated transforms once.
-    bubbleMesh.instanceMatrix.needsUpdate = true;
+    if (activeBubbleCount > 0) {
+      bubbleMesh.instanceMatrix.needsUpdate = true;
+    }
 
     particles.rotation.y =
       Math.sin(
@@ -441,6 +463,7 @@ export function createUnderwaterEffects(
 
   return {
     update,
+    setBubbles,
     destroy,
   };
 }

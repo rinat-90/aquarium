@@ -1,3 +1,5 @@
+import type { AquariumCustomization } from '../features/aquarium-customization/types';
+
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 export class TvApiError extends Error {
@@ -60,9 +62,14 @@ export const tvPairingApi = {
     `/api/tv/pairing/${encodeURIComponent(code)}/approve`,
     { method: 'POST', body: JSON.stringify({ aquariumId }) },
   ),
-  fish: (token: string) => request<{ aquariumId: string; fish: import('./aquarium-api').ApiFish[] }>(
-    '/api/tv/display/fish', { headers: { Authorization: `Bearer ${token}` } },
-  ),
+  fish: (token: string) =>
+    request<{
+      aquariumId: string;
+      fish: import('./aquarium-api').ApiFish[];
+      appearance: Partial<AquariumCustomization> | null;
+    }>('/api/tv/display/fish', {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
   texture: async (token: string, fishId: string): Promise<Blob> => {
     const response = await fetch(
       `${API_URL}/api/tv/display/fish/${encodeURIComponent(fishId)}/texture`,
