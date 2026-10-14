@@ -27,6 +27,8 @@ import { mapApiFish } from '../../lib/mapApiFish';
 import { useLiveAquariumFish } from '../../hooks/useLiveAquariumFish';
 import { tvPairingApi } from '../../lib/tv-pairing-api';
 import { saveAquariumAppearance } from '../../lib/save-aquarium-appearance';
+import { FALLBACK_THEMES, fetchPublishedThemes } from '../../lib/content-themes';
+import type { AquariumTheme } from '../../features/aquarium-customization/themeRegistry';
 
 import {
   AquariumRemote,
@@ -62,6 +64,16 @@ export function AquariumPage() {
   const [fishCollectionOpen, setFishCollectionOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const [availableThemes, setAvailableThemes] = useState<readonly AquariumTheme[]>(FALLBACK_THEMES);
+
+  useEffect(() => {
+    let active = true;
+    void fetchPublishedThemes()
+      .then((themes) => { if (active) setAvailableThemes(themes); })
+      .catch(() => { if (active) setAvailableThemes(FALLBACK_THEMES); });
+    return () => { active = false; };
+  }, []);
+
   const [appearance, setAppearance] = useState<AquariumCustomization>(DEFAULT_AQUARIUM_CUSTOMIZATION);
   const [appearanceSaving, setAppearanceSaving] = useState(false);
   const [appearanceSaveError, setAppearanceSaveError] = useState<string | null>(null);
@@ -739,6 +751,7 @@ export function AquariumPage() {
       )}
 
       <AquariumAppearanceEditor
+        themes={availableThemes}
         open={appearanceOpen}
         value={appearance}
         onChange={(next) => {

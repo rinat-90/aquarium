@@ -139,3 +139,44 @@ model TvDisplaySession {
   @@index([ownerId])
   @@index([expiresAt])
 }
+
+enum ContentType {
+  THEME
+  FISH_SPECIES
+  DECORATION
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model ContentItem {
+  id                 String        @id @default(cuid())
+  type               ContentType
+  slug               String
+  name               String
+  status             ContentStatus @default(DRAFT)
+  publishedVersionId String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  versions ContentVersion[]
+
+  @@unique([type, slug])
+  @@index([type, status])
+}
+
+model ContentVersion {
+  id            String   @id @default(cuid())
+  contentItemId String
+  version       Int
+  schemaVersion Int      @default(1)
+  definition    Json
+  createdAt     DateTime @default(now())
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@unique([contentItemId, version])
+}

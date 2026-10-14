@@ -218,3 +218,238 @@
     height: 46px;
   }
 }
+
+/* Phase 6.1: large, kid-friendly navigation between existing controls. */
+.aquarium-editor-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 8px 16px 12px;
+  border-bottom: 1px solid #366078;
+}
+.aquarium-editor-tabs button {
+  min-width: 0;
+  min-height: 52px;
+  padding: 8px 4px;
+  border: 2px solid transparent;
+  border-radius: 13px;
+  background: #123a51;
+  color: #ecfbff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.aquarium-editor-tabs button.is-active {
+  background: #18546a;
+  border-color: #9cf6fb;
+}
+.aquarium-editor-tabs button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+@media (max-width: 767px) {
+  .aquarium-editor-tabs { padding: 8px 12px 12px; }
+  .aquarium-editor-tabs button { min-height: 58px; font-size: 14px; }
+}
+
+/* Phase 6.2: illustrated, CSS-only theme thumbnails (no new textures or WebGL work). */
+.aquarium-theme-mini-tank {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  isolation: isolate;
+  min-height: 110px;
+}
+.aquarium-theme-mini-tank .aquarium-theme-mini-rays {
+  position: absolute;
+  inset: -35% 0 12%;
+  background: repeating-conic-gradient(from 200deg at 50% -15%, transparent 0deg 13deg, #ffffff16 14deg 23deg, transparent 24deg 42deg);
+  opacity: .85;
+  pointer-events: none;
+}
+.aquarium-theme-mini-floor {
+  position: absolute;
+  z-index: 1;
+  bottom: -14px;
+  left: -12%;
+  width: 124%;
+  height: 33px;
+  border-radius: 50% 50% 0 0;
+  background: linear-gradient(180deg, #f6e4ba, #b69d77);
+  box-shadow: 0 -5px 12px #001c2c30;
+}
+.aquarium-theme-mini-scene {
+  position: absolute;
+  z-index: 2;
+  left: 9%;
+  bottom: 10px;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1;
+  filter: drop-shadow(0 3px 2px #00182770);
+}
+.aquarium-theme-mini-fish {
+  position: absolute;
+  z-index: 3;
+  top: 20%;
+  left: 48%;
+  font-size: 29px;
+  line-height: 1;
+  filter: drop-shadow(0 3px 3px #00182760);
+}
+.aquarium-theme-mini-fish--small {
+  top: 52%;
+  left: 70%;
+  font-size: 19px;
+  transform: scaleX(-1);
+}
+.aquarium-theme-mini-bubble {
+  position: absolute;
+  z-index: 2;
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid #dcfaffbb;
+  border-radius: 50%;
+  background: #ffffff16;
+}
+.aquarium-theme-mini-bubble--one { top: 17%; left: 23%; }
+.aquarium-theme-mini-bubble--two { top: 42%; left: 32%; width: 6px; height: 6px; }
+.aquarium-theme-mini-bubble--three { top: 12%; left: 77%; width: 7px; height: 7px; }
+.aquarium-theme-card:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+@media (max-width: 767px) {
+  .aquarium-theme-mini-tank { min-height: 100px; }
+  .aquarium-theme-mini-scene { font-size: 30px; }
+}
+
+/* Keep theme names readable in the narrow editor panel. */
+.aquarium-appearance-editor .aquarium-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.aquarium-appearance-editor .aquarium-theme-card { min-width: 0; }
+.aquarium-appearance-editor .aquarium-theme-name {
+  overflow-wrap: anywhere;
+}
+.aquarium-appearance-editor .aquarium-theme-mini-tank > .aquarium-theme-mini-fish,
+.aquarium-appearance-editor .aquarium-theme-mini-tank > .aquarium-theme-mini-scene {
+  display: block;
+}
+
+/* Phase 6.3: distinctive, lightweight scenery cues for published starter themes. */
+.aquarium-appearance-editor .aquarium-theme-mini-scene--glow {
+  filter: drop-shadow(0 0 8px #dbb1ff) drop-shadow(0 2px 2px #00182790);
+}
+.aquarium-appearance-editor .aquarium-theme-mini-accent {
+  position: absolute;
+  z-index: 1;
+  bottom: 13px;
+  right: 8%;
+  width: 24px;
+  height: 34px;
+  border-radius: 55% 55% 35% 35%;
+  pointer-events: none;
+}
+.aquarium-appearance-editor .aquarium-theme-mini-accent--lagoon {
+  background: radial-gradient(ellipse at 50% 18%, #dca5ff 0 26%, transparent 28%), linear-gradient(90deg, transparent 43%, #a5f6f2 44% 56%, transparent 57%);
+  filter: drop-shadow(0 0 7px #d18aff);
+}
+.aquarium-appearance-editor .aquarium-theme-mini-accent--midnight {
+  background: repeating-conic-gradient(from 15deg at 50% 100%, #6af9c5 0 12deg, transparent 14deg 38deg);
+  filter: drop-shadow(0 0 7px #63edb4);
+}
+
+/* Phase 6.4 — kid-friendly decoration guidance and larger controls. */
+.aquarium-appearance-editor .aquarium-decorate-steps {
+  display: flex; align-items: center; justify-content: space-between; gap: 5px;
+  padding: 10px 11px; margin: 12px 0 14px;
+  background: #17475a; border: 1px solid #3b8190; border-radius: 13px;
+  color: #e7fbff; font-size: 12px; font-weight: 750;
+}
+.aquarium-appearance-editor .aquarium-decorate-steps span { white-space: nowrap; }
+.aquarium-appearance-editor .aquarium-decorate-steps strong {
+  display: inline-grid; place-items: center; width: 21px; height: 21px;
+  border-radius: 50%; background: #a4f1f4; color: #092b3e; margin-right: 3px;
+}
+.aquarium-appearance-editor .aquarium-decorate-limit {
+  color: #ffdfad; font-size: 13px; line-height: 1.4;
+  background: #65452166; border-radius: 10px; padding: 10px;
+}
+.aquarium-appearance-editor .aquarium-catalog-grid { gap: 12px; }
+.aquarium-appearance-editor .aquarium-catalog-card {
+  min-height: 136px; padding: 12px 7px;
+  border-radius: 17px; position: relative;
+}
+.aquarium-appearance-editor .aquarium-catalog-card:focus-visible,
+.aquarium-appearance-editor .aquarium-catalog-owned-item:focus-visible {
+  outline: 3px solid #a4f1f4; outline-offset: 2px;
+}
+.aquarium-appearance-editor .aquarium-decorate-add-label {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-top: 7px; padding: 5px 13px; border-radius: 999px;
+  background: #a4f1f4; color: #083047; font-size: 12px; font-weight: 850;
+}
+.aquarium-appearance-editor .aquarium-catalog-card:disabled .aquarium-decorate-add-label { opacity: .45; }
+.aquarium-appearance-editor .aquarium-decoration-controls {
+  border: 2px solid #83dfe9; box-shadow: 0 0 0 3px #83dfe91a;
+}
+.aquarium-appearance-editor .aquarium-kid-stepper button { min-width: 52px; min-height: 52px; }
+.aquarium-appearance-editor .aquarium-kid-colors button { min-width: 43px; min-height: 43px; }
+.aquarium-appearance-editor .aquarium-catalog-owned-item { min-height: 54px; }
+.aquarium-appearance-editor .aquarium-decorate-owned-action {
+  font-size: 12px; font-weight: 800; color: #a4f1f4;
+}
+@media (max-width: 390px) {
+  .aquarium-appearance-editor .aquarium-decorate-steps { font-size: 11px; padding: 8px; }
+  .aquarium-appearance-editor .aquarium-decorate-steps strong { width: 18px; height: 18px; }
+}
+
+/* Phase 6.5 — kid-friendly lighting and bubble cards. */
+.aquarium-appearance-editor .aquarium-effects-hint {
+  color: #b8dce6; font-size: 13px; line-height: 1.4; margin: -3px 0 14px;
+}
+.aquarium-appearance-editor .aquarium-effects-grid { gap: 10px; }
+.aquarium-appearance-editor .aquarium-effects-grid button {
+  position: relative; min-width: 0; min-height: 116px; padding: 12px 5px 11px;
+  overflow: hidden; border-radius: 17px; border: 2px solid #366980;
+  background: linear-gradient(160deg, #194d66, #0b2b42);
+  transition: border-color .15s ease, transform .15s ease, background .15s ease;
+}
+.aquarium-appearance-editor .aquarium-effects-grid button:active { transform: scale(.97); }
+.aquarium-appearance-editor .aquarium-effects-grid button:focus-visible { outline: 3px solid #a4f1f4; outline-offset: 2px; }
+.aquarium-appearance-editor .aquarium-effects-grid button.is-selected {
+  border-color: #a4f1f4; background: linear-gradient(160deg, #24687b, #10435c);
+  box-shadow: inset 0 0 0 1px #a4f1f4, 0 0 15px #67dce122;
+}
+.aquarium-appearance-editor .aquarium-effects-grid .aquarium-effects-icon {
+  display: grid; place-items: center; font-size: 31px; line-height: 1;
+  width: 100%; height: 54px; margin-bottom: 3px;
+}
+.aquarium-appearance-editor .aquarium-effects-grid .aquarium-effects-name {
+  font-size: 13px; font-weight: 800; line-height: 1.2;
+}
+.aquarium-appearance-editor .aquarium-effects-grid .aquarium-effects-selected {
+  display: none; position: absolute; right: 6px; top: 6px;
+  width: 21px; height: 21px; border-radius: 50%;
+  background: #a4f1f4; color: #083147; font-size: 13px; font-weight: 900;
+  place-items: center;
+}
+.aquarium-appearance-editor .aquarium-effects-grid button.is-selected .aquarium-effects-selected { display: grid; }
+.aquarium-appearance-editor .aquarium-effects-lighting button:nth-child(1) .aquarium-effects-icon {
+  background: radial-gradient(ellipse at center, #ffdc7470, transparent 75%);
+}
+.aquarium-appearance-editor .aquarium-effects-lighting button:nth-child(2) .aquarium-effects-icon {
+  background: radial-gradient(ellipse at center, #a8d9ed40, transparent 75%);
+}
+.aquarium-appearance-editor .aquarium-effects-lighting button:nth-child(3) .aquarium-effects-icon {
+  background: radial-gradient(ellipse at center, #8b84e650, transparent 75%);
+}
+.aquarium-appearance-editor .aquarium-effects-bubbles button:nth-child(1) .aquarium-effects-icon { opacity: .65; }
+@media (max-width: 390px) {
+ .aquarium-appearance-editor .aquarium-effects-grid { gap: 7px; }
+ .aquarium-appearance-editor .aquarium-effects-grid button { min-height: 104px; padding-inline: 3px; }
+ .aquarium-appearance-editor .aquarium-effects-grid .aquarium-effects-name { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+ .aquarium-appearance-editor .aquarium-effects-grid button { transition: none; }
+}

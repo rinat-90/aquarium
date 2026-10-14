@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import './AquariumDecorationCatalog.css';
 import './AquariumWorkspace.css';
-import { AQUARIUM_THEMES, applyAquariumTheme, isAquariumThemeSelected } from '../../features/aquarium-customization/themeRegistry';
+import { applyAquariumTheme, isAquariumThemeSelected } from '../../features/aquarium-customization/themeRegistry';
+import type { AquariumTheme } from '../../features/aquarium-customization/themeRegistry';
 import type {
   AquariumDecorationAssetId,
   AquariumDecorationInstance,
@@ -27,6 +28,7 @@ type Props = {
   onSave: () => void;
   saving: boolean;
   saveError: string | null;
+  themes: readonly AquariumTheme[];
   selectedDecorationId?: string | null;
   onDecorationSelect?: (id: string | null) => void;
 };
@@ -89,6 +91,7 @@ const catalogItems = [
 ] as const;
 
 type CatalogCategory = 'all' | 'plants' | 'rocks';
+type EditorTab = 'worlds' | 'decorate' | 'effects';
 
 const decorationColors = [
   { name: 'Ocean blue', hex: '#739fc8' },
@@ -102,9 +105,10 @@ const decorationColors = [
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
-export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSave, saving, saveError, selectedDecorationId = null, onDecorationSelect }: Props) {
+export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSave, saving, saveError, themes, selectedDecorationId = null, onDecorationSelect }: Props) {
 
   const [catalogCategory, setCatalogCategory] = useState<CatalogCategory>('all');
+  const [activeTab, setActiveTab] = useState<EditorTab>('worlds');
   const [sheetCollapsed, setSheetCollapsed] = useState(false);
   const [localSelectedId, setLocalSelectedId] = useState<string | null>(selectedDecorationId);
   const controlsRef = useRef<HTMLDivElement>(null);
@@ -124,7 +128,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
 
   const selectDecoration = (id: string | null) => {
     setLocalSelectedId(id);
-    if (id) setSheetCollapsed(false);
+    if (id) { setSheetCollapsed(false); setActiveTab('decorate'); }
     onDecorationSelect?.(id);
   };
 
@@ -134,6 +138,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
     if (!open || !selectedDecoration) return;
 
     setSheetCollapsed(false);
+    setActiveTab('decorate');
     const frame = requestAnimationFrame(() => {
       const controls = controlsRef.current;
       const scroller = scrollRef.current;
@@ -216,7 +221,26 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
         <button type="button" className="aquarium-appearance-close" onClick={onClose} disabled={saving} aria-label="Close editor">×</button>
       </header>
 
+      <nav className="aquarium-editor-tabs" aria-label="Aquarium customization" role="tablist">
+        {([
+          ['worlds', '🌎', 'Worlds'],
+          ['decorate', '🎨', 'Decorate'],
+          ['effects', '✨', 'Effects'],
+        ] as const).map(([id, emoji, label]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === id}
+            className={activeTab === id ? 'is-active' : ''}
+            onClick={() => { setActiveTab(id); scrollRef.current?.scrollTo({ top: 0 }); }}
+          >
+            <span aria-hidden="true">{emoji}</span> {label}
+          </button>
+        ))}
+      </nav>
       <div className="aquarium-appearance-scroll" ref={scrollRef}>
+        {activeTab === 'worlds' && (<>
         <section className="aquarium-theme-section" aria-label="Starter aquarium themes">
           <div className="aquarium-theme-heading">
             <div>
@@ -226,7 +250,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
             <span className="aquarium-theme-free">Free</span>
           </div>
           <div className="aquarium-theme-grid">
-            {AQUARIUM_THEMES.filter((theme) => theme.id === 'sunny-reef' || theme.id === 'ocean-garden').map((theme) => {
+            {themes.map((theme) => {
               const selected = isAquariumThemeSelected(value, theme);
               return (
                 <button
@@ -237,8 +261,20 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
                   aria-label={`Use ${theme.name} theme`}
                   onClick={() => onChange(applyAquariumTheme(value, theme))}
                 >
-                  <span className="aquarium-theme-art" style={{ background: theme.gradient }}>
-                    <span aria-hidden="true">{theme.emoji}</span>
+<span className="aquarium-theme-art aquarium-theme-mini-tank" style={{ background: theme.gradient }}>
+                    <span className="aquarium-theme-mini-rays" aria-hidden="true" />
+                    <span className="aquarium-theme-mini-bubble aquarium-theme-mini-bubble--one" aria-hidden="true" />
+                    <span className="aquarium-theme-mini-bubble aquarium-theme-mini-bubble--two" aria-hidden="true" />
+                    <span className="aquarium-theme-mini-bubble aquarium-theme-mini-bubble--three" aria-hidden="true" />
+                    <span className="aquarium-theme-mini-fish" aria-hidden="true">🐠</span>
+                    <span className="aquarium-theme-mini-fish aquarium-theme-mini-fish--small" aria-hidden="true">🐟</span>
+                    <span className={`aquarium-theme-mini-scene ${theme.id === 'magic-lagoon' || theme.id === 'midnight-sea' ? 'aquarium-theme-mini-scene--glow' : ''}`} aria-hidden="true">
+                      {theme.id === 'magic-lagoon' ? '🍄' : theme.id === 'midnight-sea' ? '🌿' : theme.id === 'ocean-garden' ? '🌱' : theme.id === 'sunny-reef' ? '🪸' : theme.emoji}
+                    </span>
+                    {(theme.id === 'magic-lagoon' || theme.id === 'midnight-sea') && (
+                      <span className={`aquarium-theme-mini-accent ${theme.id === 'magic-lagoon' ? 'aquarium-theme-mini-accent--lagoon' : 'aquarium-theme-mini-accent--midnight'}`} aria-hidden="true" />
+                    )}
+                    <span className="aquarium-theme-mini-floor" aria-hidden="true" />
                     {selected && <span className="aquarium-theme-check" aria-hidden="true">✓</span>}
                   </span>
                   <span className="aquarium-theme-name">{theme.name}</span>
@@ -247,10 +283,10 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
               );
             })}
           </div>
-          <p className="aquarium-theme-hint">Sunny Reef has colorful coral; Ocean Garden has tall seaweed and natural stones. Customize either theme below.</p>
+          <p className="aquarium-theme-hint">Choose a world, then make it your own below.</p>
         </section>
         <section>
-          <h3>🌊 Pick your world</h3>
+          <h3>🌊 Change the water color</h3>
           <div className="aquarium-appearance-worlds">
             {backgrounds.map((option) => (
               <button
@@ -301,15 +337,27 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
           </div>
         </section>
 
+        </>)}
+        {activeTab === 'decorate' && (<>
         <section className="aquarium-decoration-section aquarium-catalog">
           <div className="aquarium-catalog-heading">
             <div>
               <h3>🪸 Pick a decoration</h3>
-              <p>Tap something you love to add it to your aquarium!</p>
+              <p>Pick an object, then make it your own!</p>
             </div>
             <span className="aquarium-catalog-counter">{decorationInstances.length}/30</span>
           </div>
 
+          <div className="aquarium-decorate-steps" aria-label="How to decorate">
+            <span><strong>1</strong> Pick</span>
+            <span aria-hidden="true">→</span>
+            <span><strong>2</strong> Move</span>
+            <span aria-hidden="true">→</span>
+            <span><strong>3</strong> Make it yours!</span>
+          </div>
+          {decorationInstances.length >= 30 && (
+            <p className="aquarium-decorate-limit" role="status">Your aquarium is full! Remove an object to add another.</p>
+          )}
           <div className="aquarium-catalog-tabs" role="group" aria-label="Decoration categories">
             {([
               ['all', '✨ All'],
@@ -345,6 +393,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
                     <span className="aquarium-catalog-plus">+</span>
                   </span>
                   <span className="aquarium-catalog-name">{item.label}</span>
+                  <span className="aquarium-decorate-add-label" aria-hidden="true">+ Add</span>
                 </button>
               ))}
           </div>
@@ -357,17 +406,17 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
                     {catalogItems.find((item) => item.id === selectedDecoration.assetId)?.emoji ?? '🪸'}{' '}
                     {DECORATION_REGISTRY[selectedDecoration.assetId].name}
                   </h3>
-                  <p>Make it just how you like!</p>
+                  <p>Selected! Drag it in the tank or use the buttons below.</p>
                 </div>
                 <span aria-hidden="true">✨</span>
               </div>
 
                              <div className="aquarium-decoration-control-group">
-                 <span className="aquarium-decoration-label">↔️ Move</span>
+                 <span className="aquarium-decoration-label">↔️ Move left or right</span>
                  <div className="aquarium-kid-stepper" role="group" aria-label="Move decoration">
                    <button type="button" aria-label="Move left" disabled={selectedDecoration.x <= 0.06}
                      onClick={() => updateDecoration(selectedDecoration.id, { x: clamp(Number((selectedDecoration.x - 0.05).toFixed(2)), 0.06, 0.94) })}>←</button>
-                   <span>Left / Right</span>
+                   <span>Move</span>
                    <button type="button" aria-label="Move right" disabled={selectedDecoration.x >= 0.94}
                      onClick={() => updateDecoration(selectedDecoration.id, { x: clamp(Number((selectedDecoration.x + 0.05).toFixed(2)), 0.06, 0.94) })}>→</button>
                  </div>
@@ -393,7 +442,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
                </div>
 
                <div className="aquarium-decoration-control-group">
-                 <span className="aquarium-decoration-label">🔄 Turn it</span>
+                 <span className="aquarium-decoration-label">🔄 Turn your decoration</span>
                  <div className="aquarium-kid-stepper" role="group" aria-label="Rotate decoration">
                    <button type="button" aria-label="Rotate left" onClick={() => updateDecoration(selectedDecoration.id, {
                      rotation: clamp(Number((selectedDecoration.rotation - Math.PI / 12).toFixed(3)), -Math.PI, Math.PI),
@@ -439,7 +488,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
             <div className="aquarium-catalog-owned">
               <div className="aquarium-catalog-owned-heading">
                 <h3>✨ In your aquarium</h3>
-                <span>Tap to edit · drag in the tank to move</span>
+                <span>Tap an object below to change it</span>
               </div>
               <div className="aquarium-catalog-owned-list">
                 {decorationInstances.map((decoration, index) => {
@@ -454,7 +503,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
                     >
                       <span aria-hidden="true">{item?.emoji ?? '🪸'}</span>
                       <span>{DECORATION_REGISTRY[decoration.assetId].name} {index + 1}</span>
-                      <span aria-hidden="true">{activeSelectedId === decoration.id ? '✓' : '›'}</span>
+                      <span className="aquarium-decorate-owned-action" aria-hidden="true">{activeSelectedId === decoration.id ? '✓ Editing' : 'Edit ›'}</span>
                     </button>
                   );
                 })}
@@ -466,9 +515,12 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
 
         </section>
 
+        </>)}
+        {activeTab === 'effects' && (<>
         <section>
           <h3>💡 Set the mood</h3>
-          <div className="aquarium-appearance-options">
+          <p className="aquarium-effects-hint">Choose how your underwater world shines!</p>
+          <div className="aquarium-appearance-options aquarium-effects-grid aquarium-effects-lighting">
             {lighting.map((option) => (
               <button
                 type="button"
@@ -477,7 +529,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
                 aria-pressed={value.lighting === option.id}
                 onClick={() => onChange({ ...value, lighting: option.id })}
               >
-                <span aria-hidden="true">{option.emoji}</span>{option.label}
+                <span className="aquarium-effects-icon" aria-hidden="true">{option.emoji}</span><span className="aquarium-effects-name">{option.label}</span><span className="aquarium-effects-selected" aria-hidden="true">✓</span>
               </button>
             ))}
           </div>
@@ -485,7 +537,8 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
 
         <section>
           <h3>🫧 Add bubbles</h3>
-          <div className="aquarium-appearance-options">
+          <p className="aquarium-effects-hint">How bubbly should your aquarium be?</p>
+          <div className="aquarium-appearance-options aquarium-effects-grid aquarium-effects-bubbles">
             {bubbles.map((option) => (
               <button
                 type="button"
@@ -494,11 +547,12 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
                 aria-pressed={value.bubbles === option.id}
                 onClick={() => onChange({ ...value, bubbles: option.id })}
               >
-                <span aria-hidden="true">{option.emoji}</span>{option.label}
+                <span className="aquarium-effects-icon" aria-hidden="true">{option.emoji}</span><span className="aquarium-effects-name">{option.label}</span><span className="aquarium-effects-selected" aria-hidden="true">✓</span>
               </button>
             ))}
           </div>
         </section>
+        </>)}
       </div>
       <footer className="aquarium-appearance-footer">
         <p>Changes appear instantly. Tap Done to save them.</p>
