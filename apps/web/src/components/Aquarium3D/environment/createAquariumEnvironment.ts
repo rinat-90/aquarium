@@ -1,4 +1,3 @@
-
 import * as THREE from 'three';
 
 import type {
@@ -13,6 +12,7 @@ import type { createSandCaustics } from '../createSandCaustics';
 
 import { createBackground } from './createBackground';
 import { ENVIRONMENT_PRESETS, LIGHTING_PRESETS } from './presets';
+import { getSunnyReefScenery } from '../../../../../../../../Downloads/aquarium-sunny-reef-3d/apps/web/src/features/aquarium-customization/themeRegistry.ts';
 import {
   createAquariumDecorations,
   type DecorationInstance,
@@ -75,6 +75,9 @@ export function createAquariumEnvironment(options: {
   );
 
   const decorations = createAquariumDecorations(scene);
+  // Non-interactive theme scenery: intentionally separate from kids' decorations.
+  const themeScenery = createAquariumDecorations(scene);
+  let previousThemeSignature = '';
 
   let activeCamera = options.camera;
   let currentAppearance = options.appearance;
@@ -184,6 +187,19 @@ export function createAquariumEnvironment(options: {
     );
   };
 
+  const syncThemeScenery = (force = false) => {
+    const instances = getSunnyReefScenery(currentAppearance);
+    const signature = JSON.stringify({
+      instances,
+      aspect: activeCamera.aspect,
+      fov: activeCamera.fov,
+      position: activeCamera.position.toArray(),
+    });
+    if (!force && signature === previousThemeSignature) return;
+    previousThemeSignature = signature;
+    themeScenery.setDecorations(getDecorationLayout(instances));
+  };
+
   const setAppearance = (appearance: AquariumCustomization) => {
     currentAppearance = appearance;
 
@@ -226,6 +242,7 @@ export function createAquariumEnvironment(options: {
 
     // Render saved decoration instances immediately.
     syncDecorations();
+    syncThemeScenery();
   };
 
   setAppearance(options.appearance);
@@ -276,6 +293,7 @@ export function createAquariumEnvironment(options: {
       underwaterEffects.update(deltaTime, elapsed);
       sandCaustics.update(elapsed);
       decorations.update(elapsed);
+      themeScenery.update(elapsed);
     },
     setSelectedDecoration(id: string | null) {
       decorations.setSelectedDecoration(id);
@@ -297,10 +315,12 @@ export function createAquariumEnvironment(options: {
 
       // Recalculate positions when the viewport changes.
       syncDecorations(true);
+      syncThemeScenery(true);
     },
 
     destroy() {
       decorations.destroy();
+      themeScenery.destroy();
 
       background.destroy();
       underwaterEffects.destroy();

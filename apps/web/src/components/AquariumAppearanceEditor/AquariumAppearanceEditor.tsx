@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import './AquariumDecorationCatalog.css';
 import './AquariumWorkspace.css';
+import { AQUARIUM_THEMES, applyAquariumTheme, isAquariumThemeSelected } from '../../features/aquarium-customization/themeRegistry.ts';
 import type {
   AquariumDecorationAssetId,
   AquariumDecorationInstance,
-} from '../../features/aquarium-customization/types';
+} from '../../features/aquarium-customization/types.ts';
 
 import {
   DECORATION_REGISTRY,
@@ -16,7 +17,7 @@ import type {
   AquariumSubstrate,
   AquariumLighting,
   AquariumBubbles,
-} from '../../features/aquarium-customization/types';
+} from '../../features/aquarium-customization/types.ts';
 
 type Props = {
   open: boolean;
@@ -216,6 +217,38 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
       </header>
 
       <div className="aquarium-appearance-scroll" ref={scrollRef}>
+        <section className="aquarium-theme-section" aria-label="Starter aquarium themes">
+          <div className="aquarium-theme-heading">
+            <div>
+              <h3>🐠 3D Reef Theme</h3>
+              <p>Add a colorful 3D reef! Your own decorations stay right where you put them.</p>
+            </div>
+            <span className="aquarium-theme-free">Free</span>
+          </div>
+          <div className="aquarium-theme-grid">
+            {AQUARIUM_THEMES.filter((theme) => theme.id === 'sunny-reef').map((theme) => {
+              const selected = isAquariumThemeSelected(value, theme);
+              return (
+                <button
+                  key={theme.id}
+                  type="button"
+                  className={`aquarium-theme-card ${selected ? 'is-selected' : ''}`}
+                  aria-pressed={selected}
+                  aria-label={`Use ${theme.name} theme`}
+                  onClick={() => onChange(applyAquariumTheme(value, theme))}
+                >
+                  <span className="aquarium-theme-art" style={{ background: theme.gradient }}>
+                    <span aria-hidden="true">{theme.emoji}</span>
+                    {selected && <span className="aquarium-theme-check" aria-hidden="true">✓</span>}
+                  </span>
+                  <span className="aquarium-theme-name">{theme.name}</span>
+                  <span className="aquarium-theme-description">{theme.description}</span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="aquarium-theme-hint">The reef comes with coral, rocks, and plants. Change individual settings below to customize the environment.</p>
+        </section>
         <section>
           <h3>🌊 Pick your world</h3>
           <div className="aquarium-appearance-worlds">

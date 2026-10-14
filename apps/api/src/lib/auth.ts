@@ -15,7 +15,7 @@ const trustedOrigins = [
       'http://192.168.86.23:5173',
 
       // HTTPS tunnel for testing the guided fish scanner.
-      'https://determination-abilities-ranking-attraction.trycloudflare.com'
+      'https://extent-gcc-impressive-swing.trycloudflare.com'
 
     ]
     : []),

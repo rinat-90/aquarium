@@ -47,3 +47,21 @@
 .aquarium-kid-colors button span { display: grid; place-items: center; width: 29px; height: 29px; border-radius: 50%; background: rgba(0,25,46,.55); color: white; font-size: 21px; font-weight: 900; }
 .aquarium-kid-colors button:focus-visible, .aquarium-kid-stepper button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 @media (max-width: 767px) { .aquarium-catalog-tabs button { min-height: 48px; } .aquarium-catalog-card { min-height: 132px; } .aquarium-catalog-owned-item { min-height: 48px; font-size: 14px; } .aquarium-kid-colors button { height: 62px; } }
+
+/* Starter themes: large, accessible one-tap presets for phone and desktop. */
+.aquarium-theme-section { display: grid; gap: 12px; }
+.aquarium-theme-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.aquarium-theme-heading h3 { margin: 0 0 5px; }
+.aquarium-theme-heading p, .aquarium-theme-hint { margin: 0; font-size: 12px; line-height: 1.45; opacity: .8; }
+.aquarium-theme-free { padding: 5px 10px; border-radius: 99px; background: rgba(123,233,196,.18); color: #b6ffe7; font-size: 12px; font-weight: 700; }
+.aquarium-theme-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.aquarium-theme-card { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-width: 0; padding: 7px 7px 10px; border: 2px solid rgba(115,197,244,.28); border-radius: 17px; background: rgba(255,255,255,.07); color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.aquarium-theme-card.is-selected { border-color: #93eaff; background: rgba(90,205,244,.18); }
+.aquarium-theme-card:focus-visible { outline: 3px solid #9fe9ff; outline-offset: 2px; }
+.aquarium-theme-art { position: relative; display: grid; place-items: center; height: 92px; border-radius: 11px; overflow: hidden; }
+.aquarium-theme-art > span:first-child { font-size: 44px; filter: drop-shadow(0 4px 5px rgba(0,0,0,.25)); }
+.aquarium-theme-check { position: absolute; right: 7px; top: 7px; display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: #d8fbff; color: #08425b; font-weight: 900; }
+.aquarium-theme-name { font-size: 14px; font-weight: 800; padding: 3px 3px 0; }
+.aquarium-theme-description { font-size: 11px; opacity: .78; padding: 0 3px; }
+@media (min-width: 700px) { .aquarium-theme-grid { grid-template-columns: repeat(4,minmax(0,1fr)); } }
+@media (max-width: 380px) { .aquarium-theme-art { height: 76px; } .aquarium-theme-art > span:first-child { font-size: 36px; } }
