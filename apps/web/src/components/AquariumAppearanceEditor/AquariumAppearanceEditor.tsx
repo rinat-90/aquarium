@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import './AquariumDecorationCatalog.css';
 import './AquariumWorkspace.css';
-import { AQUARIUM_THEMES, applyAquariumTheme, isAquariumThemeSelected } from '../../features/aquarium-customization/themeRegistry';
+import { applyAquariumTheme, isAquariumThemeSelected } from '../../features/aquarium-customization/themeRegistry';
+import type { AquariumTheme } from '../../features/aquarium-customization/themeRegistry';
 import type {
   AquariumDecorationAssetId,
   AquariumDecorationInstance,
@@ -27,6 +28,7 @@ type Props = {
   onSave: () => void;
   saving: boolean;
   saveError: string | null;
+  themes: readonly AquariumTheme[];
   selectedDecorationId?: string | null;
   onDecorationSelect?: (id: string | null) => void;
 };
@@ -102,7 +104,7 @@ const decorationColors = [
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
-export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSave, saving, saveError, selectedDecorationId = null, onDecorationSelect }: Props) {
+export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSave, saving, saveError, themes, selectedDecorationId = null, onDecorationSelect }: Props) {
 
   const [catalogCategory, setCatalogCategory] = useState<CatalogCategory>('all');
   const [sheetCollapsed, setSheetCollapsed] = useState(false);
@@ -226,7 +228,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
             <span className="aquarium-theme-free">Free</span>
           </div>
           <div className="aquarium-theme-grid">
-            {AQUARIUM_THEMES.filter((theme) => theme.id === 'sunny-reef' || theme.id === 'ocean-garden').map((theme) => {
+            {themes.map((theme) => {
               const selected = isAquariumThemeSelected(value, theme);
               return (
                 <button
@@ -247,7 +249,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
               );
             })}
           </div>
-          <p className="aquarium-theme-hint">Sunny Reef has colorful coral; Ocean Garden has tall seaweed and natural stones. Customize either theme below.</p>
+          <p className="aquarium-theme-hint">Choose a world, then make it your own below.</p>
         </section>
         <section>
           <h3>🌊 Pick your world</h3>
