@@ -1,3 +1,4 @@
+import { getPublishedThemeScenery } from './publishedScenery';
 import type { AquariumCustomization } from './types';
 import type { ThemeAsset } from '../../components/Aquarium3D/environment/createThemeScenery.ts';
 
@@ -66,6 +67,9 @@ export function isAquariumThemeSelected(
 }
 
 export function getAquariumThemeScenery(appearance: AquariumCustomization): ThemeInstance[] {
+  const published = getPublishedThemeScenery(appearance.themeId);
+  if (published) return published;
+
   const themeId = appearance.themeId === undefined
     ? (isAquariumThemeSelected(appearance, AQUARIUM_THEMES[0]) ? 'sunny-reef' : null)
     : appearance.themeId;

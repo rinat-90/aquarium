@@ -1,3 +1,4 @@
+import { loadPublishedScenery, subscribeToPublishedScenery } from '../../features/aquarium-customization/publishedScenery';
 import {
   useEffect,
   useRef,
@@ -82,6 +83,16 @@ export function ThreeAquariumView({
                                     selectedDecorationId = null,
                                     onDecorationSelect,
                                   }: ThreeAquariumViewProps) {
+  // The catalog is shared by the editor, phone renderer and TV renderer.
+  // A loaded catalog updates existing meshes without recreating the scene.
+  useEffect(() => {
+    const unsubscribe = subscribeToPublishedScenery(() => {
+      environmentRef.current?.setAppearance(appearanceRef.current);
+    });
+    void loadPublishedScenery();
+    return unsubscribe;
+  }, []);
+
   const environmentRef = useRef<AquariumEnvironmentController | null>(null);
   const appearanceRef = useRef(appearance ?? DEFAULT_AQUARIUM_CUSTOMIZATION);
   appearanceRef.current = appearance ?? DEFAULT_AQUARIUM_CUSTOMIZATION;
