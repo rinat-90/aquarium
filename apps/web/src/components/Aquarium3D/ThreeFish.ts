@@ -76,6 +76,11 @@ export async function createThreeFish(
   let lastElapsed: number | undefined;
   let swimPhase = Math.random() * Math.PI * 2;
   const glideOffset = Math.random() * Math.PI * 2;
+  const swimRate = 0.88 + Math.random() * 0.24;
+  const glideRate = 0.42 + Math.random() * 0.24;
+  const bobOffset = Math.random() * Math.PI * 2;
+  const swayOffset = Math.random() * Math.PI * 2;
+  let smoothedEffort = 0.65;
 
   const update: ThreeFish['update'] = (
     elapsed,
@@ -85,15 +90,20 @@ export async function createThreeFish(
     nibbleProgress = 0,
   ) => {
     const clampedIntensity = THREE.MathUtils.clamp(intensity, 0.35, 1.8);
-    const glideFactor = 0.5 + 0.5 * Math.sin(elapsed * 0.65 + glideOffset);
-    const swimEffort = THREE.MathUtils.lerp(0.35, 1, glideFactor);
-    const effectiveIntensity = clampedIntensity * swimEffort;
-
+    // This clock is supplied by the aquarium view and already scales with
+    // swimming speed. Smooth effort in that same time domain to avoid pops.
     const delta = lastElapsed === undefined
       ? 0
       : THREE.MathUtils.clamp(elapsed - lastElapsed, 0, 0.1);
     lastElapsed = elapsed;
-    swimPhase += delta * (1.8 + effectiveIntensity * 1.2);
+
+    const glideFactor = 0.5 + 0.5 * Math.sin(elapsed * glideRate + glideOffset);
+    const targetEffort = clampedIntensity * THREE.MathUtils.lerp(0.38, 1, glideFactor);
+    const effortBlend = 1 - Math.exp(-3.5 * delta);
+    smoothedEffort += (targetEffort - smoothedEffort) * effortBlend;
+    const effectiveIntensity = smoothedEffort;
+
+    swimPhase += delta * swimRate * (1.65 + effectiveIntensity * 1.25);
     if (swimPhase > Math.PI * 2) swimPhase %= Math.PI * 2;
 
     // A PlaneGeometry displays its texture with the same left/right orientation
@@ -110,9 +120,12 @@ export async function createThreeFish(
       Math.PI * THREE.MathUtils.clamp(nibbleProgress, 0, 1),
     );
     const nibble = Math.sin(elapsed * 12) * nibbleEnvelope * 0.09;
-    body.rotation.z = nibble;
+    // The head stays mostly stable. These small motions are intentionally
+    // independent of the tail phase so the whole fish doesn't wag as a unit.
+    const gentleSway = Math.sin(elapsed * 0.37 + swayOffset) * 0.012;
+    body.rotation.z = nibble + gentleSway;
     body.position.x = -Math.abs(nibble) * 0.12;
-    body.position.y = Math.sin(elapsed * 0.55) * 0.012;
+    body.position.y = Math.sin(elapsed * 0.48 + bobOffset) * 0.014;
 
     for (let i = 0; i < vertexCount; i += 1) {
       const offset = i * 3;
