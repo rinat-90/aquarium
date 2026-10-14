@@ -14,9 +14,9 @@ type PublishedTheme = {
   };
 };
 
-const supportedThemes = AQUARIUM_THEMES.filter(
-  (theme) => theme.id === 'sunny-reef' || theme.id === 'ocean-garden',
-);
+// Only built-in theme IDs have an established appearance and supported renderer.
+// The API remains the source of truth for which themes are published.
+const supportedThemes = AQUARIUM_THEMES;
 
 export const FALLBACK_THEMES: readonly AquariumTheme[] = supportedThemes;
 
