@@ -205,7 +205,7 @@ export function AquariumsPage() {
           <h1>My Aquariums</h1>
 
           <p className="aquariums-header__description">
-            Create different underwater worlds
+            Create, customize, and explore your underwater worlds
           </p>
 
           <p className="aquariums-header__count">
@@ -264,7 +264,7 @@ export function AquariumsPage() {
             </span>
 
             <strong>Create a new aquarium</strong>
-            <small>Design a new underwater world</small>
+            <small>Choose a theme, add fish, and make it your own.</small>
           </button>
         </div>
       )}

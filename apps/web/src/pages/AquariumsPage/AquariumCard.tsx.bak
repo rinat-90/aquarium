@@ -1,0 +1,55 @@
+import { Link } from 'react-router';
+import type { ApiAquarium } from '../../lib/aquarium-api';
+
+type AquariumCardProps = {
+  aquarium: ApiAquarium;
+  isBroadcasting?: boolean;
+};
+
+const THEME_LABELS: Record<string, string> = {
+  'sunny-reef': 'Sunny Reef',
+  'ocean-garden': 'Ocean Garden',
+  'midnight-sea': 'Midnight Sea',
+  'magic-lagoon': 'Magic Lagoon',
+};
+
+export function AquariumCard({ aquarium, isBroadcasting = false }: AquariumCardProps) {
+  const aquariumUrl = `/aquariums/${encodeURIComponent(aquarium.id)}`;
+  const editUrl = `${aquariumUrl}?decorate=1`;
+  const themeId = aquarium.themeId ?? 'sunny-reef';
+  const themeName = THEME_LABELS[themeId] ?? 'Custom World';
+
+  return (
+    <article className={`aquarium-card aquarium-card--${themeId}${isBroadcasting ? ' aquarium-card--broadcasting' : ''}`}>
+      <Link className="aquarium-card__preview" to={aquariumUrl} aria-label={`Open ${aquarium.name}`}>
+        <div className="aquarium-card__water">
+          <span className="aquarium-card__light" aria-hidden="true" />
+          <span className="aquarium-card__fish aquarium-card__fish--one" aria-hidden="true">🐠</span>
+          <span className="aquarium-card__fish aquarium-card__fish--two" aria-hidden="true">🐟</span>
+          <span className="aquarium-card__fish aquarium-card__fish--three" aria-hidden="true">🐡</span>
+          <span className="aquarium-card__plants" aria-hidden="true">🌿 🪸 🌱</span>
+          <span className="aquarium-card__sand" aria-hidden="true" />
+        </div>
+      </Link>
+      {isBroadcasting && (
+        <span className="aquarium-card__live-badge">
+          <span className="aquarium-card__live-dot" aria-hidden="true" />Live on TV
+        </span>
+      )}
+      <div className="aquarium-card__footer">
+        <div className="aquarium-card__info">
+          <Link to={aquariumUrl}>{aquarium.name}</Link>
+          <span>{aquarium.fish.length} fish · {themeName}</span>
+        </div>
+        <div className="aquarium-card__actions">
+          <Link className="aquarium-card__action aquarium-card__action--open" to={aquariumUrl} aria-label={`Open ${aquarium.name}`}>
+            <span aria-hidden="true">▷</span> Open
+          </Link>
+          <Link className="aquarium-card__action aquarium-card__action--edit" to={editUrl} aria-label={`Decorate ${aquarium.name}`}>
+            <span aria-hidden="true">⚙</span> Edit
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}

@@ -64,6 +64,13 @@ export function AquariumPage() {
   const [fishCollectionOpen, setFishCollectionOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
+
+  // Allow the dashboard's Edit button to open the appearance editor directly.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('decorate') === '1') {
+      setAppearanceOpen(true);
+    }
+  }, []);
   const [availableThemes, setAvailableThemes] = useState<readonly AquariumTheme[]>(FALLBACK_THEMES);
 
   useEffect(() => {

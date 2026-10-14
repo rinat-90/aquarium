@@ -504,3 +504,145 @@
     background: #34d399;
     box-shadow: 0 0 8px #34d399;
 }
+
+/* Family Aquarium — desktop dashboard visual refresh.
+   Append this stylesheet to AquariumsPage.css. Existing mobile behavior remains. */
+@media (min-width: 721px) {
+  .aquariums-layout {
+    --aq-background: #062a47;
+    --aq-panel: #0a2945;
+    --aq-border: #278ac1;
+    --aq-muted: #c3e5f5;
+    background: #06243e;
+  }
+  .aquariums-content {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 100dvh;
+    padding: clamp(35px, 4vw, 60px) clamp(24px, 3.5vw, 64px) 90px;
+    background:
+      radial-gradient(ellipse 60% 45% at 50% -18%, rgba(116,233,255,.48), transparent 80%),
+      radial-gradient(ellipse 30% 35% at 97% 43%, rgba(0,153,193,.22), transparent 85%),
+      linear-gradient(180deg,#076697 0%,#07517c 30%,#063657 65%,#092b44 100%);
+  }
+  .aquariums-content::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 11% 14%,transparent 0 8px,rgba(179,247,255,.55) 9px,transparent 11px),
+      radial-gradient(circle at 73% 10%,transparent 0 12px,rgba(179,247,255,.42) 13px,transparent 16px),
+      radial-gradient(circle at 91% 24%,transparent 0 5px,rgba(179,247,255,.48) 6px,transparent 8px),
+      radial-gradient(circle at 19% 60%,transparent 0 5px,rgba(179,247,255,.32) 6px,transparent 8px),
+      radial-gradient(circle at 85% 73%,transparent 0 9px,rgba(179,247,255,.27) 10px,transparent 13px),
+      repeating-linear-gradient(106deg,transparent 0 75px,rgba(151,241,255,.055) 88px 108px,transparent 125px 195px);
+    mask-image: linear-gradient(#000,rgba(0,0,0,.3) 90%);
+  }
+  .aquariums-content::after {
+    content: '🪸       🌿';
+    position: absolute;
+    z-index: -1;
+    bottom: -30px;
+    left: 1%;
+    width: 98%;
+    display: flex;
+    justify-content: space-between;
+    font-size: clamp(70px,9vw,145px);
+    opacity: .55;
+    pointer-events: none;
+    filter: saturate(.8);
+  }
+  .aquariums-header { margin-bottom: 30px; align-items: flex-start; }
+  .aquariums-header h1 { font-size: clamp(32px,3.5vw,46px); font-weight: 800; letter-spacing: -1.5px; text-shadow: 0 4px 18px #04273d70; }
+  .aquariums-header .aquariums-header__description { color: #e0f6ff; font-size: 16px; margin-top: 7px; }
+  .aquariums-create-button {
+    min-height: 48px; padding: 0 24px; border: 1px solid #44bdff;
+    border-radius: 15px; background: linear-gradient(135deg,#23b3ff,#087be6);
+    box-shadow: 0 9px 24px #00345470; font-weight: 750;
+  }
+  .aquariums-create-button:focus-visible,.aquariums-new-card:focus-visible { outline: 3px solid #a1f3ff; outline-offset: 4px; }
+  .aquariums-grid { grid-template-columns: repeat(auto-fill,minmax(min(100%,265px),1fr)); gap: 22px; align-items: stretch; }
+  .aquarium-card,.aquariums-new-card {
+    min-height: 365px; border-radius: 18px; border: 1px solid rgba(58,190,255,.7);
+    box-shadow: 0 18px 32px rgba(0,19,38,.25);
+    background: linear-gradient(165deg,#103f62,#08243f);
+  }
+  .aquarium-card { padding: 0; display: flex; flex-direction: column; }
+  .aquarium-card:hover { transform: translateY(-5px); border-color: #88e6ff; box-shadow: 0 20px 38px rgba(0,17,39,.4); }
+  .aquarium-card__preview { height: 238px; border-radius: 17px 17px 0 0; }
+  .aquarium-card__water { background: radial-gradient(ellipse at 47% -25%,#8beeff 0%,transparent 53%),linear-gradient(180deg,#0984ad,#075278 62%,#073451); }
+  .aquarium-card__light { background: repeating-linear-gradient(110deg,transparent 0 28px,rgba(208,252,255,.17) 40px 60px,transparent 72px 110px); }
+  .aquarium-card__fish { font-size: 47px; }
+  .aquarium-card__fish--two { font-size: 35px; }
+  .aquarium-card__fish--three { font-size: 31px; }
+  .aquarium-card__plants { font-size: 48px; }
+  .aquarium-card__sand { height: 50px; background: linear-gradient(#f6dfb0,#b58e5c); }
+  .aquarium-card__footer { padding: 16px 15px; flex: 1; align-items: center; }
+  .aquarium-card__info a { font-size: 17px; }
+  .aquarium-card__info span { color: #c4e2f5; font-size: 13px; }
+  .aquarium-card__action { width: 42px; height: 42px; border-radius: 11px; background: #16517c; }
+  .aquarium-card__live-badge { top: 12px; left: 12px; right: auto; background: rgba(3,93,76,.94); border-color: #37e2b3; }
+  .aquariums-new-card {
+    position: relative; border: 2px dashed rgba(102,207,255,.7);
+    background: linear-gradient(150deg,rgba(18,85,130,.8),rgba(7,38,65,.75));
+    padding: 28px;
+  }
+  .aquariums-new-card:hover { background: linear-gradient(150deg,#176b9b,#0c395d); }
+  .aquariums-new-card__icon { width: 70px; height: 70px; background: #116eb5; box-shadow: 0 8px 28px #002b4d80; font-size: 42px; }
+  .aquariums-new-card strong { font-size: 18px; }
+  .aquariums-new-card small { font-size: 13px; line-height: 1.6; max-width: 195px; }
+}
+@media (min-width: 721px) and (max-width: 1100px) {
+  .aquariums-grid { grid-template-columns: repeat(auto-fill,minmax(min(100%,225px),1fr)); }
+  .aquarium-card__preview { height: 195px; }
+  .aquarium-card,.aquariums-new-card { min-height: 320px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aquarium-card { transition: none; }
+}
+
+
+/* Aquarium cards — desktop redesign. Keep mobile layout overrides below. */
+@media (min-width: 721px) {
+  .aquariums-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 20px; }
+  .aquarium-card { padding: 0; border-radius: 18px; background: linear-gradient(180deg, #103956, #071d33); box-shadow: 0 15px 35px #00101e55; }
+  .aquarium-card__preview { height: 205px; border-radius: 17px 17px 0 0; }
+  .aquarium-card__footer { display: block; padding: 14px; }
+  .aquarium-card__info { margin-bottom: 15px; }
+  .aquarium-card__info a { font-size: 17px; }
+  .aquarium-card__info span { font-size: 12px; }
+  .aquarium-card__actions { display: flex; gap: 10px; }
+  .aquarium-card__action { width: auto; height: 40px; flex: 1; gap: 7px; display: flex; align-items: center; justify-content: center; border: 1px solid #ffffff29; font-size: 13px; font-weight: 700; }
+  .aquarium-card__action--open { background: linear-gradient(120deg, #18b7ff, #1779ed); border-color: #44bfff; }
+  .aquarium-card__action--edit { background: #ffffff12; }
+  .aquarium-card__action:hover { background-color: #26608c; }
+  .aquarium-card__live-badge { top: 12px; right: auto; left: 12px; }
+  .aquariums-new-card { min-height: 330px; border-radius: 18px; }
+}
+.aquarium-card--ocean-garden .aquarium-card__water { background: radial-gradient(ellipse at 48% -20%, #b8fff5, transparent 45%), linear-gradient(180deg, #158ca6, #063952); }
+.aquarium-card--midnight-sea .aquarium-card__water { background: radial-gradient(ellipse at 50% -30%, #6579c6, transparent 55%), linear-gradient(180deg, #233c80, #050c27); }
+.aquarium-card--magic-lagoon .aquarium-card__water { background: radial-gradient(ellipse at 50% -20%, #e7b4ff, transparent 50%), linear-gradient(180deg, #8756c7, #241557); }
+.aquarium-card__preview:focus-visible, .aquarium-card__action:focus-visible { outline: 3px solid #a8f4ff; outline-offset: 2px; }
+@media (max-width: 720px) {
+  .aquarium-card__actions { display: flex; gap: 8px; }
+  .aquarium-card__action { width: auto; min-width: 72px; padding: 0 12px; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 13px; }
+}
+
+
+/* Theme-aware, inexpensive card previews (no extra WebGL canvases). */
+.aquarium-card__preview-scenery { position:absolute; z-index:2; bottom:7px; left:4%; right:4%; display:flex; justify-content:space-around; font-size:34px; letter-spacing:8px; pointer-events:none; text-shadow:0 5px 7px #00192c99; }
+.aquarium-card__preview-fish { position:absolute; z-index:3; width:42px; height:28px; border-radius:55% 48% 48% 55%; background:radial-gradient(circle at 72% 38%, #fff9 0 4%, transparent 6%),var(--fish-body); border:1px solid #ffffff70; box-shadow:inset -8px -4px 8px #001b3a38, 0 7px 12px #001b3a77; pointer-events:none; }
+.aquarium-card__preview-fish::before { content:''; position:absolute; left:-13px; top:4px; width:18px; height:22px; background:var(--fish-fin); clip-path:polygon(100% 50%,0 0,0 100%); }
+.aquarium-card__preview-fish::after { content:''; position:absolute; right:7px; top:9px; width:4px; height:4px; border-radius:50%; background:#09243d; box-shadow:0 0 0 2px #fff9; }
+.aquarium-card__preview-fish--angelfish { width:32px; height:42px; border-radius:55% 45% 55% 45%; }
+.aquarium-card__preview-fish--guppy { width:33px; height:22px; }
+.aquarium-card__preview-fish--drawn { border-radius:40% 60% 55% 50%; }
+.aquarium-card__empty-preview { position:absolute; z-index:3; top:45%; left:12%; right:12%; text-align:center; font-size:13px; color:#f2faffd9; text-shadow:0 2px 5px #001d35; }
+.aquarium-card--midnight-sea .aquarium-card__sand { background:linear-gradient(#626781,#323850); }
+.aquarium-card--magic-lagoon .aquarium-card__sand { background:linear-gradient(#c2a9da,#7e6d9b); }
+.aquarium-card--ocean-garden .aquarium-card__sand { background:linear-gradient(#e6d3a3,#b8a073); }
+@media(min-width:721px) { .aquarium-card { min-height:0; } .aquarium-card__preview { height:200px; } .aquarium-card__footer { padding:14px; } .aquarium-card__info { margin-bottom:12px; } .aquariums-new-card { min-height:310px; } }
+@media(prefers-reduced-motion:no-preference) { .aquarium-card__preview-fish { animation: aquarium-preview-bob 4s ease-in-out infinite alternate; } .aquarium-card__preview-fish:nth-of-type(even) { animation-delay:-1.7s; } @keyframes aquarium-preview-bob { from { translate:0 -3px; } to { translate:0 5px; } } }
