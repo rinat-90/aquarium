@@ -230,6 +230,20 @@ export function AquariumsPage() {
         </div>
 
         <button
+          className="aquariums-mobile-add-button"
+          type="button"
+          onClick={openCreateModal}
+          aria-label="Create a new aquarium"
+          title="Create a new aquarium"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"
+            aria-hidden="true" focusable="false">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </button>
+
+        <button
           className="aquariums-create-button"
           type="button"
           onClick={openCreateModal}

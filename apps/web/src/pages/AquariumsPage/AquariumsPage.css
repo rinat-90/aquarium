@@ -658,3 +658,46 @@
 .aquariums-create-choice small { color: #b5d2e2; margin-top: 3px; line-height: 1.35; }
 .aquariums-create-theme { display: grid; gap: 7px; color: #eaf9ff; font-weight: 600; }
 .aquariums-create-theme select { width: 100%; min-height: 42px; padding: 8px 12px; border-radius: 10px; border: 1px solid #5791b0; background: #092b45; color: white; }
+
+/* Mobile dashboard: breathing room around cards, without insetting global chrome. */
+@media (max-width: 720px) {
+  .aquariums-layout .aquariums-content {
+    box-sizing: border-box;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  .aquariums-header { margin-bottom: 20px; }
+  .aquariums-grid { gap: 16px; }
+}
+
+/* Add aquarium: compact icon action on phone and tablet only. */
+.aquariums-mobile-add-button { display: none; }
+@media (max-width: 1024px) {
+  .aquariums-header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .aquariums-header > div:first-child { min-width: 0; }
+  .aquariums-header .aquariums-create-button { display: none; }
+  .aquariums-header .aquariums-mobile-add-button {
+    display: inline-flex;
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(93, 199, 245, .45);
+    border-radius: 13px;
+    background: #155778;
+    color: #e7faff;
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+  .aquariums-header .aquariums-mobile-add-button:hover { background: #1a7096; }
+  .aquariums-header .aquariums-mobile-add-button:focus-visible {
+    outline: 3px solid #9eeaff;
+    outline-offset: 3px;
+  }
+}

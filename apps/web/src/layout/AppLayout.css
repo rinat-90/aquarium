@@ -350,3 +350,18 @@ html, body, #root { margin: 0; min-height: 100%; }
 .aquariums-mobile-nav__item.is-active .aquariums-mobile-nav__svg {
   color: #83e5ff;
 }
+
+/* Content spacing below the fixed app header.
+   68px / 66px accounts for header height; the remainder is breathing room.
+   Keep these rules last to override earlier legacy padding declarations. */
+@media (min-width: 1025px) {
+  .aquariums-layout--with-header .aquariums-content {
+    padding-top: 92px; /* 68px header + 24px gap */
+  }
+}
+@media (max-width: 1024px) {
+  .aquariums-layout--with-header .aquariums-content,
+  .aquariums-layout--create-fish .aquariums-content {
+    padding-top: 86px; /* 66px header + 20px gap */
+  }
+}
