@@ -3,10 +3,12 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { authClient } from '../../lib/auth-client';
 import { aquariumApi } from '../../lib/aquarium-api';
 import './ProfilePage.css';
+import './ProfileAccount.css';
 
 type ProfileUser = {
   name: string;
   email: string;
+  emailVerified: boolean;
   createdAt?: string | Date;
 };
 
@@ -15,6 +17,15 @@ export function ProfilePage() {
 
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [changingEmail, setChangingEmail] = useState(false);
+  const [changeEmailMessage, setChangeEmailMessage] = useState('');
+  const [changeEmailError, setChangeEmailError] = useState('');
+  const [sendingVerification, setSendingVerification] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState('');
+  const [verificationError, setVerificationError] = useState('');
+
 
   const [user, setUser] = useState<ProfileUser | null>(null);
   const [name, setName] = useState('');
@@ -31,8 +42,10 @@ export function ProfilePage() {
 
     async function loadProfile() {
       try {
+        // Fetch current account data after an email verification callback.
+        // Do not use the potentially stale cookie-cached session here.
         const result = await authClient.getSession({
-          query: {},
+          query: { disableCookieCache: true },
         });
 
         if (result.error) {
@@ -49,6 +62,7 @@ export function ProfilePage() {
           setUser({
             name: sessionUser.name,
             email: sessionUser.email,
+            emailVerified: sessionUser.emailVerified,
             createdAt: sessionUser.createdAt,
           });
 
@@ -83,8 +97,19 @@ export function ProfilePage() {
     void loadProfile();
     void loadStatistics();
 
+    // Verification links may return to an already-open profile tab.
+    // Re-read the account when the tab becomes active again.
+    const refreshOnFocus = () => { void loadProfile(); };
+    const refreshOnVisibility = () => {
+      if (document.visibilityState === 'visible') void loadProfile();
+    };
+    window.addEventListener('focus', refreshOnFocus);
+    document.addEventListener('visibilitychange', refreshOnVisibility);
+
     return () => {
       cancelled = true;
+      window.removeEventListener('focus', refreshOnFocus);
+      document.removeEventListener('visibilitychange', refreshOnVisibility);
     };
   }, []);
 
@@ -130,6 +155,57 @@ export function ProfilePage() {
       })
     : '—';
 
+  async function handleResendVerification() {
+    if (!user || user.emailVerified || sendingVerification) return;
+    setSendingVerification(true);
+    setVerificationMessage('');
+    setVerificationError('');
+
+    try {
+      const result = await authClient.sendVerificationEmail({
+        email: user.email,
+        callbackURL: `${window.location.origin}/profile`,
+      });
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Unable to send verification email');
+      }
+      setVerificationMessage('Verification email sent. Please check your inbox.');
+    } catch {
+      setVerificationError('Unable to send verification email. Please try again.');
+    } finally {
+      setSendingVerification(false);
+    }
+  }
+
+  async function handleChangeEmail(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!user || changingEmail) return;
+    const nextEmail = newEmail.trim().toLowerCase();
+    if (!nextEmail || nextEmail === user.email.toLowerCase()) {
+      setChangeEmailError('Enter a different email address.');
+      return;
+    }
+    setChangingEmail(true);
+    setChangeEmailError('');
+    setChangeEmailMessage('');
+    try {
+      const result = await authClient.changeEmail({
+        newEmail: nextEmail,
+        callbackURL: `${window.location.origin}/profile`,
+      });
+      if (result.error) throw new Error(result.error.message ?? 'Unable to change email');
+      setChangeEmailMessage(
+        'Verification email sent to your new address. Open that email and click Verify My Email to complete the change.',
+      );
+      setEditingEmail(false);
+      setNewEmail('');
+    } catch (err) {
+      setChangeEmailError(err instanceof Error ? err.message : 'Unable to change email.');
+    } finally {
+      setChangingEmail(false);
+    }
+  }
+
   async function handleSignOut() {
     if (signingOut) return;
 
@@ -172,6 +248,8 @@ export function ProfilePage() {
         </div>
       </section>
 
+      <form id="profile-change-email-form" onSubmit={(event) => void handleChangeEmail(event)} />
+
       <div className="profile-grid">
         <section className="profile-card">
           <h2>Account Information</h2>
@@ -195,6 +273,49 @@ export function ProfilePage() {
             <label htmlFor="profile-email">Email Address</label>
 
             <input id="profile-email" value={user?.email ?? ''} readOnly />
+
+            <div className="profile-change-email">
+              {!editingEmail ? (
+                <button type="button" className="profile-secondary-action" onClick={() => {
+                  setEditingEmail(true);
+                  setChangeEmailError('');
+                  setChangeEmailMessage('');
+                }} disabled={!user}>
+                  Change Email
+                </button>
+              ) : (
+                <div className="profile-email-editor">
+                  <label htmlFor="profile-new-email">New email address</label>
+                  <input form="profile-change-email-form" id="profile-new-email" type="email" autoComplete="email" value={newEmail}
+                    onChange={(event) => setNewEmail(event.target.value)} placeholder="new@example.com" required />
+                  <div className="profile-email-actions">
+                    <button type="button" className="profile-secondary-action" onClick={() => {
+                      setEditingEmail(false); setNewEmail(''); setChangeEmailError('');
+                    }} disabled={changingEmail}>Cancel</button>
+                    <button type="submit" form="profile-change-email-form" disabled={changingEmail || !newEmail.trim()}>
+                      {changingEmail ? 'Sending...' : 'Continue'}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {changeEmailMessage && <p className="profile-success" role="status">{changeEmailMessage}</p>}
+              {changeEmailError && <p className="profile-error" role="alert">{changeEmailError}</p>}
+            </div>
+
+            <div className="profile-email-verification" style={{ marginTop: 12, marginBottom: 20 }}>
+              {user?.emailVerified ? (
+                <p className="profile-success" role="status">✓ Email verified</p>
+              ) : user ? (
+                <>
+                  <p>Your email address hasn't been verified yet.</p>
+                  <button type="button" onClick={() => void handleResendVerification()} disabled={sendingVerification}>
+                    {sendingVerification ? 'Sending...' : 'Resend Verification Email'}
+                  </button>
+                  {verificationMessage && <p className="profile-success" role="status">{verificationMessage}</p>}
+                  {verificationError && <p className="profile-error" role="alert">{verificationError}</p>}
+                </>
+              ) : null}
+            </div>
 
             {error && (
               <p className="profile-error" role="alert">
@@ -241,7 +362,7 @@ export function ProfilePage() {
         </section>
       </div>
 
-      <section className="profile-mobile-signout">
+      <section className="profile-account-signout">
         <button type="button" onClick={() => void handleSignOut()} disabled={signingOut}>
           <span aria-hidden="true">↪</span>
           {signingOut ? 'Signing out...' : 'Sign Out'}

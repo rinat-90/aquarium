@@ -29,7 +29,7 @@ export function AuthScreen() {
   }
 
   if (session) {
-    return <Navigate to={redirectTo} replace />;
+    return <Navigate to={session.user.emailVerified ? redirectTo : `/verify-email?email=${encodeURIComponent(session.user.email)}`} replace />;
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -54,7 +54,11 @@ export function AuthScreen() {
         return;
       }
 
-      navigate(redirectTo, { replace: true });
+      if (isSignUp) {
+        navigate(`/verify-email?email=${encodeURIComponent(email.trim())}`, { replace: true });
+      } else {
+        navigate(redirectTo, { replace: true });
+      }
     } catch {
       setError('Unable to connect to the server. Please try again.');
     } finally {

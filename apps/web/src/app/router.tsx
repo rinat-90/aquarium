@@ -14,6 +14,12 @@ const ResetPasswordPage = lazy(() =>
   })),
 );
 
+const VerifyEmailPage = lazy(() =>
+  import('../pages/VerifyEmailPage/VerifyEmailPage').then((module) => ({
+    default: module.VerifyEmailPage,
+  })),
+);
+
 const AuthScreen = lazy(() =>
   import('../components/Auth/AuthScreen').then((module) => ({ default: module.AuthScreen })),
 );
@@ -106,6 +112,11 @@ export const router = createBrowserRouter([
   {
     path: '/reset-password',
     element: lazyPage(<ResetPasswordPage />),
+  },
+
+  {
+    path: '/verify-email',
+    element: lazyPage(<VerifyEmailPage />),
   },
 
   // Public TV routes.
