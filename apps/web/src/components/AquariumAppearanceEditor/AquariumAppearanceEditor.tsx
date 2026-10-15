@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import './AquariumDecorationCatalog.css';
 import './AquariumWorkspace.css';
+import './AquariumAppearanceDrawer.css';
 import { applyAquariumTheme, isAquariumThemeSelected } from '../../features/aquarium-customization/themeRegistry';
 import type { AquariumTheme } from '../../features/aquarium-customization/themeRegistry';
 import type {

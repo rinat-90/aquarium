@@ -1,1 +1,3 @@
-Create aquarium: choose Empty (default) or Starter Theme; persist appearance; navigate to editor; empty-state editor prompt. No commits. Apply: unzip -o ~/Downloads/aquarium-create-editor-flow-patch.zip -d . then pnpm --filter @aquarium/web build. Note: existing API POST creates by name, PATCH persists appearance; check server support.
+Apply from aquarium repository root: unzip -o ~/Downloads/aquarium-decorate-right-drawer.zip -d .
+Then pnpm --filter @aquarium/web build && git diff --check
+No commits made.

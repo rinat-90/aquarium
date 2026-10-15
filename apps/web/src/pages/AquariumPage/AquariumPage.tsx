@@ -698,6 +698,7 @@ export function AquariumPage() {
             onViewFish={handleOpenFishList}
             onFeed={handleFeedFish}
             onSettings={() => setSettingsOpen(true)}
+            onDecorate={() => setAppearanceOpen(true)}
           />
 
           <ThreeAquariumView
@@ -728,17 +729,6 @@ export function AquariumPage() {
             }}
           />
         </>
-      )}
-
-      {!isMobile && !appearanceOpen && (
-        <button
-          type="button"
-          className="aquarium-appearance-launch"
-          onClick={() => setAppearanceOpen(true)}
-          aria-label="Customize aquarium appearance"
-        >
-          <span aria-hidden="true">🎨</span> Decorate
-        </button>
       )}
 
       <AquariumAppearanceEditor

@@ -133,3 +133,31 @@
         font-size: 10px;
     }
 }
+
+/* Keep Settings at the far right of the aquarium header. */
+.aquarium-hud__settings { margin-left: auto; width: 48px; height: 48px; align-self: center !important; flex-shrink: 0; }
+.aquarium-hud__settings svg { display: block; }
+@media (max-width: 540px) {
+  .aquarium-hud__settings { width: 44px; height: 44px; }
+  .aquarium-hud__actions { width: calc(100vw - 24px); justify-content: space-around; box-sizing: border-box; }
+  .aquarium-hud__actions button { min-width: 0; flex: 1; }
+}
+
+/* Header actions match in size, outline and vertical alignment. */
+.aquarium-hud__header { align-items: stretch; }
+.aquarium-hud__header > .aquarium-hud__icon-button {
+    width: 56px;
+    min-width: 56px;
+    height: auto;
+    min-height: 56px;
+    align-self: stretch !important;
+    box-sizing: border-box;
+    padding: 0;
+}
+.aquarium-hud__header > .aquarium-hud__settings {
+    margin-left: auto;
+    width: 56px;
+    height: auto;
+    align-self: stretch !important;
+}
+.aquarium-hud__settings svg { width: 22px; height: 22px; }
