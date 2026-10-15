@@ -154,7 +154,13 @@ export function AuthScreen() {
               </div>
             </div>
 
-            {error && (
+            {!isSignUp && (
+            <p className="auth-switch">
+              <Link to="/forgot-password">Forgot password?</Link>
+            </p>
+          )}
+
+          {error && (
               <div className="auth-error" role="alert">
                 {error}
               </div>

@@ -425,3 +425,98 @@
     transition: none;
   }
 }
+
+
+/* Password recovery screens */
+
+.auth-page .auth-container {
+  width: min(100% - 32px, 440px);
+}
+
+.auth-card {
+  padding: 36px 32px;
+}
+
+.auth-card-heading {
+  margin-bottom: 28px;
+}
+
+.auth-card-heading h2 {
+  margin-bottom: 10px;
+}
+
+.auth-card-heading p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auth-field label {
+  margin: 0;
+}
+
+.auth-field input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 50px;
+}
+
+.auth-password-wrapper {
+  position: relative;
+}
+
+.auth-password-wrapper input {
+  padding-right: 76px;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+}
+
+.auth-submit {
+  width: 100%;
+  min-height: 52px;
+  margin-top: 8px;
+}
+
+.auth-switch {
+  margin: 24px 0 0;
+  text-align: center;
+}
+
+.auth-success {
+  padding: 16px 18px;
+  background: #e4f6f2;
+  border: 1px solid #b9e7dd;
+  border-radius: 12px;
+  color: #155e57;
+  line-height: 1.6;
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 30px 22px;
+  }
+
+  .auth-card-heading {
+    margin-bottom: 24px;
+  }
+
+  .auth-form {
+    gap: 18px;
+  }
+}

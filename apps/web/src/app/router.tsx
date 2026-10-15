@@ -2,6 +2,18 @@ import { lazy, Suspense, type ReactNode } from 'react';
 
 import { createBrowserRouter, Navigate } from 'react-router';
 
+const ForgotPasswordPage = lazy(() =>
+  import('../pages/ForgotPasswordPage/ForgotPasswordPage').then((module) => ({
+    default: module.ForgotPasswordPage,
+  })),
+);
+
+const ResetPasswordPage = lazy(() =>
+  import('../pages/ResetPasswordPage/ResetPasswordPage').then((module) => ({
+    default: module.ResetPasswordPage,
+  })),
+);
+
 const AuthScreen = lazy(() =>
   import('../components/Auth/AuthScreen').then((module) => ({ default: module.AuthScreen })),
 );
@@ -84,6 +96,16 @@ export const router = createBrowserRouter([
   {
     path: '/signup',
     element: lazyPage(<AuthScreen />),
+  },
+
+  {
+    path: '/forgot-password',
+    element: lazyPage(<ForgotPasswordPage />),
+  },
+
+  {
+    path: '/reset-password',
+    element: lazyPage(<ResetPasswordPage />),
   },
 
   // Public TV routes.

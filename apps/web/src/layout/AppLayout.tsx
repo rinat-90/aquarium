@@ -1,10 +1,7 @@
-import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { authClient } from '../lib/auth-client.ts';
 import './AppLayout.css';
-
-type DashboardUser = { name: string };
 
 type NavIconName = 'waves' | 'fish' | 'radio-tower' | 'user-round';
 
@@ -62,7 +59,17 @@ function NavIcon({ name }: { name: NavIconName }) {
   );
 }
 
+type SessionUser = {
+  name: string;
+};
+
 export function AppLayout() {
+  const { data } = authClient.useSession();
+
+  const session = data as { user: SessionUser } | null;
+
+  const displayName = session?.user?.name?.trim() || 'Aquarium User';
+
   const { pathname } = useLocation();
   // Create Fish retains its standalone heading on desktop only.
   const isCreateFish = pathname === '/fish/create';
@@ -75,33 +82,6 @@ export function AppLayout() {
         : pathname === '/profile'
           ? 'Profile'
           : 'Aquariums';
-  const [user, setUser] = useState<DashboardUser | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function loadUser() {
-      try {
-        const result: unknown = await authClient.getSession({ query: {} });
-        if (typeof result !== 'object' || result === null || !('data' in result)) return;
-        const data = result.data;
-        if (typeof data !== 'object' || data === null || !('user' in data)) return;
-        const sessionUser = data.user;
-        if (typeof sessionUser !== 'object' || sessionUser === null || !('name' in sessionUser))
-          return;
-        if (!cancelled && typeof sessionUser.name === 'string') {
-          setUser({ name: sessionUser.name });
-        }
-      } catch {
-        // The protected route handles authentication; keep the fallback label here.
-      }
-    }
-    void loadUser();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const displayName = user?.name?.trim() || 'Aquarium User';
 
   return (
     <div
