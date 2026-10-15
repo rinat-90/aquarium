@@ -1100,6 +1100,8 @@ export function ThreeAquariumView({
     let fpsElapsed = 0;
     let animationFrame = 0;
     let currentQuality = graphicsQuality.getQuality();
+    // Reuse this collection across frames to avoid per-frame allocations.
+    const existingFoodIds = new Set<string>();
 
     const animate = () => {
       if (cancelled) {
@@ -1165,8 +1167,7 @@ export function ThreeAquariumView({
       /*
        * Synchronize food.
        */
-      const existingFoodIds =
-        new Set<string>();
+      existingFoodIds.clear();
 
       for (
         const food of
