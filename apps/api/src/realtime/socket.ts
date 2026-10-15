@@ -61,7 +61,9 @@ export function switchTvDisplayAquarium(sessionId: string, aquariumId: string) {
     }
 
     socket.data.displayAquariumId = aquariumId;
-    void socket.join(aquariumRoom(aquariumId));
+    if (socket.data.displayPaused !== true) {
+      void socket.join(aquariumRoom(aquariumId));
+    }
 
     socket.emit('tv:aquarium-switched', { aquariumId });
   }
@@ -81,6 +83,7 @@ export function initializeSocket(httpServer: HttpServer, webOrigin: string | str
       socket.data.displaySessionId = null;
       socket.data.displayAquariumId = null;
       socket.data.displayExpiresAt = null;
+      socket.data.displayPaused = false;
 
       const displayToken = socket.handshake.auth?.displayToken;
       if (displayToken !== undefined) {
@@ -105,6 +108,7 @@ export function initializeSocket(httpServer: HttpServer, webOrigin: string | str
         socket.data.displaySessionId = session.id;
         socket.data.displayAquariumId = aquarium.id;
         socket.data.displayExpiresAt = session.expiresAt.getTime();
+        socket.data.displayPaused = session.pausedAt !== null;
         return next();
       }
 
