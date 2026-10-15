@@ -59,6 +59,8 @@ type ThreeAquariumViewProps = {
   interactive?: boolean;
   /** Show renderer performance statistics. */
   showDebugStats?: boolean;
+  /** Render inside a parent container instead of covering the viewport. */
+  embedded?: boolean;
 
   decorationEditing?: boolean;
   onDecorationMove?: (id: string, normalizedX: number) => void;
@@ -78,6 +80,7 @@ export function ThreeAquariumView({
                                     onFishSelect,
                                     interactive = true,
                                     showDebugStats = import.meta.env.DEV,
+                                    embedded = false,
                                     decorationEditing = false,
                                     onDecorationMove,
                                     selectedDecorationId = null,
@@ -1462,10 +1465,10 @@ export function ThreeAquariumView({
     <div
       ref={containerRef}
       style={{
-        position: 'fixed',
-        inset: 0,
-        width: '100vw',
-        height: '100dvh',
+        position: embedded ? 'relative' : 'fixed',
+        inset: embedded ? undefined : 0,
+        width: embedded ? '100%' : '100vw',
+        height: embedded ? '100%' : '100dvh',
         overflow: 'hidden',
         backgroundColor: '#04132f',
       }}

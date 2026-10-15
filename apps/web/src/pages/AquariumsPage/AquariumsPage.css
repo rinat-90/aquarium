@@ -646,3 +646,15 @@
 .aquarium-card--ocean-garden .aquarium-card__sand { background:linear-gradient(#e6d3a3,#b8a073); }
 @media(min-width:721px) { .aquarium-card { min-height:0; } .aquarium-card__preview { height:200px; } .aquarium-card__footer { padding:14px; } .aquarium-card__info { margin-bottom:12px; } .aquariums-new-card { min-height:310px; } }
 @media(prefers-reduced-motion:no-preference) { .aquarium-card__preview-fish { animation: aquarium-preview-bob 4s ease-in-out infinite alternate; } .aquarium-card__preview-fish:nth-of-type(even) { animation-delay:-1.7s; } @keyframes aquarium-preview-bob { from { translate:0 -3px; } to { translate:0 5px; } } }
+
+/* Aquarium creation: large, child-friendly starting choices. */
+.aquariums-create-choices { border: 0; margin: 20px 0 0; padding: 0; display: grid; gap: 10px; min-width: 0; }
+.aquariums-create-choices legend { margin-bottom: 10px; font-weight: 700; color: #eaf9ff; }
+.aquariums-create-choice { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid rgba(138,207,239,.26); border-radius: 14px; background: rgba(5,36,64,.48); cursor: pointer; color: #eaf9ff; }
+.aquariums-create-choice.is-selected { border-color: #69dafa; background: rgba(28,108,150,.3); }
+.aquariums-create-choice input { accent-color: #69dafa; flex-shrink: 0; }
+.aquariums-create-choice__icon { font-size: 24px; color: #8ce6ff; }
+.aquariums-create-choice strong,.aquariums-create-choice small { display: block; }
+.aquariums-create-choice small { color: #b5d2e2; margin-top: 3px; line-height: 1.35; }
+.aquariums-create-theme { display: grid; gap: 7px; color: #eaf9ff; font-weight: 600; }
+.aquariums-create-theme select { width: 100%; min-height: 42px; padding: 8px 12px; border-radius: 10px; border: 1px solid #5791b0; background: #092b45; color: white; }

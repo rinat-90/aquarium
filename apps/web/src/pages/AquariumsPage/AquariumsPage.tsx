@@ -7,6 +7,9 @@ import {
   type ApiAquarium,
 } from '../../lib/aquarium-api';
 import { tvPairingApi } from '../../lib/tv-pairing-api';
+import { saveAquariumAppearance } from '../../lib/save-aquarium-appearance';
+import { AQUARIUM_THEMES } from '../../features/aquarium-customization/themeRegistry';
+import { DEFAULT_AQUARIUM_CUSTOMIZATION } from '../../features/aquarium-customization/types';
 
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
@@ -30,10 +33,14 @@ export function AquariumsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [newAquariumName, setNewAquariumName] = useState('');
   const [creating, setCreating] = useState(false);
+  const [createMode, setCreateMode] = useState<'empty' | 'starter'>('empty');
+  const [starterThemeId, setStarterThemeId] = useState(AQUARIUM_THEMES[0].id);
   const [createError, setCreateError] = useState<string | null>(null);
 
   function openCreateModal() {
     setNewAquariumName('');
+    setCreateMode('empty');
+    setStarterThemeId(AQUARIUM_THEMES[0].id);
     setCreateError(null);
     setCreateOpen(true);
   }
@@ -60,12 +67,20 @@ export function AquariumsPage() {
 
     try {
       const aquarium = await aquariumApi.create(name);
+      const starter = AQUARIUM_THEMES.find((theme) => theme.id === starterThemeId) ?? AQUARIUM_THEMES[0];
+      const appearance = createMode === 'empty'
+        ? { ...DEFAULT_AQUARIUM_CUSTOMIZATION, themeId: null, bubbles: 'none' as const }
+        : { ...DEFAULT_AQUARIUM_CUSTOMIZATION, ...starter.appearance, themeId: starter.id };
 
+      // Creation uses the existing POST endpoint, then saves initial appearance.
+      try {
+        await saveAquariumAppearance(aquarium.id, appearance);
+      } catch (appearanceError) {
+        // The aquarium already exists: don't retry creation and duplicate it.
+        console.error('Could not save initial aquarium appearance:', appearanceError);
+      }
       setCreateOpen(false);
-
-      navigate(
-        `/aquariums/${encodeURIComponent(aquarium.id)}`,
-      );
+      navigate(`/aquariums/edit/${encodeURIComponent(aquarium.id)}`);
     } catch (err) {
       setCreateError(
         err instanceof Error
@@ -272,7 +287,7 @@ export function AquariumsPage() {
       <Modal
         open={createOpen}
         title="Create an Aquarium"
-        description="Give your new underwater world a name."
+        description="Name your underwater world and choose how to begin."
         onClose={closeCreateModal}
         footer={
           <>
@@ -322,6 +337,32 @@ export function AquariumsPage() {
             }}
             disabled={creating}
           />
+
+          <fieldset className="aquariums-create-choices" disabled={creating}>
+            <legend>How would you like to start?</legend>
+            <label className={`aquariums-create-choice${createMode === 'empty' ? ' is-selected' : ''}`}>
+              <input type="radio" name="aquarium-start" value="empty"
+                checked={createMode === 'empty'} onChange={() => setCreateMode('empty')} />
+              <span className="aquariums-create-choice__icon" aria-hidden="true">◯</span>
+              <span><strong>Empty Aquarium</strong><small>Start from scratch with water and light</small></span>
+            </label>
+            <label className={`aquariums-create-choice${createMode === 'starter' ? ' is-selected' : ''}`}>
+              <input type="radio" name="aquarium-start" value="starter"
+                checked={createMode === 'starter'} onChange={() => setCreateMode('starter')} />
+              <span className="aquariums-create-choice__icon" aria-hidden="true">✦</span>
+              <span><strong>Starter Theme</strong><small>Begin with a ready-made underwater world</small></span>
+            </label>
+            {createMode === 'starter' && (
+              <label className="aquariums-create-theme">
+                Choose a theme
+                <select value={starterThemeId} onChange={(event) => setStarterThemeId(event.target.value)}>
+                  {AQUARIUM_THEMES.filter((theme) => theme.access === 'free').map((theme) => (
+                    <option key={theme.id} value={theme.id}>{theme.name}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </fieldset>
 
           {createError && (
             <p className="aquarium-form-error" role="alert">

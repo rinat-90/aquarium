@@ -89,6 +89,11 @@ export function CreateFishPage() {
     );
   };
 
+  const handleScanFish = () => {
+    if (!canCreate) return;
+    navigate(`/fish/create/scan?aquariumId=${encodeURIComponent(validAquariumId)}`);
+  };
+
   const handleCustomizeFish = () => {
     if (!canCreate) return;
 
@@ -199,6 +204,24 @@ export function CreateFishPage() {
             <span className="create-fish-card__action">
               Start Drawing →
             </span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          className="create-fish-card"
+          disabled={!canCreate}
+          onClick={handleScanFish}
+        >
+          <div className="create-fish-card__art create-fish-card__art--scan" aria-hidden="true">
+            <div className="create-fish-scan__paper"><span>🐠</span></div>
+            <div className="create-fish-scan__phone"><span>📷</span><i /></div>
+            <span className="create-fish-scan__sparkle">✦</span>
+          </div>
+          <div className="create-fish-card__content">
+            <h2>Scan Your Drawing</h2>
+            <p>Draw a fish on paper, scan it with your camera, and bring it to life.</p>
+            <span className="create-fish-card__action">Scan Drawing →</span>
           </div>
         </button>
 

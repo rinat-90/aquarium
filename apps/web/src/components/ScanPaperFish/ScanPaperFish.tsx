@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
-import type { ChangeEvent } from 'react';
+import type { ChangeEvent, DragEvent } from 'react';
 import { useNavigate } from 'react-router';
 
 import { AQUARIUM_CAPACITY, createFish } from '../../lib/create-fish';
@@ -16,15 +16,18 @@ import {
 import { flipFishImage } from '../../lib/image-processing/flipFishImage';
 
 import { GuidedFishCamera } from './GuidedFishCamera';
+import './ScanPaperFishPriority.css';
 
 type ScanPaperFishProps = {
   aquariumId: string;
   onSaved?: () => void;
+  variant?: 'default' | 'studio';
 };
 
 export function ScanPaperFish({
                                 aquariumId,
                                 onSaved,
+                                variant = 'default',
                               }: ScanPaperFishProps) {
   const navigate = useNavigate();
 
@@ -32,6 +35,7 @@ export function ScanPaperFish({
   const savingRef = useRef(false);
 
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
@@ -109,6 +113,14 @@ export function ScanPaperFish({
     if (file) {
       void processPhoto(file);
     }
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    if (isProcessing || saving) return;
+    const file = event.dataTransfer.files[0];
+    if (file) void processPhoto(file);
   };
 
   // Guided browser camera.
@@ -214,7 +226,7 @@ export function ScanPaperFish({
   };
 
   return (
-    <div style={{ padding: 20 }}>
+    <div className={variant === 'studio' ? 'scan-paper-fish scan-paper-fish--studio' : 'scan-paper-fish'} style={{ padding: variant === 'studio' ? 0 : 20 }}>
       {cameraOpen && (
         <GuidedFishCamera
           onCapture={handleGuidedCapture}
@@ -222,46 +234,66 @@ export function ScanPaperFish({
         />
       )}
 
-      <h2>Scan Paper Fish</h2>
-
-      <p>
-        Take a picture of your fish drawing on white paper.
-        Keep the entire fish inside the guide.
-      </p>
-
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={handlePhotoSelected}
-        style={{ display: 'none' }}
-      />
-
-      <div
-        style={{
-          display: 'flex',
-          gap: 12,
-          flexWrap: 'wrap',
-          marginTop: 16,
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setCameraOpen(true)}
-          disabled={isProcessing || saving}
-        >
-          📷 {imageUrl ? 'Retake with Guide' : 'Scan with Guide'}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          disabled={isProcessing || saving}
-        >
-          Use Phone Camera
-        </button>
-      </div>
+      {variant === 'studio' ? (
+        <div className="scan-studio">
+          <div className="scan-studio__intro">
+            <div className="scan-studio__intro-text">
+              <span className="scan-studio__eyebrow">YOUR ART COMES ALIVE</span>
+              <h2>Bring your paper fish to life!</h2>
+              <p>Draw a fish on white paper, then upload a clear photo. We'll remove the paper and get your fish ready to swim.</p>
+            </div>
+            <div className="scan-studio__illustration" aria-hidden="true">
+              <span className="scan-studio__paper">🐠</span>
+              <span className="scan-studio__sparkle">✦</span>
+              <span className="scan-studio__pencil">🖍️</span>
+            </div>
+          </div>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoSelected}
+            style={{ display: 'none' }}
+            aria-label="Choose a fish drawing photo"
+          />
+          <div className="scan-studio__guided-primary">
+            <div className="scan-studio__guided-icon" aria-hidden="true">📷</div>
+            <h3>Scan your drawing with the camera</h3>
+            <p>Point your camera at your paper fish and follow the guide.</p>
+            <button className="scan-studio__primary" type="button" onClick={() => setCameraOpen(true)} disabled={isProcessing || saving}>
+              {imageUrl ? 'Scan Another Drawing' : 'Scan with Guide'} →
+            </button>
+          </div>
+          <div
+            className={`scan-studio__dropzone${isDragging ? ' scan-studio__dropzone--active' : ''}`}
+            onDragOver={(event) => { event.preventDefault(); if (!isProcessing && !saving) setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+          >
+            <div className="scan-studio__upload-icon" aria-hidden="true">📷</div>
+            <h3>{imageUrl ? 'Try another drawing?' : 'Upload your fish drawing'}</h3>
+            <p className="scan-studio__upload-description">Choose a photo from your device, or take one with your camera.</p>
+            <button className="scan-studio__primary" type="button" onClick={() => inputRef.current?.click()} disabled={isProcessing || saving}>
+              {imageUrl ? 'Choose Another Photo' : 'Choose a Photo'} →
+            </button>
+            <small>JPG, PNG, or WebP · White paper works best</small>
+          </div>
+          <div className="scan-studio__camera-option">
+            <span>Have a webcam?</span>
+            <button type="button" onClick={() => setCameraOpen(true)} disabled={isProcessing || saving}>📷 Scan with Guide</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <h2>Scan Paper Fish</h2>
+          <p>Take a picture of your fish drawing on white paper. Keep the entire fish inside the guide.</p>
+          <input ref={inputRef} type="file" accept="image/*" onChange={handlePhotoSelected} style={{ display: 'none' }} />
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 16 }}>
+            <button type="button" onClick={() => setCameraOpen(true)} disabled={isProcessing || saving}>📷 {imageUrl ? 'Retake with Guide' : 'Scan with Guide'}</button>
+            <button type="button" onClick={() => inputRef.current?.click()} disabled={isProcessing || saving}>Upload Photo</button>
+          </div>
+        </>
+      )}
 
       {error && (
         <p

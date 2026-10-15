@@ -22,6 +22,10 @@ import type {
 
 type Props = {
   open: boolean;
+  embedded?: boolean;
+  /** Standalone page: show only the controls for this editor section. */
+  embeddedSection?: 'appearance' | 'decorations';
+  initialTab?: 'worlds' | 'decorate' | 'effects';
   value: AquariumCustomization;
   onChange: (next: AquariumCustomization) => void;
   onClose: () => void;
@@ -105,10 +109,10 @@ const decorationColors = [
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
-export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSave, saving, saveError, themes, selectedDecorationId = null, onDecorationSelect }: Props) {
+export function AquariumAppearanceEditor({ open, embedded = false, embeddedSection, initialTab = 'worlds', value, onChange, onClose, onSave, saving, saveError, themes, selectedDecorationId = null, onDecorationSelect }: Props) {
 
   const [catalogCategory, setCatalogCategory] = useState<CatalogCategory>('all');
-  const [activeTab, setActiveTab] = useState<EditorTab>('worlds');
+  const [activeTab, setActiveTab] = useState<EditorTab>(initialTab);
   const [sheetCollapsed, setSheetCollapsed] = useState(false);
   const [localSelectedId, setLocalSelectedId] = useState<string | null>(selectedDecorationId);
   const controlsRef = useRef<HTMLDivElement>(null);
@@ -210,8 +214,8 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
   if (!open) return null;
 
   return (
-    <aside className={`aquarium-appearance-editor aquarium-workspace ${sheetCollapsed ? 'is-collapsed' : ''}`} aria-label="Decorate your aquarium">
-      <header className="aquarium-appearance-header">
+    <aside className={`aquarium-appearance-editor aquarium-workspace ${embedded ? "is-embedded" : ""} ${sheetCollapsed ? 'is-collapsed' : ''}`} aria-label="Decorate your aquarium">
+      {!embeddedSection && <header className="aquarium-appearance-header">
         <button type="button" className="aquarium-workspace-sheet-toggle" aria-expanded={!sheetCollapsed} aria-label={sheetCollapsed ? "Expand decoration panel" : "Collapse decoration panel"} onClick={() => setSheetCollapsed((current) => !current)}><span className="aquarium-workspace-grip" aria-hidden="true" /><span className="aquarium-workspace-sheet-label">{sheetCollapsed ? "🎨 Tap to decorate" : "Drag decorations in the aquarium"}</span><span aria-hidden="true">{sheetCollapsed ? "⌃" : "⌄"}</span></button>
         <div>
           <div className="aquarium-appearance-eyebrow">MY AQUARIUM</div>
@@ -219,9 +223,9 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
           <p>Make your aquarium your own.</p>
         </div>
         <button type="button" className="aquarium-appearance-close" onClick={onClose} disabled={saving} aria-label="Close editor">×</button>
-      </header>
+      </header>}
 
-      <nav className="aquarium-editor-tabs" aria-label="Aquarium customization" role="tablist">
+      {!embeddedSection && <nav className="aquarium-editor-tabs" aria-label="Aquarium customization" role="tablist">
         {([
           ['worlds', '🌎', 'Worlds'],
           ['decorate', '🎨', 'Decorate'],
@@ -238,9 +242,9 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
             <span aria-hidden="true">{emoji}</span> {label}
           </button>
         ))}
-      </nav>
+      </nav>}
       <div className="aquarium-appearance-scroll" ref={scrollRef}>
-        {activeTab === 'worlds' && (<>
+        {(embeddedSection === 'appearance' || (!embeddedSection && activeTab === 'worlds')) && (<>
         <section className="aquarium-theme-section" aria-label="Starter aquarium themes">
           <div className="aquarium-theme-heading">
             <div>
@@ -338,7 +342,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
         </section>
 
         </>)}
-        {activeTab === 'decorate' && (<>
+        {(embeddedSection === 'decorations' || (!embeddedSection && activeTab === 'decorate')) && (<>
         <section className="aquarium-decoration-section aquarium-catalog">
           <div className="aquarium-catalog-heading">
             <div>
@@ -516,7 +520,7 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
         </section>
 
         </>)}
-        {activeTab === 'effects' && (<>
+        {(embeddedSection === 'appearance' || (!embeddedSection && activeTab === 'effects')) && (<>
         <section>
           <h3>💡 Set the mood</h3>
           <p className="aquarium-effects-hint">Choose how your underwater world shines!</p>
@@ -554,13 +558,13 @@ export function AquariumAppearanceEditor({ open, value, onChange, onClose, onSav
         </section>
         </>)}
       </div>
-      <footer className="aquarium-appearance-footer">
+      {!embeddedSection && <footer className="aquarium-appearance-footer">
         <p>Changes appear instantly. Tap Done to save them.</p>
         {saveError && <p role="alert" style={{ color: '#ffb6b6' }}>{saveError}</p>}
         <button type="button" onClick={onSave} disabled={saving}>
           {saving ? 'Saving…' : 'Done ✓'}
         </button>
-      </footer>
+      </footer>}
     </aside>
   );
 }

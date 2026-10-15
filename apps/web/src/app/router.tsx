@@ -6,9 +6,11 @@ import { AppLayout } from '../layout/AppLayout';
 
 import { AquariumsPage } from '../pages/AquariumsPage/AquariumsPage';
 import { AquariumPage } from '../pages/AquariumPage/AquariumPage';
+import { EditAquariumPage } from '../pages/EditAquariumPage/EditAquariumPage';
 import { TvAquariumPage } from '../pages/TvAquariumPage/TvAquariumPage';
 import { TvPairPage } from '../pages/TvPairPage/TvPairPage';
 import { CreateFishPage } from '../pages/CreateFishPage/CreateFishPage';
+import { ScanFishPage } from '../pages/ScanFishPage/ScanFishPage';
 import { DrawFishPage } from '../pages/DrawFishPage/DrawFishPage';
 import { CustomizeFishPage } from '../pages/CustomizeFishPage/CustomizeFishPage';
 import { ProfilePage } from '../pages/ProfilePage/ProfilePage';
@@ -71,6 +73,12 @@ export const router = createBrowserRouter([
         ],
       },
 
+      // Standalone aquarium management workspace (no AppLayout sidebar).
+      {
+        path: '/aquariums/edit/:id',
+        element: <EditAquariumPage />,
+      },
+
       // Full-screen aquarium editor.
       {
         path: '/aquariums/:id',
@@ -88,6 +96,10 @@ export const router = createBrowserRouter([
       {
         path: '/fish/create/draw',
         element: <DrawFishPage />,
+      },
+      {
+        path: '/fish/create/scan',
+        element: <ScanFishPage />,
       },
       {
         path: '/fish/create/3d',

@@ -155,7 +155,7 @@ export function AquariumPage() {
   const [endingBroadcast, setEndingBroadcast] = useState(false);
 
   const [switchingAquarium, setSwitchingAquarium] = useState(false);
-  const [aquariumChoices, setAquariumChoices] = useState<ApiAquarium[]>([]);
+  const [aquariumChoices] = useState<ApiAquarium[]>([]);
   const [switchDialogOpen, setSwitchDialogOpen] = useState(false);
   const [selectedAquariumId, setSelectedAquariumId] = useState('');
 
@@ -204,7 +204,7 @@ export function AquariumPage() {
   };
 
   useEffect(() => {
-    if (!settingsOpen || !aquarium?.id) return;
+    if ((!settingsOpen && !isMobile) || !aquarium?.id) return;
 
     let cancelled = false;
     const id = aquarium.id;
@@ -236,7 +236,7 @@ export function AquariumPage() {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [settingsOpen, aquarium?.id]);
+  }, [settingsOpen, isMobile, aquarium?.id]);
 
 
 
@@ -562,30 +562,6 @@ export function AquariumPage() {
     setBroadcastStatus('paused');
   }
 
-  async function handleOpenSwitchAquarium() {
-    if (switchingAquarium) return;
-
-    setSwitchingAquarium(true);
-
-    try {
-      const aquariums = await aquariumApi.list();
-
-      setAquariumChoices(aquariums);
-      setSelectedAquariumId(
-        aquariums.find((item) => item.id !== aquariumId)?.id ?? '',
-      );
-      setSwitchDialogOpen(true);
-    } catch (error) {
-      window.alert(
-        error instanceof Error
-          ? error.message
-          : 'Failed to load aquariums.',
-      );
-    } finally {
-      setSwitchingAquarium(false);
-    }
-  }
-
   async function handleConfirmSwitchAquarium() {
     if (!selectedAquariumId || switchingAquarium) return;
 
@@ -699,8 +675,7 @@ export function AquariumPage() {
             feedPending={feedPending}
             onEndBroadcast={handleEndBroadcast}
             endingBroadcast={endingBroadcast}
-            onSwitchAquarium={handleOpenSwitchAquarium}
-            switchingAquarium={switchingAquarium}
+            isBroadcasting={broadcastStatus === 'live'}
             onDecorate={() => setAppearanceOpen(true)}
           />
         ) : null

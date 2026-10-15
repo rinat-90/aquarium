@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { ScanPaperFish } from '../ScanPaperFish/ScanPaperFish';
 import './AquariumRemote.css';
+import './AquariumRemoteOcean.css';
 
 type RemoteFish = {
   id: string;
@@ -22,8 +23,7 @@ type AquariumRemoteProps = {
   feedPending: boolean;
   onEndBroadcast: () => void;
   endingBroadcast: boolean;
-  onSwitchAquarium: () => void;
-  switchingAquarium: boolean;
+  isBroadcasting: boolean;
   onDecorate: () => void;
 };
 
@@ -40,8 +40,7 @@ export function AquariumRemote({
                                  feedPending,
                                  onEndBroadcast,
                                  endingBroadcast,
-                                 onSwitchAquarium,
-                                 switchingAquarium,
+                                 isBroadcasting,
                                  onDecorate,
                                }: AquariumRemoteProps) {
   const [isScanning, setIsScanning] = useState(false);
@@ -191,22 +190,16 @@ export function AquariumRemote({
           <small>Make your own underwater world</small>
         </button>
       </div>
-      <button
-        type="button"
-        className="aquarium-remote__end-broadcast"
-        onClick={onSwitchAquarium}
-        disabled={switchingAquarium}
-      >
-        {switchingAquarium ? 'Switching...' : '🔄 Switch Aquarium'}
-      </button>
-      <button
-        type="button"
-        className="aquarium-remote__end-broadcast"
-        onClick={onEndBroadcast}
-        disabled={endingBroadcast}
-      >
-        {endingBroadcast ? 'Ending broadcast...' : '⏹ End Broadcast'}
-      </button>
+      {isBroadcasting && (
+        <div className="aquarium-remote__broadcast-controls">
+          <button type="button"
+            className="aquarium-remote__end-broadcast aquarium-remote__end-broadcast--ocean"
+            onClick={onEndBroadcast} disabled={endingBroadcast}>
+            <span aria-hidden="true">■</span>
+            {endingBroadcast ? 'Ending broadcast…' : 'End Broadcast'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

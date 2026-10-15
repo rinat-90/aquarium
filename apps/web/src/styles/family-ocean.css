@@ -1,0 +1,20 @@
+/* Family Aquarium shared underwater backdrop. Import once from your web entrypoint. */
+:root { --family-ocean-background: url('../assets/family-ocean.svg'); }
+html { min-height: 100%; background: #032a48; }
+body { min-height: 100%; margin: 0; background: #032a48; }
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1;
+  pointer-events: none;
+  background: #032a48 var(--family-ocean-background) center center / cover no-repeat;
+}
+#root { min-height: 100dvh; isolation: isolate; }
+/* Make the shared backdrop visible through full-page surfaces, not cards. */
+:where(.aquariums-layout, .aquarium-remote, .create-fish-page,
+  .profile-page, .tv-manager-page, .edit-aquarium-page) {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+@media (max-width: 1024px) {
+  body::before { background-position: center bottom; }
+}
+@media (prefers-reduced-motion: reduce) { body::before { animation: none; } }

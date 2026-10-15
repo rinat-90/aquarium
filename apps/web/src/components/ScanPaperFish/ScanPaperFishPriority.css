@@ -1,0 +1,40 @@
+/* Device-specific scanner action priority; studio variant only. */
+.scan-paper-fish--studio .scan-studio__guided-primary { display: none; }
+
+@media (max-width: 1024px) {
+  .scan-paper-fish--studio .scan-studio__guided-primary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    padding: 26px 20px;
+    border: 2px solid rgba(141, 237, 247, .65);
+    border-radius: 20px;
+    background: linear-gradient(135deg, #115878, #0c3456);
+    margin: 16px 0;
+    box-sizing: border-box;
+  }
+  .scan-paper-fish--studio .scan-studio__guided-icon { font-size: 42px; line-height: 1.1; }
+  .scan-paper-fish--studio .scan-studio__guided-primary h3 { margin: 0; font-size: clamp(19px, 4.5vw, 25px); }
+  .scan-paper-fish--studio .scan-studio__guided-primary p { margin: 0; color: #c3dfea; font-size: 15px; }
+  .scan-paper-fish--studio .scan-studio__guided-primary .scan-studio__primary {
+    width: 100%; max-width: 480px; min-height: 54px;
+  }
+  .scan-paper-fish--studio .scan-studio__camera-option { display: none !important; }
+  .scan-paper-fish--studio .scan-studio__dropzone {
+    margin-top: 14px;
+    padding: 20px 16px;
+    border-style: solid;
+    border-color: rgba(96, 181, 210, .4);
+  }
+  .scan-paper-fish--studio .scan-studio__dropzone h3 { font-size: clamp(17px, 4vw, 22px); }
+  .scan-paper-fish--studio .scan-studio__dropzone .scan-studio__primary { width: 100%; max-width: 480px; }
+}
+@media (max-width: 600px) {
+  .scan-paper-fish--studio .scan-studio__intro { padding-top: 18px; padding-bottom: 18px; }
+  .scan-paper-fish--studio .scan-studio__illustration { max-height: 135px; }
+  .scan-paper-fish--studio .scan-studio__guided-primary { margin: 12px 0; padding: 22px 16px; }
+  .scan-paper-fish--studio .scan-studio__dropzone { padding: 18px 14px; }
+  .scan-paper-fish--studio { padding-bottom: max(24px, env(safe-area-inset-bottom)) !important; }
+}

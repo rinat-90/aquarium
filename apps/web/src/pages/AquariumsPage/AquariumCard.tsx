@@ -71,7 +71,7 @@ export function AquariumCard({ aquarium, isBroadcasting = false }: AquariumCardP
         </div>
         <div className="aquarium-card__actions">
           <Link className="aquarium-card__action aquarium-card__action--open" to={aquariumUrl} aria-label={`Open ${aquarium.name}`}><span aria-hidden="true">▷</span> Open</Link>
-          <Link className="aquarium-card__action aquarium-card__action--edit" to={`${aquariumUrl}?decorate=1`} aria-label={`Decorate ${aquarium.name}`}><span aria-hidden="true">⚙</span> Edit</Link>
+          <Link className="aquarium-card__action aquarium-card__action--edit" to={`/aquariums/edit/${encodeURIComponent(aquarium.id)}`} aria-label={`Edit ${aquarium.name}`}><span aria-hidden="true">⚙</span> Edit</Link>
         </div>
       </div>
     </article>
