@@ -12,18 +12,13 @@ export class TvApiError extends Error {
   }
 }
 
-async function request<T>(
-  path: string,
-  options?: RequestInit,
-): Promise<T> {
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     credentials: 'include',
     cache: 'no-store',
     ...options,
     headers: {
-      ...(options?.body
-        ? { 'Content-Type': 'application/json' }
-        : {}),
+      ...(options?.body ? { 'Content-Type': 'application/json' } : {}),
       ...options?.headers,
     },
   });
@@ -32,10 +27,7 @@ async function request<T>(
 
   if (!response.ok) {
     const message =
-      data &&
-      typeof data === 'object' &&
-      'error' in data &&
-      typeof data.error === 'string'
+      data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
         ? data.error
         : `Request failed (${response.status})`;
 
@@ -49,19 +41,20 @@ export type PairingResult =
   | { status: 'pending' }
   | { status: 'expired' }
   | {
-  status: 'paired';
-  token: string;
-  aquariumId: string;
-  expiresAt: string;
-};
+      status: 'paired';
+      token: string;
+      aquariumId: string;
+      expiresAt: string;
+    };
 
 export const tvPairingApi = {
   create: () => request<{ code: string; expiresAt: string }>('/api/tv/pairing', { method: 'POST' }),
   poll: (code: string) => request<PairingResult>(`/api/tv/pairing/${encodeURIComponent(code)}`),
-  approve: (code: string, aquariumId: string) => request<{ ok: boolean }>(
-    `/api/tv/pairing/${encodeURIComponent(code)}/approve`,
-    { method: 'POST', body: JSON.stringify({ aquariumId }) },
-  ),
+  approve: (code: string, aquariumId: string) =>
+    request<{ ok: boolean }>(`/api/tv/pairing/${encodeURIComponent(code)}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ aquariumId }),
+    }),
   fish: (token: string) =>
     request<{
       aquariumId: string;
@@ -81,18 +74,15 @@ export const tvPairingApi = {
     );
 
     if (!response.ok) {
-      throw new Error(
-        `Failed to load TV fish texture (${response.status})`,
-      );
+      throw new Error(`Failed to load TV fish texture (${response.status})`);
     }
 
     return response.blob();
   },
   revoke: (sessionId: string) =>
-    request<{ ok: boolean }>(
-      `/api/tv/display/sessions/${encodeURIComponent(sessionId)}/revoke`,
-      { method: 'POST' },
-    ),
+    request<{ ok: boolean }>(`/api/tv/display/sessions/${encodeURIComponent(sessionId)}/revoke`, {
+      method: 'POST',
+    }),
   sessions: () =>
     request<{
       sessions: {
@@ -104,24 +94,18 @@ export const tvPairingApi = {
       }[];
     }>('/api/tv/display/sessions'),
   switchAquarium: (sessionId: string, aquariumId: string) =>
-    request<{ ok: boolean }>(
-      `/api/tv/display/sessions/${encodeURIComponent(sessionId)}/switch`,
-      {
-        method: 'POST',
-        body: JSON.stringify({ aquariumId }),
-      },
-    ),
+    request<{ ok: boolean }>(`/api/tv/display/sessions/${encodeURIComponent(sessionId)}/switch`, {
+      method: 'POST',
+      body: JSON.stringify({ aquariumId }),
+    }),
 
   pause: (sessionId: string) =>
-    request<{ ok: boolean }>(
-      `/api/tv/display/sessions/${encodeURIComponent(sessionId)}/pause`,
-      { method: 'POST' },
-    ),
+    request<{ ok: boolean }>(`/api/tv/display/sessions/${encodeURIComponent(sessionId)}/pause`, {
+      method: 'POST',
+    }),
 
   resume: (sessionId: string) =>
-    request<{ ok: boolean }>(
-      `/api/tv/display/sessions/${encodeURIComponent(sessionId)}/resume`,
-      { method: 'POST' },
-    ),
-
+    request<{ ok: boolean }>(`/api/tv/display/sessions/${encodeURIComponent(sessionId)}/resume`, {
+      method: 'POST',
+    }),
 };

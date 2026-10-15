@@ -19,9 +19,7 @@ import {
   type DecorationInstance,
 } from '../decorations/createAquariumDecorations';
 
-import {
-  getSeabedScreenY,
-} from './seabedGeometry';
+import { getSeabedScreenY } from './seabedGeometry';
 
 type WaterEffects = ReturnType<typeof createWaterEffects>;
 type SandCaustics = ReturnType<typeof createSandCaustics>;
@@ -62,18 +60,9 @@ export function createAquariumEnvironment(options: {
   waterEffects: WaterEffects;
   sandCaustics: SandCaustics;
 }): AquariumEnvironmentController {
-  const {
-    scene,
-    lighting,
-    underwaterEffects,
-    waterEffects,
-    sandCaustics,
-  } = options;
+  const { scene, lighting, underwaterEffects, waterEffects, sandCaustics } = options;
 
-  const background = createBackground(
-    scene,
-    ENVIRONMENT_PRESETS[options.appearance.background],
-  );
+  const background = createBackground(scene, ENVIRONMENT_PRESETS[options.appearance.background]);
 
   const decorations = createAquariumDecorations(scene);
   // Non-interactive theme scenery: intentionally separate from kids' decorations.
@@ -91,49 +80,27 @@ export function createAquariumEnvironment(options: {
    * world-space positions based on the camera.
    */
 
-
-  const getDecorationLayout = (
-    instances: AquariumDecorationInstance[],
-  ): DecorationInstance[] => {
+  const getDecorationLayout = (instances: AquariumDecorationInstance[]): DecorationInstance[] => {
     const camera = activeCamera;
 
     camera.updateMatrixWorld();
 
     const raycaster = new THREE.Raycaster();
 
-    const groundPlane = new THREE.Plane(
-      new THREE.Vector3(0, 0, 1),
-      0,
-    );
+    const groundPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
     const intersection = new THREE.Vector3();
 
-    const screenToWorld = (
-      normalizedX: number,
-      normalizedY: number,
-    ): THREE.Vector3 => {
-      raycaster.setFromCamera(
-        new THREE.Vector2(
-          normalizedX * 2 - 1,
-          1 - normalizedY * 2,
-        ),
-        camera,
-      );
+    const screenToWorld = (normalizedX: number, normalizedY: number): THREE.Vector3 => {
+      raycaster.setFromCamera(new THREE.Vector2(normalizedX * 2 - 1, 1 - normalizedY * 2), camera);
 
-      const hit = raycaster.ray.intersectPlane(
-        groundPlane,
-        intersection,
-      );
+      const hit = raycaster.ray.intersectPlane(groundPlane, intersection);
 
       return hit?.clone() ?? new THREE.Vector3();
     };
 
     return instances.slice(0, MAX_DECORATIONS).map((instance) => {
-      const normalizedX = THREE.MathUtils.clamp(
-        instance.x,
-        0.06,
-        0.94,
-      );
+      const normalizedX = THREE.MathUtils.clamp(instance.x, 0.06, 0.94);
 
       // Exact dune edge at this horizontal position.
       const seabedY = getSeabedScreenY(normalizedX);
@@ -142,16 +109,9 @@ export function createAquariumEnvironment(options: {
       // naturally planted rather than hovering above it.
       const plantingOffset = 0.012;
 
-      const normalizedY = THREE.MathUtils.clamp(
-        seabedY + plantingOffset,
-        0,
-        1,
-      );
+      const normalizedY = THREE.MathUtils.clamp(seabedY + plantingOffset, 0, 1);
 
-      const ground = screenToWorld(
-        normalizedX,
-        normalizedY,
-      );
+      const ground = screenToWorld(normalizedX, normalizedY);
 
       return {
         id: instance.id,
@@ -164,8 +124,6 @@ export function createAquariumEnvironment(options: {
       };
     });
   };
-
-
 
   const syncDecorations = (force = false) => {
     const instances = currentAppearance.decorationInstances ?? [];
@@ -183,9 +141,7 @@ export function createAquariumEnvironment(options: {
 
     previousDecorationSignature = signature;
 
-    decorations.setDecorations(
-      getDecorationLayout(instances),
-    );
+    decorations.setDecorations(getDecorationLayout(instances));
   };
 
   const syncThemeScenery = (force = false) => {
@@ -198,7 +154,11 @@ export function createAquariumEnvironment(options: {
     });
     if (!force && signature === previousThemeSignature) return;
     previousThemeSignature = signature;
-    themeScenery.setDecorations(getDecorationLayout(instances as unknown as AquariumDecorationInstance[]) as unknown as ThemeSceneryInstance[]);
+    themeScenery.setDecorations(
+      getDecorationLayout(
+        instances as unknown as AquariumDecorationInstance[],
+      ) as unknown as ThemeSceneryInstance[],
+    );
   };
 
   const setAppearance = (appearance: AquariumCustomization) => {
@@ -210,8 +170,7 @@ export function createAquariumEnvironment(options: {
 
     const mood = appearance.lighting;
 
-    const moodBrightness =
-      mood === 'sunny' ? 1.5 : mood === 'night' ? 0.42 : 1;
+    const moodBrightness = mood === 'sunny' ? 1.5 : mood === 'night' ? 0.42 : 1;
 
     background.setBrightness(moodBrightness);
 
@@ -219,14 +178,9 @@ export function createAquariumEnvironment(options: {
 
     const fogColor = new THREE.Color(preset.fog.color);
 
-    fogColor.multiplyScalar(
-      mood === 'sunny' ? 1.2 : mood === 'night' ? 0.55 : 1,
-    );
+    fogColor.multiplyScalar(mood === 'sunny' ? 1.2 : mood === 'night' ? 0.55 : 1);
 
-    scene.fog = new THREE.FogExp2(
-      fogColor,
-      preset.fog.density,
-    );
+    scene.fog = new THREE.FogExp2(fogColor, preset.fog.density);
 
     const light = LIGHTING_PRESETS[appearance.lighting];
 
@@ -234,8 +188,7 @@ export function createAquariumEnvironment(options: {
     lighting.ambient.intensity = light.ambientIntensity;
     lighting.sunlight.intensity = light.sunlightIntensity;
 
-    lighting.frontFill.intensity =
-      0.32 * (light.sunlightIntensity / 1.65);
+    lighting.frontFill.intensity = 0.32 * (light.sunlightIntensity / 1.65);
 
     underwaterEffects.setBubbles(appearance.bubbles);
 
@@ -248,20 +201,12 @@ export function createAquariumEnvironment(options: {
 
   setAppearance(options.appearance);
 
-
-  const getDecorationAtPoint = (
-    raycaster: THREE.Raycaster,
-  ): string | null => {
+  const getDecorationAtPoint = (raycaster: THREE.Raycaster): string | null => {
     return decorations.getDecorationAtPoint(raycaster);
   };
 
-  const moveDecoration = (
-    id: string,
-    normalizedX: number,
-  ) => {
-    const instance = (
-      currentAppearance.decorationInstances ?? []
-    ).find((item) => item.id === id);
+  const moveDecoration = (id: string, normalizedX: number) => {
+    const instance = (currentAppearance.decorationInstances ?? []).find((item) => item.id === id);
 
     if (!instance) return;
 
@@ -276,13 +221,8 @@ export function createAquariumEnvironment(options: {
 
     if (!position) return;
 
-    decorations.moveDecoration(
-      id,
-      position.x,
-      position.y,
-    );
+    decorations.moveDecoration(id, position.x, position.y);
   };
-
 
   return {
     setAppearance,

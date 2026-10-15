@@ -1,8 +1,4 @@
-import type {
-  Fish,
-  Food,
-  Vector3,
-} from '@aquarium/types';
+import type { Fish, Food, Vector3 } from '@aquarium/types';
 
 export type FishSpecies = 'basic' | 'angelfish' | 'guppy';
 
@@ -32,37 +28,26 @@ const FISH_BOUNDS = {
 };
 
 export class Aquarium {
-  private fish =
-    new Map<string, Fish>();
+  private fish = new Map<string, Fish>();
 
-  private food =
-    new Map<string, Food>();
+  private food = new Map<string, Food>();
 
-  private personalities =
-    new Map<
-      string,
-      FishPersonality
-    >();
+  private personalities = new Map<string, FishPersonality>();
 
-  private activities =
-    new Map<
-      string,
-      FishActivity
-    >();
+  private activities = new Map<string, FishActivity>();
 
   private species = new Map<string, FishSpecies>();
 
   private elapsedTime = 0;
 
-  private foodSeekProgress =
-    new Map<
-      string,
-      {
-        foodId: string;
-        bestDistance: number;
-        lastProgressAt: number;
-      }
-    >();
+  private foodSeekProgress = new Map<
+    string,
+    {
+      foodId: string;
+      bestDistance: number;
+      lastProgressAt: number;
+    }
+  >();
 
   private eatingUntil = new Map<string, number>();
 
@@ -73,41 +58,19 @@ export class Aquarium {
   }
 
   addFish(fish: Fish) {
-    this.fish.set(
-      fish.id,
-      fish,
-    );
+    this.fish.set(fish.id, fish);
   }
 
-  createFish(
-    id: string,
-    size = 1,
-    species: FishSpecies = 'basic',
-  ): Fish {
-    const speed =
-      0.7 +
-      Math.random() * 0.7;
+  createFish(id: string, size = 1, species: FishSpecies = 'basic'): Fish {
+    const speed = 0.7 + Math.random() * 0.7;
 
-    const position =
-      this.createRandomPosition(
-        size,
-      );
+    const position = this.createRandomPosition(size);
 
-    const target =
-      this.createRandomTarget(
-        undefined,
-        undefined,
-        size,
-      );
+    const target = this.createRandomTarget(undefined, undefined, size);
 
-    const direction =
-      this.directionTo(
-        position,
-        target,
-      );
+    const direction = this.directionTo(position, target);
 
-    const initialSpeed =
-      speed * 0.65;
+    const initialSpeed = speed * 0.65;
 
     const fish: Fish = {
       id,
@@ -116,28 +79,18 @@ export class Aquarium {
       target,
 
       velocity: {
-        x:
-          direction.x *
-          initialSpeed,
+        x: direction.x * initialSpeed,
 
-        y:
-          direction.y *
-          initialSpeed,
+        y: direction.y * initialSpeed,
 
-        z:
-          direction.z *
-          initialSpeed,
+        z: direction.z * initialSpeed,
       },
 
       speed,
 
-      direction:
-        direction.x >= 0
-          ? 'right'
-          : 'left',
+      direction: direction.x >= 0 ? 'right' : 'left',
 
-      behavior:
-        'wandering',
+      behavior: 'wandering',
     };
 
     this.addFish(fish);
@@ -150,24 +103,16 @@ export class Aquarium {
     this.fish.delete(id);
     this.species.delete(id);
 
-    this.personalities.delete(
-      id,
-    );
+    this.personalities.delete(id);
 
-    this.activities.delete(
-      id,
-    );
+    this.activities.delete(id);
 
-    this.foodSeekProgress.delete(
-      id,
-    );
+    this.foodSeekProgress.delete(id);
     this.eatingUntil.delete(id);
   }
 
   getFish(): Fish[] {
-    return [
-      ...this.fish.values(),
-    ];
+    return [...this.fish.values()];
   }
 
   getNibbleProgress(fishId: string): number {
@@ -188,129 +133,73 @@ export class Aquarium {
   }
 
   addFood(
-    food: Omit<
-      Food,
-      'sinkSpeed'
-    > & {
+    food: Omit<Food, 'sinkSpeed'> & {
       sinkSpeed?: number;
     },
   ) {
-    const safePosition =
-      this.getSafeFoodPosition(
-        food.position,
-      );
+    const safePosition = this.getSafeFoodPosition(food.position);
 
-    this.food.set(
-      food.id,
-      {
-        ...food,
+    this.food.set(food.id, {
+      ...food,
 
-        position:
-        safePosition,
+      position: safePosition,
 
-        sinkSpeed:
-          food.sinkSpeed ??
-          0.35,
-      },
-    );
+      sinkSpeed: food.sinkSpeed ?? 0.35,
+    });
   }
 
   getFood(): Food[] {
-    return [
-      ...this.food.values(),
-    ];
+    return [...this.food.values()];
   }
 
   update(deltaTime: number) {
-    const safeDeltaTime =
-      Math.min(
-        deltaTime,
-        0.05,
-      );
+    const safeDeltaTime = Math.min(deltaTime, 0.05);
 
-    this.elapsedTime +=
-      safeDeltaTime;
+    this.elapsedTime += safeDeltaTime;
 
-    this.updateFood(
-      safeDeltaTime,
-    );
+    this.updateFood(safeDeltaTime);
 
     this.assignFoodTargets();
 
-    for (
-      const fish of
-      this.fish.values()
-      ) {
-      this.updateFish(
-        fish,
-        safeDeltaTime,
-      );
+    for (const fish of this.fish.values()) {
+      this.updateFish(fish, safeDeltaTime);
     }
   }
 
-  private updateFood(
-    deltaTime: number,
-  ) {
-    const bottom =
-      this.getFoodBounds()
-        .minY;
+  private updateFood(deltaTime: number) {
+    const bottom = this.getFoodBounds().minY;
 
-    for (
-      const food of
-      this.food.values()
-      ) {
-      food.position.y =
-        Math.max(
-          bottom,
+    for (const food of this.food.values()) {
+      food.position.y = Math.max(
+        bottom,
 
-          food.position.y -
-          food.sinkSpeed *
-          deltaTime,
-        );
+        food.position.y - food.sinkSpeed * deltaTime,
+      );
     }
   }
 
   private assignFoodTargets() {
-    const claimedFood =
-      new Set<string>();
+    const claimedFood = new Set<string>();
 
     /*
      * Preserve existing assignments.
      */
-    for (
-      const fish of
-      this.fish.values()
-      ) {
-      if (
-        !fish.targetFoodId
-      ) {
+    for (const fish of this.fish.values()) {
+      if (!fish.targetFoodId) {
         continue;
       }
 
-      const food =
-        this.food.get(
-          fish.targetFoodId,
-        );
+      const food = this.food.get(fish.targetFoodId);
 
-      if (
-        !food ||
-        claimedFood.has(
-          food.id,
-        )
-      ) {
-        this.returnToWandering(
-          fish,
-        );
+      if (!food || claimedFood.has(food.id)) {
+        this.returnToWandering(fish);
 
         continue;
       }
 
-      claimedFood.add(
-        food.id,
-      );
+      claimedFood.add(food.id);
 
-      fish.behavior =
-        'seeking-food';
+      fish.behavior = 'seeking-food';
 
       fish.target = {
         ...food.position,
@@ -320,53 +209,29 @@ export class Aquarium {
     /*
      * Assign nearest available food.
      */
-    for (
-      const fish of
-      this.fish.values()
-      ) {
+    for (const fish of this.fish.values()) {
       if (this.elapsedTime < (this.eatingUntil.get(fish.id) ?? 0)) {
         continue;
       }
-      if (
-        fish.targetFoodId
-      ) {
+      if (fish.targetFoodId) {
         continue;
       }
 
-      let closestFood:
-        | Food
-        | undefined;
+      let closestFood: Food | undefined;
 
-      let closestDistance =
-        Infinity;
+      let closestDistance = Infinity;
 
-      for (
-        const food of
-        this.food.values()
-        ) {
-        if (
-          claimedFood.has(
-            food.id,
-          )
-        ) {
+      for (const food of this.food.values()) {
+        if (claimedFood.has(food.id)) {
           continue;
         }
 
-        const distance =
-          this.distance(
-            fish.position,
-            food.position,
-          );
+        const distance = this.distance(fish.position, food.position);
 
-        if (
-          distance <
-          closestDistance
-        ) {
-          closestDistance =
-            distance;
+        if (distance < closestDistance) {
+          closestDistance = distance;
 
-          closestFood =
-            food;
+          closestFood = food;
         }
       }
 
@@ -374,15 +239,11 @@ export class Aquarium {
         continue;
       }
 
-      claimedFood.add(
-        closestFood.id,
-      );
+      claimedFood.add(closestFood.id);
 
-      fish.behavior =
-        'seeking-food';
+      fish.behavior = 'seeking-food';
 
-      fish.targetFoodId =
-        closestFood.id;
+      fish.targetFoodId = closestFood.id;
 
       fish.target = {
         ...closestFood.position,
@@ -390,38 +251,20 @@ export class Aquarium {
     }
   }
 
-  private applyBoundaryAvoidance(
-    fish: Fish,
-    desiredDirection: Vector3,
-  ): Vector3 {
-    const halfWidth =
-      this.options.width / 2;
+  private applyBoundaryAvoidance(fish: Fish, desiredDirection: Vector3): Vector3 {
+    const halfWidth = this.options.width / 2;
 
-    const halfHeight =
-      this.options.height / 2;
+    const halfHeight = this.options.height / 2;
 
-    const halfDepth =
-      this.options.depth / 2;
+    const halfDepth = this.options.depth / 2;
 
-    const {
-      horizontalPadding,
-      verticalPadding,
-      depthPadding,
-    } = this.getFishBounds(
-      fish.size,
-    );
+    const { horizontalPadding, verticalPadding, depthPadding } = this.getFishBounds(fish.size);
 
-    const marginX =
-      horizontalPadding * 1.2;
+    const marginX = horizontalPadding * 1.2;
 
-    const marginY =
-      verticalPadding * 1.2;
+    const marginY = verticalPadding * 1.2;
 
-    const marginZ =
-      Math.max(
-        0.9,
-        depthPadding,
-      );
+    const marginZ = Math.max(0.9, depthPadding);
 
     let x = desiredDirection.x;
     let y = desiredDirection.y;
@@ -431,78 +274,43 @@ export class Aquarium {
      * Start gently steering inward before
      * actually reaching the glass.
      */
-    const rightDistance =
-      halfWidth - fish.position.x;
+    const rightDistance = halfWidth - fish.position.x;
 
-    const leftDistance =
-      fish.position.x + halfWidth;
+    const leftDistance = fish.position.x + halfWidth;
 
     if (rightDistance < marginX) {
-      x -=
-        (1 -
-          rightDistance /
-          marginX) *
-        2.0;
+      x -= (1 - rightDistance / marginX) * 2.0;
     }
 
     if (leftDistance < marginX) {
-      x +=
-        (1 -
-          leftDistance /
-          marginX) *
-        2.0;
+      x += (1 - leftDistance / marginX) * 2.0;
     }
 
-    const topDistance =
-      halfHeight - fish.position.y;
+    const topDistance = halfHeight - fish.position.y;
 
-    const bottomDistance =
-      fish.position.y + halfHeight;
+    const bottomDistance = fish.position.y + halfHeight;
 
     if (topDistance < marginY) {
-      y -=
-        (1 -
-          topDistance /
-          marginY) *
-        1.9;
+      y -= (1 - topDistance / marginY) * 1.9;
     }
 
     if (bottomDistance < marginY) {
-      y +=
-        (1 -
-          bottomDistance /
-          marginY) *
-        1.9;
+      y += (1 - bottomDistance / marginY) * 1.9;
     }
 
-    const frontDistance =
-      halfDepth - fish.position.z;
+    const frontDistance = halfDepth - fish.position.z;
 
-    const backDistance =
-      fish.position.z + halfDepth;
+    const backDistance = fish.position.z + halfDepth;
 
     if (frontDistance < marginZ) {
-      z -=
-        (1 -
-          frontDistance /
-          marginZ) *
-        1.3;
+      z -= (1 - frontDistance / marginZ) * 1.3;
     }
 
     if (backDistance < marginZ) {
-      z +=
-        (1 -
-          backDistance /
-          marginZ) *
-        1.3;
+      z += (1 - backDistance / marginZ) * 1.3;
     }
 
-    const length =
-      Math.sqrt(
-        x * x +
-        y * y +
-        z * z,
-      ) || 1;
+    const length = Math.sqrt(x * x + y * y + z * z) || 1;
 
     return {
       x: x / length,
@@ -511,84 +319,48 @@ export class Aquarium {
     };
   }
 
-  private applyFishSeparation(
-    fish: Fish,
-    desiredDirection: Vector3,
-  ): Vector3 {
+  private applyFishSeparation(fish: Fish, desiredDirection: Vector3): Vector3 {
     let separationX = 0;
     let separationY = 0;
     let separationZ = 0;
     let nearbyFish = 0;
 
-    for (
-      const other of
-      this.fish.values()
-      ) {
+    for (const other of this.fish.values()) {
       if (other.id === fish.id) {
         continue;
       }
 
-      const dx =
-        fish.position.x -
-        other.position.x;
+      const dx = fish.position.x - other.position.x;
 
-      const dy =
-        fish.position.y -
-        other.position.y;
+      const dy = fish.position.y - other.position.y;
 
-      const dz =
-        fish.position.z -
-        other.position.z;
+      const dz = fish.position.z - other.position.z;
 
-      const distanceSquared =
-        dx * dx +
-        dy * dy +
-        dz * dz;
+      const distanceSquared = dx * dx + dy * dy + dz * dz;
 
       if (distanceSquared <= 0.0001) {
-        const direction =
-          fish.id < other.id
-            ? -1
-            : 1;
+        const direction = fish.id < other.id ? -1 : 1;
 
         separationX += direction;
         nearbyFish += 1;
         continue;
       }
 
-      const distance =
-        Math.sqrt(
-          distanceSquared,
-        );
+      const distance = Math.sqrt(distanceSquared);
 
-      const separationDistance =
-        0.72 *
-        (fish.size + other.size);
+      const separationDistance = 0.72 * (fish.size + other.size);
 
-      if (
-        distance >=
-        separationDistance
-      ) {
+      if (distance >= separationDistance) {
         continue;
       }
 
-      const strength =
-        1 -
-        distance /
-        separationDistance;
+      const strength = 1 - distance / separationDistance;
 
-      separationX +=
-        (dx / distance) *
-        strength;
+      separationX += (dx / distance) * strength;
 
-      separationY +=
-        (dy / distance) *
-        strength *
-        0.7;
+      separationY += (dy / distance) * strength * 0.7;
 
-      separationZ +=
-        (dz / distance) *
-        strength;
+      separationZ += (dz / distance) * strength;
 
       nearbyFish += 1;
     }
@@ -597,33 +369,15 @@ export class Aquarium {
       return desiredDirection;
     }
 
-    const separationWeight =
-      fish.behavior ===
-      'seeking-food'
-        ? 1.15
-        : 1.45;
+    const separationWeight = fish.behavior === 'seeking-food' ? 1.15 : 1.45;
 
-    const x =
-      desiredDirection.x +
-      separationX *
-      separationWeight;
+    const x = desiredDirection.x + separationX * separationWeight;
 
-    const y =
-      desiredDirection.y +
-      separationY *
-      separationWeight;
+    const y = desiredDirection.y + separationY * separationWeight;
 
-    const z =
-      desiredDirection.z +
-      separationZ *
-      separationWeight;
+    const z = desiredDirection.z + separationZ * separationWeight;
 
-    const length =
-      Math.sqrt(
-        x * x +
-        y * y +
-        z * z,
-      ) || 1;
+    const length = Math.sqrt(x * x + y * y + z * z) || 1;
 
     return {
       x: x / length,
@@ -632,155 +386,70 @@ export class Aquarium {
     };
   }
 
-  private getFishBounds(
-    size = 1,
-  ) {
-    const safeSize =
-      Math.max(
-        0.6,
-        Math.min(
-          1.4,
-          size,
-        ),
-      );
+  private getFishBounds(size = 1) {
+    const safeSize = Math.max(0.6, Math.min(1.4, size));
 
     return {
-      horizontalPadding:
-        FISH_BOUNDS.horizontalPadding *
-        safeSize,
+      horizontalPadding: FISH_BOUNDS.horizontalPadding * safeSize,
 
-      verticalPadding:
-        FISH_BOUNDS.verticalPadding *
-        safeSize,
+      verticalPadding: FISH_BOUNDS.verticalPadding * safeSize,
 
-      depthPadding:
-        FISH_BOUNDS.depthPadding *
-        safeSize,
+      depthPadding: FISH_BOUNDS.depthPadding * safeSize,
     };
   }
 
-  private updateFish(
-    fish: Fish,
-    deltaTime: number,
-  ) {
-    const personality =
-      this.getPersonality(
-        fish,
-      );
+  private updateFish(fish: Fish, deltaTime: number) {
+    const personality = this.getPersonality(fish);
 
-    const isIdling =
-      this.updateActivity(
-        fish,
-      );
+    const isIdling = this.updateActivity(fish);
 
-    if (
-      fish.behavior ===
-      'seeking-food' &&
-      fish.targetFoodId
-    ) {
-      const food =
-        this.food.get(
-          fish.targetFoodId,
-        );
+    if (fish.behavior === 'seeking-food' && fish.targetFoodId) {
+      const food = this.food.get(fish.targetFoodId);
 
       if (!food) {
-        this.returnToWandering(
-          fish,
-        );
+        this.returnToWandering(fish);
       } else {
         fish.target = {
           ...food.position,
         };
 
-        const foodDistance =
-          this.distance(
-            fish.position,
-            food.position,
-          );
+        const foodDistance = this.distance(fish.position, food.position);
 
-        if (
-          foodDistance < 0.4
-        ) {
-          this.eatFood(
-            fish,
-            food,
-          );
+        if (foodDistance < 0.4) {
+          this.eatFood(fish, food);
 
           return;
         }
 
-        if (
-          this.isFoodTargetStalled(
-            fish,
-            food,
-            foodDistance,
-          )
-        ) {
-          this.returnToWandering(
-            fish,
-          );
+        if (this.isFoodTargetStalled(fish, food, foodDistance)) {
+          this.returnToWandering(fish);
         }
       }
     }
 
-    let distanceToTarget =
-      this.distance(
-        fish.position,
-        fish.target,
-      );
+    let distanceToTarget = this.distance(fish.position, fish.target);
 
     /*
      * Pick a new wandering target before
      * completely stopping.
      */
-    if (
-      fish.behavior ===
-      'wandering' &&
-      distanceToTarget < 0.75
-    ) {
-      fish.target =
-        this.createRandomTarget(
-          fish.position,
-          personality,
-          fish.size,
-        );
+    if (fish.behavior === 'wandering' && distanceToTarget < 0.75) {
+      fish.target = this.createRandomTarget(fish.position, personality, fish.size);
 
-      distanceToTarget =
-        this.distance(
-          fish.position,
-          fish.target,
-        );
+      distanceToTarget = this.distance(fish.position, fish.target);
     }
 
-    const targetDirection =
-      this.directionTo(
-        fish.position,
-        fish.target,
-      );
+    const targetDirection = this.directionTo(fish.position, fish.target);
 
-    const boundaryDirection =
-      this.applyBoundaryAvoidance(
-        fish,
-        targetDirection,
-      );
+    const boundaryDirection = this.applyBoundaryAvoidance(fish, targetDirection);
 
-    const desiredDirection =
-      this.applyFishSeparation(
-        fish,
-        boundaryDirection,
-      );
+    const desiredDirection = this.applyFishSeparation(fish, boundaryDirection);
 
     /*
      * Small continuous speed variation keeps
      * cruising from looking mechanical.
      */
-    const cruisingVariation =
-      0.68 +
-      Math.sin(
-        fish.position.x * 0.7 +
-        fish.position.y * 0.4,
-      ) *
-      0.08;
+    const cruisingVariation = 0.68 + Math.sin(fish.position.x * 0.7 + fish.position.y * 0.4) * 0.08;
 
     /*
      * Personality affects both normal
@@ -788,288 +457,140 @@ export class Aquarium {
      * fish reacts to food.
      */
     let targetSpeed =
-      fish.behavior ===
-      'seeking-food'
-        ? fish.speed *
-        personality.foodExcitement
-        : fish.speed *
-        cruisingVariation *
-        personality.cruiseSpeed;
+      fish.behavior === 'seeking-food'
+        ? fish.speed * personality.foodExcitement
+        : fish.speed * cruisingVariation * personality.cruiseSpeed;
 
     /*
      * Wandering fish occasionally enter a
      * short idle/glide period. Food seeking
      * always keeps its normal speed.
      */
-    if (
-      fish.behavior ===
-      'wandering' &&
-      isIdling
-    ) {
+    if (fish.behavior === 'wandering' && isIdling) {
       targetSpeed *= 0.18;
     }
 
     /*
      * Slow down when approaching food.
      */
-    if (
-      fish.behavior ===
-      'seeking-food' &&
-      distanceToTarget < 1.2
-    ) {
-      const approachFactor =
-        Math.max(
-          0.55,
-          distanceToTarget /
-          1.2,
-        );
+    if (fish.behavior === 'seeking-food' && distanceToTarget < 1.2) {
+      const approachFactor = Math.max(0.55, distanceToTarget / 1.2);
 
-      targetSpeed *=
-        approachFactor;
+      targetSpeed *= approachFactor;
     }
 
     const desiredVelocity: Vector3 = {
-      x:
-        desiredDirection.x *
-        targetSpeed,
+      x: desiredDirection.x * targetSpeed,
 
-      y:
-        desiredDirection.y *
-        targetSpeed,
+      y: desiredDirection.y * targetSpeed,
 
-      z:
-        desiredDirection.z *
-        targetSpeed,
+      z: desiredDirection.z * targetSpeed,
     };
 
     /*
      * Responsive fish make tighter turns.
      * Calm fish make broader, slower turns.
      */
-    const currentSpeed = Math.hypot(
-      fish.velocity.x,
-      fish.velocity.y,
-      fish.velocity.z,
-    );
+    const currentSpeed = Math.hypot(fish.velocity.x, fish.velocity.y, fish.velocity.z);
 
-    const isSlowingDown =
-      fish.behavior === 'wandering' &&
-      isIdling &&
-      currentSpeed > targetSpeed;
+    const isSlowingDown = fish.behavior === 'wandering' && isIdling && currentSpeed > targetSpeed;
 
     const steering =
-      (
-        fish.behavior === 'seeking-food'
-          ? 2.8
-          : isSlowingDown
-            ? 0.65
-            : 1.45
-      ) *
+      (fish.behavior === 'seeking-food' ? 2.8 : isSlowingDown ? 0.65 : 1.45) *
       personality.turnResponsiveness;
 
-    const steeringAmount =
-      1 -
-      Math.exp(
-        -steering *
-        deltaTime,
-      );
+    const steeringAmount = 1 - Math.exp(-steering * deltaTime);
 
-    fish.velocity.x +=
-      (
-        desiredVelocity.x -
-        fish.velocity.x
-      ) *
-      steeringAmount;
+    fish.velocity.x += (desiredVelocity.x - fish.velocity.x) * steeringAmount;
 
-    fish.velocity.y +=
-      (
-        desiredVelocity.y -
-        fish.velocity.y
-      ) *
-      steeringAmount;
+    fish.velocity.y += (desiredVelocity.y - fish.velocity.y) * steeringAmount;
 
-    fish.velocity.z +=
-      (
-        desiredVelocity.z -
-        fish.velocity.z
-      ) *
-      steeringAmount;
+    fish.velocity.z += (desiredVelocity.z - fish.velocity.z) * steeringAmount;
 
-    fish.position.x +=
-      fish.velocity.x *
-      deltaTime;
+    fish.position.x += fish.velocity.x * deltaTime;
 
-    fish.position.y +=
-      fish.velocity.y *
-      deltaTime;
+    fish.position.y += fish.velocity.y * deltaTime;
 
-    fish.position.z +=
-      fish.velocity.z *
-      deltaTime;
+    fish.position.z += fish.velocity.z * deltaTime;
 
-    this.keepFishInsideAquarium(
-      fish,
-    );
+    this.keepFishInsideAquarium(fish);
 
-    if (
-      Math.abs(
-        fish.velocity.x,
-      ) > 0.08
-    ) {
-      fish.direction =
-        fish.velocity.x >= 0
-          ? 'right'
-          : 'left';
+    if (Math.abs(fish.velocity.x) > 0.08) {
+      fish.direction = fish.velocity.x >= 0 ? 'right' : 'left';
     }
   }
 
-  private keepFishInsideAquarium(
-    fish: Fish,
-  ) {
-    const {
-      horizontalPadding,
-      verticalPadding,
-      depthPadding,
-    } = this.getFishBounds(
-      fish.size,
-    );
+  private keepFishInsideAquarium(fish: Fish) {
+    const { horizontalPadding, verticalPadding, depthPadding } = this.getFishBounds(fish.size);
 
-    const minX =
-      -this.options.width / 2 +
-      horizontalPadding;
+    const minX = -this.options.width / 2 + horizontalPadding;
 
-    const maxX =
-      this.options.width / 2 -
-      horizontalPadding;
+    const maxX = this.options.width / 2 - horizontalPadding;
 
-    const minY =
-      -this.options.height / 2 +
-      verticalPadding;
+    const minY = -this.options.height / 2 + verticalPadding;
 
-    const maxY =
-      this.options.height / 2 -
-      verticalPadding;
+    const maxY = this.options.height / 2 - verticalPadding;
 
-    const minZ =
-      -this.options.depth / 2 +
-      depthPadding;
+    const minZ = -this.options.depth / 2 + depthPadding;
 
-    const maxZ =
-      this.options.depth / 2 -
-      depthPadding;
+    const maxZ = this.options.depth / 2 - depthPadding;
 
-    if (
-      fish.position.x < minX
-    ) {
-      fish.position.x =
-        minX;
+    if (fish.position.x < minX) {
+      fish.position.x = minX;
 
-      fish.velocity.x =
-        Math.abs(
-          fish.velocity.x,
-        );
+      fish.velocity.x = Math.abs(fish.velocity.x);
     }
 
-    if (
-      fish.position.x > maxX
-    ) {
-      fish.position.x =
-        maxX;
+    if (fish.position.x > maxX) {
+      fish.position.x = maxX;
 
-      fish.velocity.x =
-        -Math.abs(
-          fish.velocity.x,
-        );
+      fish.velocity.x = -Math.abs(fish.velocity.x);
     }
 
-    if (
-      fish.position.y < minY
-    ) {
-      fish.position.y =
-        minY;
+    if (fish.position.y < minY) {
+      fish.position.y = minY;
 
-      fish.velocity.y =
-        Math.abs(
-          fish.velocity.y,
-        );
+      fish.velocity.y = Math.abs(fish.velocity.y);
     }
 
-    if (
-      fish.position.y > maxY
-    ) {
-      fish.position.y =
-        maxY;
+    if (fish.position.y > maxY) {
+      fish.position.y = maxY;
 
-      fish.velocity.y =
-        -Math.abs(
-          fish.velocity.y,
-        );
+      fish.velocity.y = -Math.abs(fish.velocity.y);
     }
 
-    if (
-      fish.position.z < minZ
-    ) {
-      fish.position.z =
-        minZ;
+    if (fish.position.z < minZ) {
+      fish.position.z = minZ;
 
-      fish.velocity.z =
-        Math.abs(
-          fish.velocity.z,
-        );
+      fish.velocity.z = Math.abs(fish.velocity.z);
     }
 
-    if (
-      fish.position.z > maxZ
-    ) {
-      fish.position.z =
-        maxZ;
+    if (fish.position.z > maxZ) {
+      fish.position.z = maxZ;
 
-      fish.velocity.z =
-        -Math.abs(
-          fish.velocity.z,
-        );
+      fish.velocity.z = -Math.abs(fish.velocity.z);
     }
   }
 
-  private eatFood(
-    fish: Fish,
-    food: Food,
-  ) {
+  private eatFood(fish: Fish, food: Food) {
     this.food.delete(food.id);
 
     this.returnToWandering(fish);
 
     // Brief pause after eating before chasing another pellet.
-    this.eatingUntil.set(
-      fish.id,
-      this.elapsedTime + 0.8,
-    );
+    this.eatingUntil.set(fish.id, this.elapsedTime + 0.8);
   }
 
-  private returnToWandering(
-    fish: Fish,
-  ) {
-    fish.behavior =
-      'wandering';
+  private returnToWandering(fish: Fish) {
+    fish.behavior = 'wandering';
 
-    fish.targetFoodId =
-      undefined;
+    fish.targetFoodId = undefined;
 
-    this.foodSeekProgress.delete(
-      fish.id,
-    );
+    this.foodSeekProgress.delete(fish.id);
 
-    const personality =
-      this.getPersonality(
-        fish,
-      );
+    const personality = this.getPersonality(fish);
 
-    fish.target =
-      this.createRandomTarget(
-        fish.position,
-        personality,
-        fish.size,
-      );
+    fish.target = this.createRandomTarget(fish.position, personality, fish.size);
   }
 
   private getFoodBounds() {
@@ -1080,88 +601,41 @@ export class Aquarium {
      * asked to chase pellets into rocks.
      */
     return {
-      minX:
-        -this.options.width / 2 +
-        1.15,
+      minX: -this.options.width / 2 + 1.15,
 
-      maxX:
-        this.options.width / 2 -
-        1.15,
+      maxX: this.options.width / 2 - 1.15,
 
-      minY:
-        -this.options.height / 2 +
-        1.45,
+      minY: -this.options.height / 2 + 1.45,
 
-      maxY:
-        this.options.height / 2 -
-        0.55,
+      maxY: this.options.height / 2 - 0.55,
 
-      minZ:
-        -this.options.depth / 2 +
-        0.65,
+      minZ: -this.options.depth / 2 + 0.65,
 
-      maxZ:
-        this.options.depth / 2 -
-        0.65,
+      maxZ: this.options.depth / 2 - 0.65,
     };
   }
 
-  private getSafeFoodPosition(
-    position: Vector3,
-  ): Vector3 {
-    const bounds =
-      this.getFoodBounds();
+  private getSafeFoodPosition(position: Vector3): Vector3 {
+    const bounds = this.getFoodBounds();
 
     return {
-      x: Math.max(
-        bounds.minX,
-        Math.min(
-          bounds.maxX,
-          position.x,
-        ),
-      ),
+      x: Math.max(bounds.minX, Math.min(bounds.maxX, position.x)),
 
-      y: Math.max(
-        bounds.minY,
-        Math.min(
-          bounds.maxY,
-          position.y,
-        ),
-      ),
+      y: Math.max(bounds.minY, Math.min(bounds.maxY, position.y)),
 
-      z: Math.max(
-        bounds.minZ,
-        Math.min(
-          bounds.maxZ,
-          position.z,
-        ),
-      ),
+      z: Math.max(bounds.minZ, Math.min(bounds.maxZ, position.z)),
     };
   }
 
-  private isFoodTargetStalled(
-    fish: Fish,
-    food: Food,
-    distance: number,
-  ): boolean {
-    const existing =
-      this.foodSeekProgress.get(
-        fish.id,
-      );
+  private isFoodTargetStalled(fish: Fish, food: Food, distance: number): boolean {
+    const existing = this.foodSeekProgress.get(fish.id);
 
-    if (
-      !existing ||
-      existing.foodId !== food.id
-    ) {
-      this.foodSeekProgress.set(
-        fish.id,
-        {
-          foodId: food.id,
-          bestDistance: distance,
-          lastProgressAt:
-          this.elapsedTime,
-        },
-      );
+    if (!existing || existing.foodId !== food.id) {
+      this.foodSeekProgress.set(fish.id, {
+        foodId: food.id,
+        bestDistance: distance,
+        lastProgressAt: this.elapsedTime,
+      });
 
       return false;
     }
@@ -1171,23 +645,15 @@ export class Aquarium {
      * steering oscillations do not keep an
      * unreachable target alive forever.
      */
-    if (
-      distance <
-      existing.bestDistance -
-      0.12
-    ) {
-      existing.bestDistance =
-        distance;
+    if (distance < existing.bestDistance - 0.12) {
+      existing.bestDistance = distance;
 
-      existing.lastProgressAt =
-        this.elapsedTime;
+      existing.lastProgressAt = this.elapsedTime;
 
       return false;
     }
 
-    const stalledFor =
-      this.elapsedTime -
-      existing.lastProgressAt;
+    const stalledFor = this.elapsedTime - existing.lastProgressAt;
 
     if (stalledFor < 4.5) {
       return false;
@@ -1198,172 +664,77 @@ export class Aquarium {
      * Otherwise another fish would immediately
      * claim the same bad target.
      */
-    this.food.delete(
-      food.id,
-    );
+    this.food.delete(food.id);
 
-    this.foodSeekProgress.delete(
-      fish.id,
-    );
+    this.foodSeekProgress.delete(fish.id);
 
     return true;
   }
 
-  private createRandomPosition(
-    size = 1,
-  ): Vector3 {
-    const {
-      horizontalPadding,
-      verticalPadding,
-      depthPadding,
-    } = this.getFishBounds(
-      size,
-    );
+  private createRandomPosition(size = 1): Vector3 {
+    const { horizontalPadding, verticalPadding, depthPadding } = this.getFishBounds(size);
 
-    const minX =
-      -this.options.width / 2 +
-      horizontalPadding;
+    const minX = -this.options.width / 2 + horizontalPadding;
 
-    const maxX =
-      this.options.width / 2 -
-      horizontalPadding;
+    const maxX = this.options.width / 2 - horizontalPadding;
 
-    const minY =
-      -this.options.height / 2 +
-      verticalPadding;
+    const minY = -this.options.height / 2 + verticalPadding;
 
-    const maxY =
-      this.options.height / 2 -
-      verticalPadding;
+    const maxY = this.options.height / 2 - verticalPadding;
 
-    const minZ =
-      -this.options.depth / 2 +
-      depthPadding;
+    const minZ = -this.options.depth / 2 + depthPadding;
 
-    const maxZ =
-      this.options.depth / 2 -
-      depthPadding;
+    const maxZ = this.options.depth / 2 - depthPadding;
 
     return {
-      x:
-        minX +
-        Math.random() *
-        (maxX - minX),
+      x: minX + Math.random() * (maxX - minX),
 
-      y:
-        minY +
-        Math.random() *
-        (maxY - minY),
+      y: minY + Math.random() * (maxY - minY),
 
-      z:
-        minZ +
-        Math.random() *
-        (maxZ - minZ),
+      z: minZ + Math.random() * (maxZ - minZ),
     };
   }
 
-  private createRandomTarget(
-    from?: Vector3,
-    personality?: FishPersonality,
-    size = 1,
-  ): Vector3 {
-    const {
-      horizontalPadding,
-      verticalPadding,
-      depthPadding,
-    } = this.getFishBounds(
-      size,
-    );
+  private createRandomTarget(from?: Vector3, personality?: FishPersonality, size = 1): Vector3 {
+    const { horizontalPadding, verticalPadding, depthPadding } = this.getFishBounds(size);
 
-    const minX =
-      -this.options.width / 2 +
-      horizontalPadding;
+    const minX = -this.options.width / 2 + horizontalPadding;
 
-    const maxX =
-      this.options.width / 2 -
-      horizontalPadding;
+    const maxX = this.options.width / 2 - horizontalPadding;
 
-    const minY =
-      -this.options.height / 2 +
-      verticalPadding;
+    const minY = -this.options.height / 2 + verticalPadding;
 
-    const maxY =
-      this.options.height / 2 -
-      verticalPadding;
+    const maxY = this.options.height / 2 - verticalPadding;
 
-    const minZ =
-      -this.options.depth / 2 +
-      depthPadding;
+    const minZ = -this.options.depth / 2 + depthPadding;
 
-    const maxZ =
-      this.options.depth / 2 -
-      depthPadding;
+    const maxZ = this.options.depth / 2 - depthPadding;
 
     if (!from) {
       return {
-        x:
-          minX +
-          Math.random() *
-          (maxX - minX),
+        x: minX + Math.random() * (maxX - minX),
 
-        y:
-          minY +
-          Math.random() *
-          (maxY - minY),
+        y: minY + Math.random() * (maxY - minY),
 
-        z:
-          minZ +
-          Math.random() *
-          (maxZ - minZ),
+        z: minZ + Math.random() * (maxZ - minZ),
       };
     }
 
     /*
      * Fish mainly cruise horizontally.
      */
-    const horizontalDistance =
-      2.5 +
-      Math.random() * 3.5;
+    const horizontalDistance = 2.5 + Math.random() * 3.5;
 
-    const horizontalDirection =
-      Math.random() < 0.5
-        ? -1
-        : 1;
+    const horizontalDirection = Math.random() < 0.5 ? -1 : 1;
 
-    const verticalRange =
-      personality
-        ?.verticalRange ??
-      1;
+    const verticalRange = personality?.verticalRange ?? 1;
 
-    const depthRange =
-      personality
-        ?.depthRange ??
-      1;
+    const depthRange = personality?.depthRange ?? 1;
 
     return {
-      x: Math.max(
-        minX,
-        Math.min(
-          maxX,
-          from.x +
-          horizontalDistance *
-          horizontalDirection,
-        ),
-      ),
+      x: Math.max(minX, Math.min(maxX, from.x + horizontalDistance * horizontalDirection)),
 
-      y: Math.max(
-        minY,
-        Math.min(
-          maxY,
-          from.y +
-          (
-            Math.random() -
-            0.5
-          ) *
-          2.2 *
-          verticalRange,
-        ),
-      ),
+      y: Math.max(minY, Math.min(maxY, from.y + (Math.random() - 0.5) * 2.2 * verticalRange)),
 
       /*
        * The illustrated aquarium is visually
@@ -1375,83 +746,46 @@ export class Aquarium {
        * layers instead of hovering around
        * one Z plane.
        */
-      z: Math.max(
-        minZ,
-        Math.min(
-          maxZ,
-          from.z +
-          (
-            Math.random() -
-            0.5
-          ) *
-          4.8 *
-          depthRange,
-        ),
-      ),
+      z: Math.max(minZ, Math.min(maxZ, from.z + (Math.random() - 0.5) * 4.8 * depthRange)),
     };
   }
 
-  private updateActivity(
-    fish: Fish,
-  ): boolean {
+  private updateActivity(fish: Fish): boolean {
     const species = this.species.get(fish.id);
     const isAngelfish = species === 'angelfish';
     const isGuppy = species === 'guppy';
 
-    let activity =
-      this.activities.get(
-        fish.id,
-      );
+    let activity = this.activities.get(fish.id);
 
     if (!activity) {
       activity = {
         idleUntil: 0,
 
-        nextIdleAt:
-          this.elapsedTime +
-          (isAngelfish ? 6 : isGuppy ? 5 : 10) +
-          Math.random() * 10,
+        nextIdleAt: this.elapsedTime + (isAngelfish ? 6 : isGuppy ? 5 : 10) + Math.random() * 10,
       };
 
-      this.activities.set(
-        fish.id,
-        activity,
-      );
+      this.activities.set(fish.id, activity);
     }
 
     /*
      * Food always wins over idling.
      */
-    if (
-      fish.behavior ===
-      'seeking-food'
-    ) {
+    if (fish.behavior === 'seeking-food') {
       return false;
     }
 
-    if (
-      this.elapsedTime <
-      activity.idleUntil
-    ) {
+    if (this.elapsedTime < activity.idleUntil) {
       return true;
     }
 
-    if (
-      this.elapsedTime >=
-      activity.nextIdleAt
-    ) {
+    if (this.elapsedTime >= activity.nextIdleAt) {
       const idleDuration =
-        (isAngelfish ? 2.5 : isGuppy ? 0.7 : 1.2) +
-        Math.random() * (isGuppy ? 1.2 : 2.5);
+        (isAngelfish ? 2.5 : isGuppy ? 0.7 : 1.2) + Math.random() * (isGuppy ? 1.2 : 2.5);
 
-      activity.idleUntil =
-        this.elapsedTime +
-        idleDuration;
+      activity.idleUntil = this.elapsedTime + idleDuration;
 
       activity.nextIdleAt =
-        activity.idleUntil +
-        (isAngelfish ? 7 : isGuppy ? 5 : 11) +
-        Math.random() * 10;
+        activity.idleUntil + (isAngelfish ? 7 : isGuppy ? 5 : 11) + Math.random() * 10;
 
       return true;
     }
@@ -1459,13 +793,8 @@ export class Aquarium {
     return false;
   }
 
-  private getPersonality(
-    fish: Fish,
-  ): FishPersonality {
-    const existing =
-      this.personalities.get(
-        fish.id,
-      );
+  private getPersonality(fish: Fish): FishPersonality {
+    const existing = this.personalities.get(fish.id);
 
     if (existing) {
       return existing;
@@ -1478,17 +807,9 @@ export class Aquarium {
      * The same fish therefore keeps the same
      * personality after a page refresh.
      */
-    const seed =
-      this.hashString(
-        fish.id,
-      );
+    const seed = this.hashString(fish.id);
 
-    const random = (
-      offset: number,
-    ) =>
-      this.seededRandom(
-        seed + offset,
-      );
+    const random = (offset: number) => this.seededRandom(seed + offset);
 
     const species = this.species.get(fish.id);
     const angelfish = species === 'angelfish';
@@ -1496,148 +817,86 @@ export class Aquarium {
 
     const personality: FishPersonality = {
       // Guppies cruise actively, but aren't constantly sprinting.
-      cruiseSpeed:
-        angelfish
-          ? 0.68 + random(11) * 0.18
-          : guppy
-            ? 1.02 + random(11) * 0.28
-            : 0.9 + random(11) * 0.3,
+      cruiseSpeed: angelfish
+        ? 0.68 + random(11) * 0.18
+        : guppy
+          ? 1.02 + random(11) * 0.28
+          : 0.9 + random(11) * 0.3,
 
       // Guppies turn quickly and explore smaller areas.
-      turnResponsiveness:
-        angelfish
-          ? 0.52 + random(23) * 0.18
-          : guppy
-            ? 1.15 + random(23) * 0.35
-            : 0.95 + random(23) * 0.35,
+      turnResponsiveness: angelfish
+        ? 0.52 + random(23) * 0.18
+        : guppy
+          ? 1.15 + random(23) * 0.35
+          : 0.95 + random(23) * 0.35,
 
       // Moderate vertical exploration.
-      verticalRange:
-        angelfish
-          ? 0.35 + random(37) * 0.3
-          : guppy
-            ? 0.65 + random(37) * 0.35
-            : 0.75 + random(37) * 0.55,
+      verticalRange: angelfish
+        ? 0.35 + random(37) * 0.3
+        : guppy
+          ? 0.65 + random(37) * 0.35
+          : 0.75 + random(37) * 0.55,
 
       // Guppies explore foreground and background.
-      depthRange:
-        angelfish
-          ? 0.5 + random(51) * 0.35
-          : guppy
-            ? 0.85 + random(51) * 0.35
-            : 0.75 + random(51) * 0.55,
+      depthRange: angelfish
+        ? 0.5 + random(51) * 0.35
+        : guppy
+          ? 0.85 + random(51) * 0.35
+          : 0.75 + random(51) * 0.55,
 
       // Slightly more excitement when food appears.
-      foodExcitement:
-        angelfish
-          ? 1.35 + random(67) * 0.3
-          : guppy
-            ? 1.5 + random(67) * 0.3
-            : 1.2 + random(67) * 0.3,
+      foodExcitement: angelfish
+        ? 1.35 + random(67) * 0.3
+        : guppy
+          ? 1.5 + random(67) * 0.3
+          : 1.2 + random(67) * 0.3,
     };
 
-    this.personalities.set(
-      fish.id,
-      personality,
-    );
+    this.personalities.set(fish.id, personality);
 
     return personality;
   }
 
-  private hashString(
-    value: string,
-  ): number {
+  private hashString(value: string): number {
     let hash = 2166136261;
 
-    for (
-      let index = 0;
-      index < value.length;
-      index += 1
-    ) {
-      hash ^=
-        value.charCodeAt(
-          index,
-        );
+    for (let index = 0; index < value.length; index += 1) {
+      hash ^= value.charCodeAt(index);
 
-      hash =
-        Math.imul(
-          hash,
-          16777619,
-        );
+      hash = Math.imul(hash, 16777619);
     }
 
     return hash >>> 0;
   }
 
-  private seededRandom(
-    seed: number,
-  ): number {
-    let value =
-      seed + 0x6d2b79f5;
+  private seededRandom(seed: number): number {
+    let value = seed + 0x6d2b79f5;
 
-    value =
-      Math.imul(
-        value ^
-        (value >>> 15),
-        value | 1,
-      );
+    value = Math.imul(value ^ (value >>> 15), value | 1);
 
-    value ^=
-      value +
-      Math.imul(
-        value ^
-        (value >>> 7),
-        value | 61,
-      );
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
 
-    return (
-      (
-        value ^
-        (value >>> 14)
-      ) >>>
-      0
-    ) / 4294967296;
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
   }
 
-  private distance(
-    a: Vector3,
-    b: Vector3,
-  ) {
-    const dx =
-      a.x - b.x;
+  private distance(a: Vector3, b: Vector3) {
+    const dx = a.x - b.x;
 
-    const dy =
-      a.y - b.y;
+    const dy = a.y - b.y;
 
-    const dz =
-      a.z - b.z;
+    const dz = a.z - b.z;
 
-    return Math.sqrt(
-      dx * dx +
-      dy * dy +
-      dz * dz,
-    );
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
   }
 
-  private directionTo(
-    from: Vector3,
-    to: Vector3,
-  ): Vector3 {
-    const dx =
-      to.x - from.x;
+  private directionTo(from: Vector3, to: Vector3): Vector3 {
+    const dx = to.x - from.x;
 
-    const dy =
-      to.y - from.y;
+    const dy = to.y - from.y;
 
-    const dz =
-      to.z - from.z;
+    const dz = to.z - from.z;
 
-    const length =
-      Math.sqrt(
-        dx * dx +
-        dy * dy +
-        dz * dz,
-      ) || 1;
+    const length = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
 
     return {
       x: dx / length,

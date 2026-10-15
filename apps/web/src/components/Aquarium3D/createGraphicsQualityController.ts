@@ -1,4 +1,3 @@
-
 export type GraphicsQuality = 'low' | 'high';
 
 export type GraphicsQualityController = {
@@ -19,13 +18,8 @@ export function createGraphicsQualityController(
 
   const sampleDuration = 3;
 
-  const update = (
-    deltaTime: number,
-  ): GraphicsQuality => {
-    if (
-      !Number.isFinite(deltaTime) ||
-      deltaTime <= 0
-    ) {
+  const update = (deltaTime: number): GraphicsQuality => {
+    if (!Number.isFinite(deltaTime) || deltaTime <= 0) {
       return quality;
     }
 
@@ -60,10 +54,7 @@ export function createGraphicsQualityController(
     }
 
     // Drop quality after 6 seconds of low FPS.
-    if (
-      quality === 'high' &&
-      lowFpsWindows >= 2
-    ) {
+    if (quality === 'high' && lowFpsWindows >= 2) {
       quality = 'low';
       lowFpsWindows = 0;
       highFpsWindows = 0;
@@ -71,10 +62,7 @@ export function createGraphicsQualityController(
 
     // Restore quality only after 15 seconds
     // of consistently high FPS.
-    if (
-      quality === 'low' &&
-      highFpsWindows >= 5
-    ) {
+    if (quality === 'low' && highFpsWindows >= 5) {
       quality = 'high';
       lowFpsWindows = 0;
       highFpsWindows = 0;

@@ -1,4 +1,3 @@
-
 import type { FastifyRequest } from 'fastify';
 import { auth } from './auth.js';
 
@@ -7,10 +6,7 @@ export async function getAuthenticatedUser(request: FastifyRequest) {
 
   for (const [key, value] of Object.entries(request.headers)) {
     if (value !== undefined) {
-      headers.set(
-        key,
-        Array.isArray(value) ? value.join(', ') : value,
-      );
+      headers.set(key, Array.isArray(value) ? value.join(', ') : value);
     }
   }
 

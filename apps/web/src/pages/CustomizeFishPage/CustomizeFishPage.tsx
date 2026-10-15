@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
@@ -8,10 +7,7 @@ import {
 } from '../../components/FishDrawing/FishDrawingCanvas';
 
 import { fishApi, type ApiFish } from '../../lib/aquarium-api';
-import {
-  AQUARIUM_CAPACITY,
-  createFish,
-} from '../../lib/create-fish';
+import { AQUARIUM_CAPACITY, createFish } from '../../lib/create-fish';
 
 import './CustomizeFishPage.css';
 
@@ -47,17 +43,11 @@ export function CustomizeFishPage() {
 
         if (cancelled) return;
 
-        setFish(
-          items.filter((item) => item.aquariumId === aquariumId),
-        );
+        setFish(items.filter((item) => item.aquariumId === aquariumId));
       } catch (err) {
         if (cancelled) return;
 
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Failed to load aquarium fish',
-        );
+        setError(err instanceof Error ? err.message : 'Failed to load aquarium fish');
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -72,23 +62,15 @@ export function CustomizeFishPage() {
     };
   }, [aquariumId]);
 
-  const usedCapacity = fish.reduce(
-    (total, item) => total + item.size * item.size,
-    0,
-  );
+  const usedCapacity = fish.reduce((total, item) => total + item.size * item.size, 0);
 
-  const remainingCapacity = Math.max(
-    0,
-    AQUARIUM_CAPACITY - usedCapacity,
-  );
+  const remainingCapacity = Math.max(0, AQUARIUM_CAPACITY - usedCapacity);
 
   const handleBack = () => {
     if (savingRef.current) return;
 
     navigate(
-      aquariumId
-        ? `/fish/create?aquariumId=${encodeURIComponent(aquariumId)}`
-        : '/aquariums',
+      aquariumId ? `/fish/create?aquariumId=${encodeURIComponent(aquariumId)}` : '/aquariums',
     );
   };
 
@@ -116,11 +98,7 @@ export function CustomizeFishPage() {
 
       navigate(`/aquariums/${encodeURIComponent(aquariumId)}`);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to create fish',
-      );
+      setError(err instanceof Error ? err.message : 'Failed to create fish');
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -134,10 +112,7 @@ export function CustomizeFishPage() {
           <h1>No aquarium selected</h1>
           <p>Please select an aquarium before creating a fish.</p>
 
-          <button
-            type="button"
-            onClick={() => navigate('/aquariums')}
-          >
+          <button type="button" onClick={() => navigate('/aquariums')}>
             My Aquariums
           </button>
         </div>
@@ -159,18 +134,12 @@ export function CustomizeFishPage() {
 
         <div>
           <h1>Paint Your Fish</h1>
-          <p>
-            Choose a species, customize its colors, and bring it
-            to life in your aquarium.
-          </p>
+          <p>Choose a species, customize its colors, and bring it to life in your aquarium.</p>
         </div>
       </header>
 
       {error && (
-        <div
-          role="alert"
-          className="customize-fish-page__error"
-        >
+        <div role="alert" className="customize-fish-page__error">
           {error}
         </div>
       )}
@@ -183,10 +152,7 @@ export function CustomizeFishPage() {
         <div className="customize-fish-page__empty">
           <p>Unable to load aquarium capacity.</p>
 
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-          >
+          <button type="button" onClick={() => window.location.reload()}>
             Retry
           </button>
         </div>
@@ -201,10 +167,7 @@ export function CustomizeFishPage() {
             />
 
             {saving && (
-              <div
-                className="customize-fish-page__saving"
-                role="status"
-              >
+              <div className="customize-fish-page__saving" role="status">
                 Saving your fish...
               </div>
             )}

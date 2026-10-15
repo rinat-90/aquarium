@@ -14,14 +14,23 @@ export function ScanFishPage() {
   return (
     <main className="scan-fish-page">
       <header className="scan-fish-page__header">
-        <Link to={`/fish/create?aquariumId=${encodeURIComponent(aquariumId)}`} className="scan-fish-page__back">← Back</Link>
+        <Link
+          to={`/fish/create?aquariumId=${encodeURIComponent(aquariumId)}`}
+          className="scan-fish-page__back"
+        >
+          ← Back
+        </Link>
         <div>
           <h1>Scan Your Drawing</h1>
           <p>Turn your paper fish into a swimming friend!</p>
         </div>
       </header>
       <section className="scan-fish-page__panel">
-        <ScanPaperFish variant="studio" aquariumId={aquariumId} onSaved={() => navigate(`/aquariums/${encodeURIComponent(aquariumId)}`)} />
+        <ScanPaperFish
+          variant="studio"
+          aquariumId={aquariumId}
+          onSaved={() => navigate(`/aquariums/${encodeURIComponent(aquariumId)}`)}
+        />
       </section>
     </main>
   );

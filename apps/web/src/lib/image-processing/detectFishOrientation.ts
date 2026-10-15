@@ -1,19 +1,13 @@
-
 export type FishOrientation = 'left' | 'right';
 
-export async function detectFishOrientation(
-  imageUrl: string,
-): Promise<FishOrientation> {
+export async function detectFishOrientation(imageUrl: string): Promise<FishOrientation> {
   const image = new Image();
   image.src = imageUrl;
   await image.decode();
 
   const canvas = document.createElement('canvas');
   const width = 120;
-  const height = Math.max(
-    1,
-    Math.round((image.height / image.width) * width),
-  );
+  const height = Math.max(1, Math.round((image.height / image.width) * width));
 
   canvas.width = width;
   canvas.height = height;
@@ -28,12 +22,7 @@ export async function detectFishOrientation(
 
   context.drawImage(image, 0, 0, width, height);
 
-  const pixels = context.getImageData(
-    0,
-    0,
-    width,
-    height,
-  ).data;
+  const pixels = context.getImageData(0, 0, width, height).data;
 
   // Estimate which end is wider near the horizontal tips.
   // The head tends to be thicker than the tail tip.

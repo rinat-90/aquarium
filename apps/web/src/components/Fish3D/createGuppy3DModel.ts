@@ -7,10 +7,22 @@ export function createGuppy3DModel(): Fish3DModel {
   const geometries: THREE.BufferGeometry[] = [];
   const materials: THREE.Material[] = [];
   const textures: THREE.Texture[] = [];
-  const geometry = <T extends THREE.BufferGeometry>(g: T): T => { geometries.push(g); return g; };
-  const material = <T extends THREE.Material>(m: T): T => { materials.push(m); return m; };
-  const texture = <T extends THREE.Texture>(t: T): T => { textures.push(t); return t; };
-  const random = (n: number) => { const v = Math.sin(n * 127.1 + 31.7) * 43758.5453; return v - Math.floor(v); };
+  const geometry = <T extends THREE.BufferGeometry>(g: T): T => {
+    geometries.push(g);
+    return g;
+  };
+  const material = <T extends THREE.Material>(m: T): T => {
+    materials.push(m);
+    return m;
+  };
+  const texture = <T extends THREE.Texture>(t: T): T => {
+    textures.push(t);
+    return t;
+  };
+  const random = (n: number) => {
+    const v = Math.sin(n * 127.1 + 31.7) * 43758.5453;
+    return v - Math.floor(v);
+  };
 
   const paintCanvas = document.createElement('canvas');
   paintCanvas.width = 1024;
@@ -30,14 +42,26 @@ export function createGuppy3DModel(): Fish3DModel {
   const bodyTexture = texture(new THREE.CanvasTexture(bodyCanvas));
   bodyTexture.colorSpace = THREE.SRGBColorSpace;
 
-  const bodyMaterial = material(new THREE.MeshStandardMaterial({
-    map: bodyTexture, color: '#ffffff', roughness: 0.34, metalness: 0.08,
-    emissive: '#063a65', emissiveIntensity: 0.09,
-  }));
-  const finMaterial = material(new THREE.MeshStandardMaterial({
-    color: '#ff9549', roughness: 0.55, side: THREE.DoubleSide,
-    transparent: true, opacity: 0.98, depthWrite: false,
-  }));
+  const bodyMaterial = material(
+    new THREE.MeshStandardMaterial({
+      map: bodyTexture,
+      color: '#ffffff',
+      roughness: 0.34,
+      metalness: 0.08,
+      emissive: '#063a65',
+      emissiveIntensity: 0.09,
+    }),
+  );
+  const finMaterial = material(
+    new THREE.MeshStandardMaterial({
+      color: '#ff9549',
+      roughness: 0.55,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.98,
+      depthWrite: false,
+    }),
+  );
   const eyeWhite = material(new THREE.MeshStandardMaterial({ color: '#e9f9ff', roughness: 0.25 }));
   const eyeBlack = material(new THREE.MeshStandardMaterial({ color: '#06152a', roughness: 0.18 }));
   const shine = material(new THREE.MeshBasicMaterial({ color: '#ffffff' }));
@@ -46,7 +70,9 @@ export function createGuppy3DModel(): Fish3DModel {
   const bodyGeometry = geometry(new THREE.SphereGeometry(1, 64, 40));
   const pos = bodyGeometry.getAttribute('position');
   for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const x = pos.getX(i),
+      y = pos.getY(i),
+      z = pos.getZ(i);
     const rear = THREE.MathUtils.smoothstep(-x, 0, 1);
     const front = THREE.MathUtils.smoothstep(x, 0.4, 1);
     const taper = 1 - rear * 0.57 - front * 0.12;
@@ -60,10 +86,16 @@ export function createGuppy3DModel(): Fish3DModel {
 
   const paintGeometry = geometry(bodyGeometry.clone());
   paintGeometry.scale(1.008, 1.008, 1.008);
-  const paintMaterial = material(new THREE.MeshBasicMaterial({
-    map: paintTexture, transparent: true, depthWrite: false,
-    side: THREE.FrontSide, polygonOffset: true, polygonOffsetFactor: -2,
-  }));
+  const paintMaterial = material(
+    new THREE.MeshBasicMaterial({
+      map: paintTexture,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.FrontSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+    }),
+  );
   const paintBody = new THREE.Mesh(paintGeometry, paintMaterial);
   paintBody.name = 'fish-paint-layer';
   paintBody.renderOrder = 3;
@@ -72,7 +104,8 @@ export function createGuppy3DModel(): Fish3DModel {
 
   // Painted-on scales and patches follow the body UVs, including in 3D.
   const redrawBody = () => {
-    const w = bodyCanvas.width, h = bodyCanvas.height;
+    const w = bodyCanvas.width,
+      h = bodyCanvas.height;
     bodyCtx.clearRect(0, 0, w, h);
     const bodyGradient = bodyCtx.createLinearGradient(0, 0, 0, h);
     bodyGradient.addColorStop(0, '#0879e9');
@@ -107,7 +140,15 @@ export function createGuppy3DModel(): Fish3DModel {
       const y = 175 + random(i + 500) * 170;
       bodyCtx.fillStyle = `rgba(4,38,119,${0.24 + random(i + 600) * 0.5})`;
       bodyCtx.beginPath();
-      bodyCtx.ellipse(x, y, 3 + random(i + 700) * 10, 3 + random(i + 800) * 7, random(i + 900), 0, Math.PI * 2);
+      bodyCtx.ellipse(
+        x,
+        y,
+        3 + random(i + 700) * 10,
+        3 + random(i + 800) * 7,
+        random(i + 900),
+        0,
+        Math.PI * 2,
+      );
       bodyCtx.fill();
     }
     bodyTexture.needsUpdate = true;
@@ -124,13 +165,20 @@ export function createGuppy3DModel(): Fish3DModel {
   finTexture.colorSpace = THREE.SRGBColorSpace;
   finTexture.wrapS = THREE.ClampToEdgeWrapping;
   finTexture.wrapT = THREE.ClampToEdgeWrapping;
-  const patternedFinMaterial = material(new THREE.MeshStandardMaterial({
-    map: finTexture, color: '#ffffff', roughness: 0.57,
-    side: THREE.DoubleSide, transparent: true, opacity: 0.98,
-    depthWrite: false,
-  }));
+  const patternedFinMaterial = material(
+    new THREE.MeshStandardMaterial({
+      map: finTexture,
+      color: '#ffffff',
+      roughness: 0.57,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.98,
+      depthWrite: false,
+    }),
+  );
   const redrawFins = (base: string) => {
-    const w = finCanvas.width, h = finCanvas.height;
+    const w = finCanvas.width,
+      h = finCanvas.height;
     finCtx.clearRect(0, 0, w, h);
     const grad = finCtx.createLinearGradient(0, 0, w, 0);
     grad.addColorStop(0, '#063ba5');
@@ -143,7 +191,7 @@ export function createGuppy3DModel(): Fish3DModel {
     finCtx.fillRect(0, 0, w, h);
     // Radiating pigment streaks.
     for (let i = 0; i < 48; i++) {
-      const y = i / 47 * h;
+      const y = (i / 47) * h;
       finCtx.strokeStyle = i % 3 === 0 ? 'rgba(234,221,255,0.42)' : 'rgba(12,64,166,0.18)';
       finCtx.lineWidth = 2 + random(i + 90) * 5;
       finCtx.beginPath();
@@ -158,7 +206,15 @@ export function createGuppy3DModel(): Fish3DModel {
       const r = 6 + random(i + 3000) * 19;
       finCtx.fillStyle = `rgba(7,35,116,${0.6 + random(i + 4000) * 0.35})`;
       finCtx.beginPath();
-      finCtx.ellipse(x, y, r * (0.7 + random(i + 5000)), r * 0.68, random(i + 6000) * Math.PI, 0, Math.PI * 2);
+      finCtx.ellipse(
+        x,
+        y,
+        r * (0.7 + random(i + 5000)),
+        r * 0.68,
+        random(i + 6000) * Math.PI,
+        0,
+        Math.PI * 2,
+      );
       finCtx.fill();
     }
     finTexture.needsUpdate = true;
@@ -169,18 +225,23 @@ export function createGuppy3DModel(): Fish3DModel {
   // This lets Fish3DPreview animate fish.tail.rotation.y directly.
   const tailRoot = -1.33;
   const tailLength = 1.95;
-  const segments = 48, rows = 24;
-  const tailPositions: number[] = [], tailUVs: number[] = [], tailIndices: number[] = [];
+  const segments = 48,
+    rows = 24;
+  const tailPositions: number[] = [],
+    tailUVs: number[] = [],
+    tailIndices: number[] = [];
   // Smoothly curved membrane, with a soft ripple near the outer edge.
   const tailPoint = (u: number, v: number, offset = 0) => {
     const y = tailEdge(v) * tailSpread(u);
-    const x = -tailLength * u
-      + 0.16 * Math.abs(Math.sin((v - 0.5) * Math.PI)) ** 2 * u
-      + 0.025 * Math.sin(v * Math.PI * 14) * u ** 3;
-    const z = 0.23 * u * u * Math.cos((v - 0.5) * Math.PI)
-      + 0.085 * Math.sin(v * Math.PI * 3) * Math.sin(Math.PI * u * 0.85)
-      + 0.045 * u ** 3 * Math.sin(v * Math.PI * 12)
-      + offset;
+    const x =
+      -tailLength * u +
+      0.16 * Math.abs(Math.sin((v - 0.5) * Math.PI)) ** 2 * u +
+      0.025 * Math.sin(v * Math.PI * 14) * u ** 3;
+    const z =
+      0.23 * u * u * Math.cos((v - 0.5) * Math.PI) +
+      0.085 * Math.sin(v * Math.PI * 3) * Math.sin(Math.PI * u * 0.85) +
+      0.045 * u ** 3 * Math.sin(v * Math.PI * 12) +
+      offset;
     return new THREE.Vector3(x, y, z);
   };
   // Rounded delta silhouette: wide near the outer rim, softly scalloped.
@@ -203,7 +264,8 @@ export function createGuppy3DModel(): Fish3DModel {
   }
   for (let i = 0; i < segments; i++) {
     for (let j = 0; j < rows; j++) {
-      const a = i * (rows + 1) + j, b = a + rows + 1;
+      const a = i * (rows + 1) + j,
+        b = a + rows + 1;
       tailIndices.push(a, b, a + 1, b, b + 1, a + 1);
     }
   }
@@ -230,9 +292,14 @@ export function createGuppy3DModel(): Fish3DModel {
   tailBack.name = 'guppy-tail-back';
   tail.add(tailBack);
 
-  const rimMaterial = material(new THREE.MeshBasicMaterial({
-    color: '#ffb4da', transparent: true, opacity: 0.55, depthWrite: false,
-  }));
+  const rimMaterial = material(
+    new THREE.MeshBasicMaterial({
+      color: '#ffb4da',
+      transparent: true,
+      opacity: 0.55,
+      depthWrite: false,
+    }),
+  );
   // Combine the three static rim tubes into a single tail child.
   // The tail's existing animation continues to transform this mesh.
   const rimGeometries: THREE.BufferGeometry[] = [];
@@ -250,9 +317,14 @@ export function createGuppy3DModel(): Fish3DModel {
   mergedRim.name = 'guppy-merged-tail-rims';
   tail.add(mergedRim);
 
-  const rayMaterial = material(new THREE.MeshBasicMaterial({
-    color: '#e5d6ff', transparent: true, opacity: 0.34, depthWrite: false,
-  }));
+  const rayMaterial = material(
+    new THREE.MeshBasicMaterial({
+      color: '#e5d6ff',
+      transparent: true,
+      opacity: 0.34,
+      depthWrite: false,
+    }),
+  );
   const rayGeometries: THREE.BufferGeometry[] = [];
   for (let j = 1; j < 18; j++) {
     const v = j / 18;
@@ -261,7 +333,9 @@ export function createGuppy3DModel(): Fish3DModel {
       const u = k / 12;
       points.push(tailPoint(u, v, 0.013));
     }
-    rayGeometries.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 24, 0.004, 4, false));
+    rayGeometries.push(
+      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 24, 0.004, 4, false),
+    );
   }
   const mergedRayGeometry = mergeGeometries(rayGeometries, false);
   rayGeometries.forEach((g) => g.dispose());
@@ -274,18 +348,21 @@ export function createGuppy3DModel(): Fish3DModel {
   const dorsalShape = new THREE.Shape();
   dorsalShape.moveTo(-0.83, 0);
   dorsalShape.bezierCurveTo(-1.08, 0.32, -1.32, 0.79, -1.34, 0.86);
-  dorsalShape.bezierCurveTo(-1.05, 0.96, -0.57, 0.70, -0.18, 0.36);
+  dorsalShape.bezierCurveTo(-1.05, 0.96, -0.57, 0.7, -0.18, 0.36);
   dorsalShape.bezierCurveTo(0.02, 0.13, 0.17, 0.02, 0.34, 0);
-  dorsalShape.quadraticCurveTo(-0.20, -0.04, -0.83, 0);
+  dorsalShape.quadraticCurveTo(-0.2, -0.04, -0.83, 0);
   const dorsalGeometry = geometry(new THREE.ShapeGeometry(dorsalShape, 40));
   dorsalGeometry.computeBoundingBox();
   const dorsalBounds = dorsalGeometry.boundingBox!;
   const dorsalUV = dorsalGeometry.getAttribute('uv');
   const dorsalPos = dorsalGeometry.getAttribute('position');
   for (let i = 0; i < dorsalUV.count; i++) {
-    dorsalUV.setXY(i,
-      (dorsalBounds.max.y - dorsalPos.getY(i)) / Math.max(0.01, dorsalBounds.max.y - dorsalBounds.min.y),
-      (dorsalPos.getX(i) - dorsalBounds.min.x) / Math.max(0.01, dorsalBounds.max.x - dorsalBounds.min.x),
+    dorsalUV.setXY(
+      i,
+      (dorsalBounds.max.y - dorsalPos.getY(i)) /
+        Math.max(0.01, dorsalBounds.max.y - dorsalBounds.min.y),
+      (dorsalPos.getX(i) - dorsalBounds.min.x) /
+        Math.max(0.01, dorsalBounds.max.x - dorsalBounds.min.x),
     );
   }
   dorsalUV.needsUpdate = true;
@@ -294,7 +371,7 @@ export function createGuppy3DModel(): Fish3DModel {
     const x = dorsalPos.getX(i);
     const y = dorsalPos.getY(i);
     const height = THREE.MathUtils.clamp(y / 0.96, 0, 1);
-    dorsalPos.setZ(i, 0.10 * height * height + 0.045 * Math.sin(x * 5) * height);
+    dorsalPos.setZ(i, 0.1 * height * height + 0.045 * Math.sin(x * 5) * height);
   }
   dorsalPos.needsUpdate = true;
   dorsalGeometry.computeVertexNormals();
@@ -320,7 +397,10 @@ export function createGuppy3DModel(): Fish3DModel {
   leftFin.position.set(0.43, -0.06, 0.31);
   leftFin.rotation.y = -0.25;
   group.add(leftFin);
-  const rightFin = new THREE.Mesh(geometry(new THREE.ShapeGeometry(pectoralShape, 24)), finMaterial);
+  const rightFin = new THREE.Mesh(
+    geometry(new THREE.ShapeGeometry(pectoralShape, 24)),
+    finMaterial,
+  );
   rightFin.position.set(0.43, -0.06, -0.31);
   rightFin.rotation.y = 0.25;
   group.add(rightFin);
@@ -371,7 +451,8 @@ export function createGuppy3DModel(): Fish3DModel {
       paintBody.visible = true;
     };
     source.onerror = () => {
-      if (!disposed && version === paintLoadVersion) console.error('Failed to load guppy paint image.');
+      if (!disposed && version === paintLoadVersion)
+        console.error('Failed to load guppy paint image.');
     };
     source.src = image;
   };
@@ -384,5 +465,17 @@ export function createGuppy3DModel(): Fish3DModel {
     textures.forEach((t) => t.dispose());
   };
   group.rotation.y = -0.18;
-  return { group, body, paintCanvas, paintTexture, tail, leftFin, rightFin, setBodyColor, setFinColor, setPaintImage, dispose };
+  return {
+    group,
+    body,
+    paintCanvas,
+    paintTexture,
+    tail,
+    leftFin,
+    rightFin,
+    setBodyColor,
+    setFinColor,
+    setPaintImage,
+    dispose,
+  };
 }

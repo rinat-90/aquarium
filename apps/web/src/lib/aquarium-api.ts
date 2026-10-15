@@ -1,11 +1,7 @@
-
 import { apiFetch } from './api-client';
-import type {
-  AquariumCustomization,
-} from '../features/aquarium-customization/types';
+import type { AquariumCustomization } from '../features/aquarium-customization/types';
 
-const API_URL =
-  import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 type FishSpecies = 'classic' | 'angelfish' | 'drawn' | 'guppy';
 
@@ -57,13 +53,9 @@ export type UpdateFishInput = Partial<{
 
 // Aquarium API
 export const aquariumApi = {
-  list: () =>
-    apiFetch<ApiAquarium[]>('/aquariums'),
+  list: () => apiFetch<ApiAquarium[]>('/aquariums'),
 
-  get: (id: string) =>
-    apiFetch<ApiAquarium>(
-      `/aquariums/${encodeURIComponent(id)}`,
-    ),
+  get: (id: string) => apiFetch<ApiAquarium>(`/aquariums/${encodeURIComponent(id)}`),
 
   create: (name: string) =>
     apiFetch<ApiAquarium>('/aquariums', {
@@ -72,13 +64,10 @@ export const aquariumApi = {
     }),
 
   update: (id: string, name: string) =>
-    apiFetch<ApiAquarium>(
-      `/aquariums/${encodeURIComponent(id)}`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify({ name }),
-      },
-    ),
+    apiFetch<ApiAquarium>(`/aquariums/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name }),
+    }),
 
   // Safely delete an aquarium.
   // If it contains fish, provide a destination aquarium.
@@ -88,59 +77,41 @@ export const aquariumApi = {
       destinationAquariumId,
     });
 
-    return apiFetch<void>(
-      `/aquariums/${encodeURIComponent(id)}`,
-      {
-        method: 'DELETE',
-        ...(destinationAquariumId
-          ? {
+    return apiFetch<void>(`/aquariums/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      ...(destinationAquariumId
+        ? {
             body: JSON.stringify({
               destinationAquariumId,
             }),
           }
-          : {}),
-      },
-    );
+        : {}),
+    });
   },
 
   setDefault: (id: string) =>
-    apiFetch<ApiAquarium>(
-      `/aquariums/${encodeURIComponent(id)}/default`,
-      {
-        method: 'PATCH',
-      },
-    ),
-
+    apiFetch<ApiAquarium>(`/aquariums/${encodeURIComponent(id)}/default`, {
+      method: 'PATCH',
+    }),
 
   // Release all fish while keeping the aquarium and TV broadcast.
   releaseAllFish: (id: string) =>
-    apiFetch<void>(
-      `/aquariums/${encodeURIComponent(id)}/fish`,
-      {
-        method: 'DELETE',
-      },
-    ),
+    apiFetch<void>(`/aquariums/${encodeURIComponent(id)}/fish`, {
+      method: 'DELETE',
+    }),
 
   // Permanently delete aquarium and its fish.
   deletePermanently: (id: string) =>
-    apiFetch<void>(
-      `/aquariums/${encodeURIComponent(id)}/permanent`,
-      {
-        method: 'DELETE',
-      },
-    ),
-
+    apiFetch<void>(`/aquariums/${encodeURIComponent(id)}/permanent`, {
+      method: 'DELETE',
+    }),
 };
 
 // Fish API
 export const fishApi = {
-  list: () =>
-    apiFetch<ApiFish[]>('/fish'),
+  list: () => apiFetch<ApiFish[]>('/fish'),
 
-  get: (id: string) =>
-    apiFetch<ApiFish>(
-      `/fish/${encodeURIComponent(id)}`,
-    ),
+  get: (id: string) => apiFetch<ApiFish>(`/fish/${encodeURIComponent(id)}`),
 
   create: (data: CreateFishInput) =>
     apiFetch<ApiFish>('/fish', {
@@ -149,73 +120,47 @@ export const fishApi = {
     }),
 
   update: (id: string, data: UpdateFishInput) =>
-    apiFetch<ApiFish>(
-      `/fish/${encodeURIComponent(id)}`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      },
-    ),
+    apiFetch<ApiFish>(`/fish/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
 
   // Delete an individual fish, not an aquarium.
   remove: (id: string) =>
-    apiFetch<void>(
-      `/fish/${encodeURIComponent(id)}`,
-      {
-        method: 'DELETE',
-      },
-    ),
+    apiFetch<void>(`/fish/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
 
   uploadTexture: (id: string, image: Blob) => {
     const formData = new FormData();
 
-    formData.append(
-      'texture',
-      image,
-      'fish.png',
-    );
+    formData.append('texture', image, 'fish.png');
 
-    return apiFetch<ApiFish>(
-      `/fish/${encodeURIComponent(id)}/texture`,
-      {
-        method: 'POST',
-        body: formData,
-      },
-    );
+    return apiFetch<ApiFish>(`/fish/${encodeURIComponent(id)}/texture`, {
+      method: 'POST',
+      body: formData,
+    });
   },
 
   getTexture: async (id: string): Promise<Blob> => {
-    const response = await fetch(
-      `${API_URL}/fish/${encodeURIComponent(id)}/texture`,
-      {
-        method: 'GET',
-        credentials: 'include',
-      },
-    );
+    const response = await fetch(`${API_URL}/fish/${encodeURIComponent(id)}/texture`, {
+      method: 'GET',
+      credentials: 'include',
+    });
 
     if (!response.ok) {
-      throw new Error(
-        `Failed to load fish texture (${response.status})`,
-      );
+      throw new Error(`Failed to load fish texture (${response.status})`);
     }
 
     return response.blob();
   },
 
-
   // Atomically remove all fish belonging to this aquarium.
   releaseAllFish: (id: string) =>
-    apiFetch<void>(
-      `/aquariums/${encodeURIComponent(id)}/fish`,
-      { method: 'DELETE' },
-    ),
+    apiFetch<void>(`/aquariums/${encodeURIComponent(id)}/fish`, { method: 'DELETE' }),
 
   // Permanently delete the aquarium and its contents.
   // Backend must reject active broadcasts with HTTP 409.
   deletePermanently: (id: string) =>
-    apiFetch<void>(
-      `/aquariums/${encodeURIComponent(id)}/permanent`,
-      { method: 'DELETE' },
-    ),
-
+    apiFetch<void>(`/aquariums/${encodeURIComponent(id)}/permanent`, { method: 'DELETE' }),
 };

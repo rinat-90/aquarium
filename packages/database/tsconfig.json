@@ -9,13 +9,6 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": [
-    "src/**/*.ts",
-    "prisma.config.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src/generated"
-  ]
+  "include": ["src/**/*.ts", "prisma.config.ts"],
+  "exclude": ["node_modules", "dist", "src/generated"]
 }

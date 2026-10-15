@@ -1,4 +1,3 @@
-
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { prisma } from '@aquarium/database';
@@ -10,27 +9,21 @@ const trustedOrigins = [
 
   ...(!isProduction
     ? [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'http://192.168.86.23:5173',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://192.168.86.23:5173',
 
-      // HTTPS tunnel for testing the guided fish scanner.
-      process.env.WEB_HTTPS ?? ''
-
-    ]
+        // HTTPS tunnel for testing the guided fish scanner.
+        process.env.WEB_HTTPS ?? '',
+      ]
     : []),
 ]
   .flatMap((value) => value.split(','))
   .map((value) => value.trim())
-  .filter(
-    (value, index, origins) =>
-      value.length > 0 && origins.indexOf(value) === index,
-  );
+  .filter((value, index, origins) => value.length > 0 && origins.indexOf(value) === index);
 
 export const auth = betterAuth({
-  baseURL:
-    process.env.BETTER_AUTH_URL ??
-    'http://localhost:3001',
+  baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3001',
 
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
@@ -45,9 +38,7 @@ export const auth = betterAuth({
   advanced: {
     defaultCookieAttributes: {
       sameSite: 'lax',
-      secure:
-        isProduction ||
-        process.env.BETTER_AUTH_URL?.startsWith('https://') === true,
+      secure: isProduction || process.env.BETTER_AUTH_URL?.startsWith('https://') === true,
       httpOnly: true,
     },
   },

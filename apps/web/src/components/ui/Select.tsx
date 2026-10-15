@@ -1,9 +1,4 @@
-
-import {
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './ui.css';
 
 type SelectOption = {
@@ -20,29 +15,25 @@ type SelectProps = {
 };
 
 export function Select({
-                         value,
-                         options,
-                         onChange,
-                         disabled = false,
-                         ariaLabel = 'Select option',
-                       }: SelectProps) {
+  value,
+  options,
+  onChange,
+  disabled = false,
+  ariaLabel = 'Select option',
+}: SelectProps) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const selectedIndex = options.findIndex(
-    (option) => option.value === value,
-  );
+  const selectedIndex = options.findIndex((option) => option.value === value);
   const selected = options[selectedIndex];
 
   useEffect(() => {
     if (!open) return;
 
     function onPointerDown(event: PointerEvent) {
-      if (
-        !containerRef.current?.contains(event.target as Node)
-      ) {
+      if (!containerRef.current?.contains(event.target as Node)) {
         setOpen(false);
       }
     }
@@ -102,11 +93,7 @@ export function Select({
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="ui-select"
-      onKeyDown={handleKeyDown}
-    >
+    <div ref={containerRef} className="ui-select" onKeyDown={handleKeyDown}>
       <button
         ref={triggerRef}
         type="button"
@@ -121,9 +108,7 @@ export function Select({
         }}
       >
         <span className="ui-select-icon">🌊</span>
-        <span className="ui-select-label">
-          {selected?.label ?? 'Select aquarium'}
-        </span>
+        <span className="ui-select-label">{selected?.label ?? 'Select aquarium'}</span>
         <svg
           className={`ui-select-chevron ${open ? 'is-open' : ''}`}
           width="18"
@@ -141,19 +126,13 @@ export function Select({
       </button>
 
       {open && (
-        <div
-          className="ui-select-menu"
-          role="listbox"
-          aria-label={ariaLabel}
-        >
+        <div className="ui-select-menu" role="listbox" aria-label={ariaLabel}>
           {options.map((option, index) => (
             <div
               key={option.value}
               role="option"
               aria-selected={option.value === value}
-              className={`ui-select-option ${
-                index === activeIndex ? 'is-active' : ''
-              }`}
+              className={`ui-select-option ${index === activeIndex ? 'is-active' : ''}`}
               onMouseEnter={() => setActiveIndex(index)}
               onClick={() => choose(index)}
             >

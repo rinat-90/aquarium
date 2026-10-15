@@ -1,7 +1,4 @@
-
-export async function flipFishImage(
-  imageUrl: string,
-): Promise<string> {
+export async function flipFishImage(imageUrl: string): Promise<string> {
   const image = new Image();
   image.src = imageUrl;
   await image.decode();

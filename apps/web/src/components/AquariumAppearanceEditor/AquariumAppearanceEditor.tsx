@@ -2,16 +2,17 @@ import { useEffect, useRef, useState } from 'react';
 import './AquariumDecorationCatalog.css';
 import './AquariumWorkspace.css';
 import './AquariumAppearanceDrawer.css';
-import { applyAquariumTheme, isAquariumThemeSelected } from '../../features/aquarium-customization/themeRegistry';
+import {
+  applyAquariumTheme,
+  isAquariumThemeSelected,
+} from '../../features/aquarium-customization/themeRegistry';
 import type { AquariumTheme } from '../../features/aquarium-customization/themeRegistry';
 import type {
   AquariumDecorationAssetId,
   AquariumDecorationInstance,
 } from '../../features/aquarium-customization/types';
 
-import {
-  DECORATION_REGISTRY,
-} from '../../features/aquarium-customization/decorationRegistry';
+import { DECORATION_REGISTRY } from '../../features/aquarium-customization/decorationRegistry';
 
 import type {
   AquariumCustomization,
@@ -107,11 +108,23 @@ const decorationColors = [
   { name: 'Sunset orange', hex: '#ff9466' },
 ] as const;
 
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(max, Math.max(min, value));
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-export function AquariumAppearanceEditor({ open, embedded = false, embeddedSection, initialTab = 'worlds', value, onChange, onClose, onSave, saving, saveError, themes, selectedDecorationId = null, onDecorationSelect }: Props) {
-
+export function AquariumAppearanceEditor({
+  open,
+  embedded = false,
+  embeddedSection,
+  initialTab = 'worlds',
+  value,
+  onChange,
+  onClose,
+  onSave,
+  saving,
+  saveError,
+  themes,
+  selectedDecorationId = null,
+  onDecorationSelect,
+}: Props) {
   const [catalogCategory, setCatalogCategory] = useState<CatalogCategory>('all');
   const [activeTab, setActiveTab] = useState<EditorTab>(initialTab);
   const [sheetCollapsed, setSheetCollapsed] = useState(false);
@@ -133,7 +146,10 @@ export function AquariumAppearanceEditor({ open, embedded = false, embeddedSecti
 
   const selectDecoration = (id: string | null) => {
     setLocalSelectedId(id);
-    if (id) { setSheetCollapsed(false); setActiveTab('decorate'); }
+    if (id) {
+      setSheetCollapsed(false);
+      setActiveTab('decorate');
+    }
     onDecorationSelect?.(id);
   };
 
@@ -177,26 +193,17 @@ export function AquariumAppearanceEditor({ open, embedded = false, embeddedSecti
 
     onChange({
       ...value,
-      decorationInstances: [
-        ...decorationInstances,
-        instance,
-      ],
+      decorationInstances: [...decorationInstances, instance],
     });
 
     selectDecoration(instance.id);
   };
 
-  const updateDecoration = (
-    id: string,
-    changes: Partial<AquariumDecorationInstance>,
-  ) => {
+  const updateDecoration = (id: string, changes: Partial<AquariumDecorationInstance>) => {
     onChange({
       ...value,
-      decorationInstances: decorationInstances.map(
-        (decoration) =>
-          decoration.id === id
-            ? { ...decoration, ...changes }
-            : decoration,
+      decorationInstances: decorationInstances.map((decoration) =>
+        decoration.id === id ? { ...decoration, ...changes } : decoration,
       ),
     });
   };
@@ -204,9 +211,7 @@ export function AquariumAppearanceEditor({ open, embedded = false, embeddedSecti
   const removeDecoration = (id: string) => {
     onChange({
       ...value,
-      decorationInstances: decorationInstances.filter(
-        (decoration) => decoration.id !== id,
-      ),
+      decorationInstances: decorationInstances.filter((decoration) => decoration.id !== id),
     });
 
     selectDecoration(null);
@@ -215,357 +220,539 @@ export function AquariumAppearanceEditor({ open, embedded = false, embeddedSecti
   if (!open) return null;
 
   return (
-    <aside className={`aquarium-appearance-editor aquarium-workspace ${embedded ? "is-embedded" : ""} ${sheetCollapsed ? 'is-collapsed' : ''}`} aria-label="Decorate your aquarium">
-      {!embeddedSection && <header className="aquarium-appearance-header">
-        <button type="button" className="aquarium-workspace-sheet-toggle" aria-expanded={!sheetCollapsed} aria-label={sheetCollapsed ? "Expand decoration panel" : "Collapse decoration panel"} onClick={() => setSheetCollapsed((current) => !current)}><span className="aquarium-workspace-grip" aria-hidden="true" /><span className="aquarium-workspace-sheet-label">{sheetCollapsed ? "🎨 Tap to decorate" : "Drag decorations in the aquarium"}</span><span aria-hidden="true">{sheetCollapsed ? "⌃" : "⌄"}</span></button>
-        <div>
-          <div className="aquarium-appearance-eyebrow">MY AQUARIUM</div>
-          <h2>🎨 Let's decorate!</h2>
-          <p>Make your aquarium your own.</p>
-        </div>
-        <button type="button" className="aquarium-appearance-close" onClick={onClose} disabled={saving} aria-label="Close editor">×</button>
-      </header>}
-
-      {!embeddedSection && <nav className="aquarium-editor-tabs" aria-label="Aquarium customization" role="tablist">
-        {([
-          ['worlds', '🌎', 'Worlds'],
-          ['decorate', '🎨', 'Decorate'],
-          ['effects', '✨', 'Effects'],
-        ] as const).map(([id, emoji, label]) => (
+    <aside
+      className={`aquarium-appearance-editor aquarium-workspace ${embedded ? 'is-embedded' : ''} ${sheetCollapsed ? 'is-collapsed' : ''}`}
+      aria-label="Decorate your aquarium"
+    >
+      {!embeddedSection && (
+        <header className="aquarium-appearance-header">
           <button
-            key={id}
             type="button"
-            role="tab"
-            aria-selected={activeTab === id}
-            className={activeTab === id ? 'is-active' : ''}
-            onClick={() => { setActiveTab(id); scrollRef.current?.scrollTo({ top: 0 }); }}
+            className="aquarium-workspace-sheet-toggle"
+            aria-expanded={!sheetCollapsed}
+            aria-label={sheetCollapsed ? 'Expand decoration panel' : 'Collapse decoration panel'}
+            onClick={() => setSheetCollapsed((current) => !current)}
           >
-            <span aria-hidden="true">{emoji}</span> {label}
+            <span className="aquarium-workspace-grip" aria-hidden="true" />
+            <span className="aquarium-workspace-sheet-label">
+              {sheetCollapsed ? '🎨 Tap to decorate' : 'Drag decorations in the aquarium'}
+            </span>
+            <span aria-hidden="true">{sheetCollapsed ? '⌃' : '⌄'}</span>
           </button>
-        ))}
-      </nav>}
+          <div>
+            <div className="aquarium-appearance-eyebrow">MY AQUARIUM</div>
+            <h2>🎨 Let's decorate!</h2>
+            <p>Make your aquarium your own.</p>
+          </div>
+          <button
+            type="button"
+            className="aquarium-appearance-close"
+            onClick={onClose}
+            disabled={saving}
+            aria-label="Close editor"
+          >
+            ×
+          </button>
+        </header>
+      )}
+
+      {!embeddedSection && (
+        <nav className="aquarium-editor-tabs" aria-label="Aquarium customization" role="tablist">
+          {(
+            [
+              ['worlds', '🌎', 'Worlds'],
+              ['decorate', '🎨', 'Decorate'],
+              ['effects', '✨', 'Effects'],
+            ] as const
+          ).map(([id, emoji, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === id}
+              className={activeTab === id ? 'is-active' : ''}
+              onClick={() => {
+                setActiveTab(id);
+                scrollRef.current?.scrollTo({ top: 0 });
+              }}
+            >
+              <span aria-hidden="true">{emoji}</span> {label}
+            </button>
+          ))}
+        </nav>
+      )}
       <div className="aquarium-appearance-scroll" ref={scrollRef}>
-        {(embeddedSection === 'appearance' || (!embeddedSection && activeTab === 'worlds')) && (<>
-        <section className="aquarium-theme-section" aria-label="Starter aquarium themes">
-          <div className="aquarium-theme-heading">
-            <div>
-              <h3>🐠 Choose a 3D theme</h3>
-              <p>Choose a world with its own scenery. Your decorations stay right where you put them.</p>
-            </div>
-            <span className="aquarium-theme-free">Free</span>
-          </div>
-          <div className="aquarium-theme-grid">
-            {themes.map((theme) => {
-              const selected = isAquariumThemeSelected(value, theme);
-              return (
-                <button
-                  key={theme.id}
-                  type="button"
-                  className={`aquarium-theme-card ${selected ? 'is-selected' : ''}`}
-                  aria-pressed={selected}
-                  aria-label={`Use ${theme.name} theme`}
-                  onClick={() => onChange(applyAquariumTheme(value, theme))}
-                >
-<span className="aquarium-theme-art aquarium-theme-mini-tank" style={{ background: theme.gradient }}>
-                    <span className="aquarium-theme-mini-rays" aria-hidden="true" />
-                    <span className="aquarium-theme-mini-bubble aquarium-theme-mini-bubble--one" aria-hidden="true" />
-                    <span className="aquarium-theme-mini-bubble aquarium-theme-mini-bubble--two" aria-hidden="true" />
-                    <span className="aquarium-theme-mini-bubble aquarium-theme-mini-bubble--three" aria-hidden="true" />
-                    <span className="aquarium-theme-mini-fish" aria-hidden="true">🐠</span>
-                    <span className="aquarium-theme-mini-fish aquarium-theme-mini-fish--small" aria-hidden="true">🐟</span>
-                    <span className={`aquarium-theme-mini-scene ${theme.id === 'magic-lagoon' || theme.id === 'midnight-sea' ? 'aquarium-theme-mini-scene--glow' : ''}`} aria-hidden="true">
-                      {theme.id === 'magic-lagoon' ? '🍄' : theme.id === 'midnight-sea' ? '🌿' : theme.id === 'ocean-garden' ? '🌱' : theme.id === 'sunny-reef' ? '🪸' : theme.emoji}
-                    </span>
-                    {(theme.id === 'magic-lagoon' || theme.id === 'midnight-sea') && (
-                      <span className={`aquarium-theme-mini-accent ${theme.id === 'magic-lagoon' ? 'aquarium-theme-mini-accent--lagoon' : 'aquarium-theme-mini-accent--midnight'}`} aria-hidden="true" />
-                    )}
-                    <span className="aquarium-theme-mini-floor" aria-hidden="true" />
-                    {selected && <span className="aquarium-theme-check" aria-hidden="true">✓</span>}
-                  </span>
-                  <span className="aquarium-theme-name">{theme.name}</span>
-                  <span className="aquarium-theme-description">{theme.description}</span>
-                </button>
-              );
-            })}
-          </div>
-          <p className="aquarium-theme-hint">Choose a world, then make it your own below.</p>
-        </section>
-        <section>
-          <h3>🌊 Change the water color</h3>
-          <div className="aquarium-appearance-worlds">
-            {backgrounds.map((option) => (
-              <button
-                type="button"
-                key={option.id}
-                className={`aquarium-appearance-world ${value.background === option.id ? 'is-selected' : ''}`}
-                aria-pressed={value.background === option.id}
-                onClick={() => onChange({ ...value, background: option.id })}
-              >
-                <span className="aquarium-appearance-preview" style={{ background: option.gradient }}>
-                  <span aria-hidden="true">{option.emoji}</span>
-                </span>
-                <span>{option.label}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <h3>🏖️ Choose your floor</h3>
-
-          <div className="aquarium-appearance-worlds">
-            {substrates.map((option) => (
-              <button
-                type="button"
-                key={option.id}
-                className={`aquarium-appearance-world ${
-                  value.substrate === option.id ? 'is-selected' : ''
-                }`}
-                aria-pressed={value.substrate === option.id}
-                onClick={() =>
-                  onChange({
-                    ...value,
-                    substrate: option.id,
-                  })
-                }
-              >
-        <span
-          className="aquarium-appearance-preview"
-          style={{ background: option.gradient }}
-        >
-          <span aria-hidden="true">{option.emoji}</span>
-        </span>
-
-                <span>{option.label}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        </>)}
-        {(embeddedSection === 'decorations' || (!embeddedSection && activeTab === 'decorate')) && (<>
-        <section className="aquarium-decoration-section aquarium-catalog">
-          <div className="aquarium-catalog-heading">
-            <div>
-              <h3>🪸 Pick a decoration</h3>
-              <p>Pick an object, then make it your own!</p>
-            </div>
-            <span className="aquarium-catalog-counter">{decorationInstances.length}/30</span>
-          </div>
-
-          <div className="aquarium-decorate-steps" aria-label="How to decorate">
-            <span><strong>1</strong> Pick</span>
-            <span aria-hidden="true">→</span>
-            <span><strong>2</strong> Move</span>
-            <span aria-hidden="true">→</span>
-            <span><strong>3</strong> Make it yours!</span>
-          </div>
-          {decorationInstances.length >= 30 && (
-            <p className="aquarium-decorate-limit" role="status">Your aquarium is full! Remove an object to add another.</p>
-          )}
-          <div className="aquarium-catalog-tabs" role="group" aria-label="Decoration categories">
-            {([
-              ['all', '✨ All'],
-              ['plants', '🌿 Plants'],
-              ['rocks', '🪨 Rocks'],
-            ] as const).map(([category, label]) => (
-              <button
-                key={category}
-                type="button"
-                className={catalogCategory === category ? 'is-active' : ''}
-                aria-pressed={catalogCategory === category}
-                onClick={() => setCatalogCategory(category)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <div className="aquarium-catalog-grid">
-            {catalogItems
-              .filter((item) => catalogCategory === 'all' || item.category === catalogCategory)
-              .map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`aquarium-catalog-card aquarium-catalog-card--${item.id}`}
-                  disabled={decorationInstances.length >= 30}
-                  onClick={() => addDecoration(item.id)}
-                  aria-label={`Add ${item.label}`}
-                >
-                  <span className="aquarium-catalog-art" aria-hidden="true">
-                    <span className="aquarium-catalog-emoji">{item.emoji}</span>
-                    <span className="aquarium-catalog-plus">+</span>
-                  </span>
-                  <span className="aquarium-catalog-name">{item.label}</span>
-                  <span className="aquarium-decorate-add-label" aria-hidden="true">+ Add</span>
-                </button>
-              ))}
-          </div>
-
-          {selectedDecoration && (
-            <div className="aquarium-decoration-controls" ref={controlsRef}>
-              <div className="aquarium-decoration-controls-header">
+        {(embeddedSection === 'appearance' || (!embeddedSection && activeTab === 'worlds')) && (
+          <>
+            <section className="aquarium-theme-section" aria-label="Starter aquarium themes">
+              <div className="aquarium-theme-heading">
                 <div>
-                  <h3>
-                    {catalogItems.find((item) => item.id === selectedDecoration.assetId)?.emoji ?? '🪸'}{' '}
-                    {DECORATION_REGISTRY[selectedDecoration.assetId].name}
-                  </h3>
-                  <p>Selected! Drag it in the tank or use the buttons below.</p>
+                  <h3>🐠 Choose a 3D theme</h3>
+                  <p>
+                    Choose a world with its own scenery. Your decorations stay right where you put
+                    them.
+                  </p>
                 </div>
-                <span aria-hidden="true">✨</span>
+                <span className="aquarium-theme-free">Free</span>
               </div>
-
-                             <div className="aquarium-decoration-control-group">
-                 <span className="aquarium-decoration-label">↔️ Move left or right</span>
-                 <div className="aquarium-kid-stepper" role="group" aria-label="Move decoration">
-                   <button type="button" aria-label="Move left" disabled={selectedDecoration.x <= 0.06}
-                     onClick={() => updateDecoration(selectedDecoration.id, { x: clamp(Number((selectedDecoration.x - 0.05).toFixed(2)), 0.06, 0.94) })}>←</button>
-                   <span>Move</span>
-                   <button type="button" aria-label="Move right" disabled={selectedDecoration.x >= 0.94}
-                     onClick={() => updateDecoration(selectedDecoration.id, { x: clamp(Number((selectedDecoration.x + 0.05).toFixed(2)), 0.06, 0.94) })}>→</button>
-                 </div>
-               </div>
-
-               <div className="aquarium-decoration-control-group">
-                 <label className="aquarium-decoration-label" htmlFor={`decoration-size-${selectedDecoration.id}`}>📏 How big?</label>
-                 <div className="aquarium-kid-slider">
-                   <span aria-hidden="true">🐟</span>
-                   <input
-                     id={`decoration-size-${selectedDecoration.id}`}
-                     type="range"
-                     min={DECORATION_REGISTRY[selectedDecoration.assetId].minScale}
-                     max={DECORATION_REGISTRY[selectedDecoration.assetId].maxScale}
-                     step="0.05"
-                     value={selectedDecoration.scale}
-                     onChange={(event) => updateDecoration(selectedDecoration.id, { scale: Number(event.target.value) })}
-                     aria-label="Decoration size"
-                   />
-                   <span className="aquarium-kid-large" aria-hidden="true">🐟</span>
-                 </div>
-                 <span className="aquarium-kid-hint">Slide to make it smaller or bigger</span>
-               </div>
-
-               <div className="aquarium-decoration-control-group">
-                 <span className="aquarium-decoration-label">🔄 Turn your decoration</span>
-                 <div className="aquarium-kid-stepper" role="group" aria-label="Rotate decoration">
-                   <button type="button" aria-label="Rotate left" onClick={() => updateDecoration(selectedDecoration.id, {
-                     rotation: clamp(Number((selectedDecoration.rotation - Math.PI / 12).toFixed(3)), -Math.PI, Math.PI),
-                   })}>↶</button>
-                   <span>Rotate</span>
-                   <button type="button" aria-label="Rotate right" onClick={() => updateDecoration(selectedDecoration.id, {
-                     rotation: clamp(Number((selectedDecoration.rotation + Math.PI / 12).toFixed(3)), -Math.PI, Math.PI),
-                   })}>↷</button>
-                 </div>
-               </div>
-
-               <div className="aquarium-decoration-control-group">
-                 <span className="aquarium-decoration-label">🎨 Pick a color</span>
-                 <div className="aquarium-kid-colors" role="group" aria-label="Decoration colors">
-                   {decorationColors.map(({ name, hex }) => (
-                     <button
-                       key={hex}
-                       type="button"
-                       className={selectedDecoration.color?.toLowerCase() === hex ? 'is-selected' : ''}
-                       style={{ backgroundColor: hex }}
-                       aria-label={name}
-                       title={name}
-                       aria-pressed={selectedDecoration.color?.toLowerCase() === hex}
-                       onClick={() => updateDecoration(selectedDecoration.id, { color: hex })}
-                     >
-                       {selectedDecoration.color?.toLowerCase() === hex && <span aria-hidden="true">✓</span>}
-                     </button>
-                   ))}
-                 </div>
-               </div>
-
-<button
-                type="button"
-                className="aquarium-decoration-remove"
-                onClick={() => removeDecoration(selectedDecoration.id)}
-              >
-                🗑️ Remove decoration
-              </button>
-            </div>
-          )}
-
-          {decorationInstances.length > 0 && (
-            <div className="aquarium-catalog-owned">
-              <div className="aquarium-catalog-owned-heading">
-                <h3>✨ In your aquarium</h3>
-                <span>Tap an object below to change it</span>
-              </div>
-              <div className="aquarium-catalog-owned-list">
-                {decorationInstances.map((decoration, index) => {
-                  const item = catalogItems.find((entry) => entry.id === decoration.assetId);
+              <div className="aquarium-theme-grid">
+                {themes.map((theme) => {
+                  const selected = isAquariumThemeSelected(value, theme);
                   return (
                     <button
-                      key={decoration.id}
+                      key={theme.id}
                       type="button"
-                      className={`aquarium-catalog-owned-item ${activeSelectedId === decoration.id ? 'is-selected' : ''}`}
-                      aria-pressed={activeSelectedId === decoration.id}
-                      onClick={() => selectDecoration(decoration.id)}
+                      className={`aquarium-theme-card ${selected ? 'is-selected' : ''}`}
+                      aria-pressed={selected}
+                      aria-label={`Use ${theme.name} theme`}
+                      onClick={() => onChange(applyAquariumTheme(value, theme))}
                     >
-                      <span aria-hidden="true">{item?.emoji ?? '🪸'}</span>
-                      <span>{DECORATION_REGISTRY[decoration.assetId].name} {index + 1}</span>
-                      <span className="aquarium-decorate-owned-action" aria-hidden="true">{activeSelectedId === decoration.id ? '✓ Editing' : 'Edit ›'}</span>
+                      <span
+                        className="aquarium-theme-art aquarium-theme-mini-tank"
+                        style={{ background: theme.gradient }}
+                      >
+                        <span className="aquarium-theme-mini-rays" aria-hidden="true" />
+                        <span
+                          className="aquarium-theme-mini-bubble aquarium-theme-mini-bubble--one"
+                          aria-hidden="true"
+                        />
+                        <span
+                          className="aquarium-theme-mini-bubble aquarium-theme-mini-bubble--two"
+                          aria-hidden="true"
+                        />
+                        <span
+                          className="aquarium-theme-mini-bubble aquarium-theme-mini-bubble--three"
+                          aria-hidden="true"
+                        />
+                        <span className="aquarium-theme-mini-fish" aria-hidden="true">
+                          🐠
+                        </span>
+                        <span
+                          className="aquarium-theme-mini-fish aquarium-theme-mini-fish--small"
+                          aria-hidden="true"
+                        >
+                          🐟
+                        </span>
+                        <span
+                          className={`aquarium-theme-mini-scene ${theme.id === 'magic-lagoon' || theme.id === 'midnight-sea' ? 'aquarium-theme-mini-scene--glow' : ''}`}
+                          aria-hidden="true"
+                        >
+                          {theme.id === 'magic-lagoon'
+                            ? '🍄'
+                            : theme.id === 'midnight-sea'
+                              ? '🌿'
+                              : theme.id === 'ocean-garden'
+                                ? '🌱'
+                                : theme.id === 'sunny-reef'
+                                  ? '🪸'
+                                  : theme.emoji}
+                        </span>
+                        {(theme.id === 'magic-lagoon' || theme.id === 'midnight-sea') && (
+                          <span
+                            className={`aquarium-theme-mini-accent ${theme.id === 'magic-lagoon' ? 'aquarium-theme-mini-accent--lagoon' : 'aquarium-theme-mini-accent--midnight'}`}
+                            aria-hidden="true"
+                          />
+                        )}
+                        <span className="aquarium-theme-mini-floor" aria-hidden="true" />
+                        {selected && (
+                          <span className="aquarium-theme-check" aria-hidden="true">
+                            ✓
+                          </span>
+                        )}
+                      </span>
+                      <span className="aquarium-theme-name">{theme.name}</span>
+                      <span className="aquarium-theme-description">{theme.description}</span>
                     </button>
                   );
                 })}
               </div>
-            </div>
-          )}
+              <p className="aquarium-theme-hint">Choose a world, then make it your own below.</p>
+            </section>
+            <section>
+              <h3>🌊 Change the water color</h3>
+              <div className="aquarium-appearance-worlds">
+                {backgrounds.map((option) => (
+                  <button
+                    type="button"
+                    key={option.id}
+                    className={`aquarium-appearance-world ${value.background === option.id ? 'is-selected' : ''}`}
+                    aria-pressed={value.background === option.id}
+                    onClick={() => onChange({ ...value, background: option.id })}
+                  >
+                    <span
+                      className="aquarium-appearance-preview"
+                      style={{ background: option.gradient }}
+                    >
+                      <span aria-hidden="true">{option.emoji}</span>
+                    </span>
+                    <span>{option.label}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
 
+            <section>
+              <h3>🏖️ Choose your floor</h3>
 
+              <div className="aquarium-appearance-worlds">
+                {substrates.map((option) => (
+                  <button
+                    type="button"
+                    key={option.id}
+                    className={`aquarium-appearance-world ${
+                      value.substrate === option.id ? 'is-selected' : ''
+                    }`}
+                    aria-pressed={value.substrate === option.id}
+                    onClick={() =>
+                      onChange({
+                        ...value,
+                        substrate: option.id,
+                      })
+                    }
+                  >
+                    <span
+                      className="aquarium-appearance-preview"
+                      style={{ background: option.gradient }}
+                    >
+                      <span aria-hidden="true">{option.emoji}</span>
+                    </span>
 
-        </section>
+                    <span>{option.label}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+        {(embeddedSection === 'decorations' || (!embeddedSection && activeTab === 'decorate')) && (
+          <>
+            <section className="aquarium-decoration-section aquarium-catalog">
+              <div className="aquarium-catalog-heading">
+                <div>
+                  <h3>🪸 Pick a decoration</h3>
+                  <p>Pick an object, then make it your own!</p>
+                </div>
+                <span className="aquarium-catalog-counter">{decorationInstances.length}/30</span>
+              </div>
 
-        </>)}
-        {(embeddedSection === 'appearance' || (!embeddedSection && activeTab === 'effects')) && (<>
-        <section>
-          <h3>💡 Set the mood</h3>
-          <p className="aquarium-effects-hint">Choose how your underwater world shines!</p>
-          <div className="aquarium-appearance-options aquarium-effects-grid aquarium-effects-lighting">
-            {lighting.map((option) => (
-              <button
-                type="button"
-                key={option.id}
-                className={value.lighting === option.id ? 'is-selected' : ''}
-                aria-pressed={value.lighting === option.id}
-                onClick={() => onChange({ ...value, lighting: option.id })}
+              <div className="aquarium-decorate-steps" aria-label="How to decorate">
+                <span>
+                  <strong>1</strong> Pick
+                </span>
+                <span aria-hidden="true">→</span>
+                <span>
+                  <strong>2</strong> Move
+                </span>
+                <span aria-hidden="true">→</span>
+                <span>
+                  <strong>3</strong> Make it yours!
+                </span>
+              </div>
+              {decorationInstances.length >= 30 && (
+                <p className="aquarium-decorate-limit" role="status">
+                  Your aquarium is full! Remove an object to add another.
+                </p>
+              )}
+              <div
+                className="aquarium-catalog-tabs"
+                role="group"
+                aria-label="Decoration categories"
               >
-                <span className="aquarium-effects-icon" aria-hidden="true">{option.emoji}</span><span className="aquarium-effects-name">{option.label}</span><span className="aquarium-effects-selected" aria-hidden="true">✓</span>
-              </button>
-            ))}
-          </div>
-        </section>
+                {(
+                  [
+                    ['all', '✨ All'],
+                    ['plants', '🌿 Plants'],
+                    ['rocks', '🪨 Rocks'],
+                  ] as const
+                ).map(([category, label]) => (
+                  <button
+                    key={category}
+                    type="button"
+                    className={catalogCategory === category ? 'is-active' : ''}
+                    aria-pressed={catalogCategory === category}
+                    onClick={() => setCatalogCategory(category)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
 
-        <section>
-          <h3>🫧 Add bubbles</h3>
-          <p className="aquarium-effects-hint">How bubbly should your aquarium be?</p>
-          <div className="aquarium-appearance-options aquarium-effects-grid aquarium-effects-bubbles">
-            {bubbles.map((option) => (
-              <button
-                type="button"
-                key={option.id}
-                className={value.bubbles === option.id ? 'is-selected' : ''}
-                aria-pressed={value.bubbles === option.id}
-                onClick={() => onChange({ ...value, bubbles: option.id })}
-              >
-                <span className="aquarium-effects-icon" aria-hidden="true">{option.emoji}</span><span className="aquarium-effects-name">{option.label}</span><span className="aquarium-effects-selected" aria-hidden="true">✓</span>
-              </button>
-            ))}
-          </div>
-        </section>
-        </>)}
+              <div className="aquarium-catalog-grid">
+                {catalogItems
+                  .filter((item) => catalogCategory === 'all' || item.category === catalogCategory)
+                  .map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`aquarium-catalog-card aquarium-catalog-card--${item.id}`}
+                      disabled={decorationInstances.length >= 30}
+                      onClick={() => addDecoration(item.id)}
+                      aria-label={`Add ${item.label}`}
+                    >
+                      <span className="aquarium-catalog-art" aria-hidden="true">
+                        <span className="aquarium-catalog-emoji">{item.emoji}</span>
+                        <span className="aquarium-catalog-plus">+</span>
+                      </span>
+                      <span className="aquarium-catalog-name">{item.label}</span>
+                      <span className="aquarium-decorate-add-label" aria-hidden="true">
+                        + Add
+                      </span>
+                    </button>
+                  ))}
+              </div>
+
+              {selectedDecoration && (
+                <div className="aquarium-decoration-controls" ref={controlsRef}>
+                  <div className="aquarium-decoration-controls-header">
+                    <div>
+                      <h3>
+                        {catalogItems.find((item) => item.id === selectedDecoration.assetId)
+                          ?.emoji ?? '🪸'}{' '}
+                        {DECORATION_REGISTRY[selectedDecoration.assetId].name}
+                      </h3>
+                      <p>Selected! Drag it in the tank or use the buttons below.</p>
+                    </div>
+                    <span aria-hidden="true">✨</span>
+                  </div>
+
+                  <div className="aquarium-decoration-control-group">
+                    <span className="aquarium-decoration-label">↔️ Move left or right</span>
+                    <div className="aquarium-kid-stepper" role="group" aria-label="Move decoration">
+                      <button
+                        type="button"
+                        aria-label="Move left"
+                        disabled={selectedDecoration.x <= 0.06}
+                        onClick={() =>
+                          updateDecoration(selectedDecoration.id, {
+                            x: clamp(Number((selectedDecoration.x - 0.05).toFixed(2)), 0.06, 0.94),
+                          })
+                        }
+                      >
+                        ←
+                      </button>
+                      <span>Move</span>
+                      <button
+                        type="button"
+                        aria-label="Move right"
+                        disabled={selectedDecoration.x >= 0.94}
+                        onClick={() =>
+                          updateDecoration(selectedDecoration.id, {
+                            x: clamp(Number((selectedDecoration.x + 0.05).toFixed(2)), 0.06, 0.94),
+                          })
+                        }
+                      >
+                        →
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="aquarium-decoration-control-group">
+                    <label
+                      className="aquarium-decoration-label"
+                      htmlFor={`decoration-size-${selectedDecoration.id}`}
+                    >
+                      📏 How big?
+                    </label>
+                    <div className="aquarium-kid-slider">
+                      <span aria-hidden="true">🐟</span>
+                      <input
+                        id={`decoration-size-${selectedDecoration.id}`}
+                        type="range"
+                        min={DECORATION_REGISTRY[selectedDecoration.assetId].minScale}
+                        max={DECORATION_REGISTRY[selectedDecoration.assetId].maxScale}
+                        step="0.05"
+                        value={selectedDecoration.scale}
+                        onChange={(event) =>
+                          updateDecoration(selectedDecoration.id, {
+                            scale: Number(event.target.value),
+                          })
+                        }
+                        aria-label="Decoration size"
+                      />
+                      <span className="aquarium-kid-large" aria-hidden="true">
+                        🐟
+                      </span>
+                    </div>
+                    <span className="aquarium-kid-hint">Slide to make it smaller or bigger</span>
+                  </div>
+
+                  <div className="aquarium-decoration-control-group">
+                    <span className="aquarium-decoration-label">🔄 Turn your decoration</span>
+                    <div
+                      className="aquarium-kid-stepper"
+                      role="group"
+                      aria-label="Rotate decoration"
+                    >
+                      <button
+                        type="button"
+                        aria-label="Rotate left"
+                        onClick={() =>
+                          updateDecoration(selectedDecoration.id, {
+                            rotation: clamp(
+                              Number((selectedDecoration.rotation - Math.PI / 12).toFixed(3)),
+                              -Math.PI,
+                              Math.PI,
+                            ),
+                          })
+                        }
+                      >
+                        ↶
+                      </button>
+                      <span>Rotate</span>
+                      <button
+                        type="button"
+                        aria-label="Rotate right"
+                        onClick={() =>
+                          updateDecoration(selectedDecoration.id, {
+                            rotation: clamp(
+                              Number((selectedDecoration.rotation + Math.PI / 12).toFixed(3)),
+                              -Math.PI,
+                              Math.PI,
+                            ),
+                          })
+                        }
+                      >
+                        ↷
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="aquarium-decoration-control-group">
+                    <span className="aquarium-decoration-label">🎨 Pick a color</span>
+                    <div
+                      className="aquarium-kid-colors"
+                      role="group"
+                      aria-label="Decoration colors"
+                    >
+                      {decorationColors.map(({ name, hex }) => (
+                        <button
+                          key={hex}
+                          type="button"
+                          className={
+                            selectedDecoration.color?.toLowerCase() === hex ? 'is-selected' : ''
+                          }
+                          style={{ backgroundColor: hex }}
+                          aria-label={name}
+                          title={name}
+                          aria-pressed={selectedDecoration.color?.toLowerCase() === hex}
+                          onClick={() => updateDecoration(selectedDecoration.id, { color: hex })}
+                        >
+                          {selectedDecoration.color?.toLowerCase() === hex && (
+                            <span aria-hidden="true">✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="aquarium-decoration-remove"
+                    onClick={() => removeDecoration(selectedDecoration.id)}
+                  >
+                    🗑️ Remove decoration
+                  </button>
+                </div>
+              )}
+
+              {decorationInstances.length > 0 && (
+                <div className="aquarium-catalog-owned">
+                  <div className="aquarium-catalog-owned-heading">
+                    <h3>✨ In your aquarium</h3>
+                    <span>Tap an object below to change it</span>
+                  </div>
+                  <div className="aquarium-catalog-owned-list">
+                    {decorationInstances.map((decoration, index) => {
+                      const item = catalogItems.find((entry) => entry.id === decoration.assetId);
+                      return (
+                        <button
+                          key={decoration.id}
+                          type="button"
+                          className={`aquarium-catalog-owned-item ${activeSelectedId === decoration.id ? 'is-selected' : ''}`}
+                          aria-pressed={activeSelectedId === decoration.id}
+                          onClick={() => selectDecoration(decoration.id)}
+                        >
+                          <span aria-hidden="true">{item?.emoji ?? '🪸'}</span>
+                          <span>
+                            {DECORATION_REGISTRY[decoration.assetId].name} {index + 1}
+                          </span>
+                          <span className="aquarium-decorate-owned-action" aria-hidden="true">
+                            {activeSelectedId === decoration.id ? '✓ Editing' : 'Edit ›'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </section>
+          </>
+        )}
+        {(embeddedSection === 'appearance' || (!embeddedSection && activeTab === 'effects')) && (
+          <>
+            <section>
+              <h3>💡 Set the mood</h3>
+              <p className="aquarium-effects-hint">Choose how your underwater world shines!</p>
+              <div className="aquarium-appearance-options aquarium-effects-grid aquarium-effects-lighting">
+                {lighting.map((option) => (
+                  <button
+                    type="button"
+                    key={option.id}
+                    className={value.lighting === option.id ? 'is-selected' : ''}
+                    aria-pressed={value.lighting === option.id}
+                    onClick={() => onChange({ ...value, lighting: option.id })}
+                  >
+                    <span className="aquarium-effects-icon" aria-hidden="true">
+                      {option.emoji}
+                    </span>
+                    <span className="aquarium-effects-name">{option.label}</span>
+                    <span className="aquarium-effects-selected" aria-hidden="true">
+                      ✓
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h3>🫧 Add bubbles</h3>
+              <p className="aquarium-effects-hint">How bubbly should your aquarium be?</p>
+              <div className="aquarium-appearance-options aquarium-effects-grid aquarium-effects-bubbles">
+                {bubbles.map((option) => (
+                  <button
+                    type="button"
+                    key={option.id}
+                    className={value.bubbles === option.id ? 'is-selected' : ''}
+                    aria-pressed={value.bubbles === option.id}
+                    onClick={() => onChange({ ...value, bubbles: option.id })}
+                  >
+                    <span className="aquarium-effects-icon" aria-hidden="true">
+                      {option.emoji}
+                    </span>
+                    <span className="aquarium-effects-name">{option.label}</span>
+                    <span className="aquarium-effects-selected" aria-hidden="true">
+                      ✓
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
       </div>
-      {!embeddedSection && <footer className="aquarium-appearance-footer">
-        <p>Changes appear instantly. Tap Done to save them.</p>
-        {saveError && <p role="alert" style={{ color: '#ffb6b6' }}>{saveError}</p>}
-        <button type="button" onClick={onSave} disabled={saving}>
-          {saving ? 'Saving…' : 'Done ✓'}
-        </button>
-      </footer>}
+      {!embeddedSection && (
+        <footer className="aquarium-appearance-footer">
+          <p>Changes appear instantly. Tap Done to save them.</p>
+          {saveError && (
+            <p role="alert" style={{ color: '#ffb6b6' }}>
+              {saveError}
+            </p>
+          )}
+          <button type="button" onClick={onSave} disabled={saving}>
+            {saving ? 'Saving…' : 'Done ✓'}
+          </button>
+        </footer>
+      )}
     </aside>
   );
 }

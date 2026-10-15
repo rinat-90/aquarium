@@ -8,16 +8,12 @@ export function createAngelfish3DModel(): Fish3DModel {
   const geometries: THREE.BufferGeometry[] = [];
   const materials: THREE.Material[] = [];
 
-  const trackGeometry = <T extends THREE.BufferGeometry>(
-    geometry: T,
-  ): T => {
+  const trackGeometry = <T extends THREE.BufferGeometry>(geometry: T): T => {
     geometries.push(geometry);
     return geometry;
   };
 
-  const trackMaterial = <T extends THREE.Material>(
-    material: T,
-  ): T => {
+  const trackMaterial = <T extends THREE.Material>(material: T): T => {
     materials.push(material);
     return material;
   };
@@ -141,7 +137,7 @@ export function createAngelfish3DModel(): Fish3DModel {
       x: -1.12,
       centerY: 0,
       height: 0.12,
-      depth: 0.10,
+      depth: 0.1,
     },
     {
       x: -1.0,
@@ -159,7 +155,7 @@ export function createAngelfish3DModel(): Fish3DModel {
       x: -0.42,
       centerY: 0,
       height: 1.1,
-      depth: 0.30,
+      depth: 0.3,
     },
     {
       x: -0.05,
@@ -187,13 +183,13 @@ export function createAngelfish3DModel(): Fish3DModel {
     },
     {
       x: 1.04,
-      centerY: -0.10,
-      height: 0.30,
+      centerY: -0.1,
+      height: 0.3,
       depth: 0.12,
     },
     {
       x: 1.09,
-      centerY: -0.10,
+      centerY: -0.1,
       height: 0.095,
       depth: 0.065,
     },
@@ -203,27 +199,13 @@ export function createAngelfish3DModel(): Fish3DModel {
   const ringSegments = 48;
 
   const sectionCurve = new THREE.CatmullRomCurve3(
-    sections.map(
-      (section) =>
-        new THREE.Vector3(
-          section.x,
-          section.height,
-          section.depth,
-        ),
-    ),
+    sections.map((section) => new THREE.Vector3(section.x, section.height, section.depth)),
     false,
     'centripetal',
   );
 
   const centerCurve = new THREE.CatmullRomCurve3(
-    sections.map(
-      (section) =>
-        new THREE.Vector3(
-          section.x,
-          section.centerY,
-          0,
-        ),
-    ),
+    sections.map((section) => new THREE.Vector3(section.x, section.centerY, 0)),
     false,
     'centripetal',
   );
@@ -241,22 +223,13 @@ export function createAngelfish3DModel(): Fish3DModel {
     for (let j = 0; j <= ringSegments; j++) {
       const angle = (j / ringSegments) * Math.PI * 2;
 
-      const y =
-        center.y + Math.cos(angle) * section.y;
+      const y = center.y + Math.cos(angle) * section.y;
 
-      const z =
-        Math.sin(angle) * section.z;
+      const z = Math.sin(angle) * section.z;
 
-      bodyVertices.push(
-        section.x,
-        y,
-        z,
-      );
+      bodyVertices.push(section.x, y, z);
 
-      bodyUVs.push(
-        t,
-        j / ringSegments,
-      );
+      bodyUVs.push(t, j / ringSegments);
     }
   }
 
@@ -265,47 +238,22 @@ export function createAngelfish3DModel(): Fish3DModel {
       const a = i * (ringSegments + 1) + j;
       const b = a + ringSegments + 1;
 
-      bodyIndices.push(
-        a,
-        b,
-        a + 1,
-      );
+      bodyIndices.push(a, b, a + 1);
 
-      bodyIndices.push(
-        b,
-        b + 1,
-        a + 1,
-      );
+      bodyIndices.push(b, b + 1, a + 1);
     }
   }
 
-  const bodyGeometry = trackGeometry(
-    new THREE.BufferGeometry(),
-  );
+  const bodyGeometry = trackGeometry(new THREE.BufferGeometry());
 
-  bodyGeometry.setAttribute(
-    'position',
-    new THREE.Float32BufferAttribute(
-      bodyVertices,
-      3,
-    ),
-  );
+  bodyGeometry.setAttribute('position', new THREE.Float32BufferAttribute(bodyVertices, 3));
 
-  bodyGeometry.setAttribute(
-    'uv',
-    new THREE.Float32BufferAttribute(
-      bodyUVs,
-      2,
-    ),
-  );
+  bodyGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(bodyUVs, 2));
 
   bodyGeometry.setIndex(bodyIndices);
   bodyGeometry.computeVertexNormals();
 
-  const body = new THREE.Mesh(
-    bodyGeometry,
-    bodyMaterial,
-  );
+  const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
 
   body.name = 'fish-paintable-body';
   group.add(body);
@@ -317,24 +265,16 @@ export function createAngelfish3DModel(): Fish3DModel {
   // as the main body.
   // --------------------------------------------------
 
-  const paintGeometry = trackGeometry(
-    bodyGeometry.clone(),
-  );
+  const paintGeometry = trackGeometry(bodyGeometry.clone());
 
-  const paintPositions =
-    paintGeometry.attributes.position;
+  const paintPositions = paintGeometry.attributes.position;
 
   for (let i = 0; i < paintPositions.count; i++) {
     const x = paintPositions.getX(i);
     const y = paintPositions.getY(i);
     const z = paintPositions.getZ(i);
 
-    paintPositions.setXYZ(
-      i,
-      x * 1.003,
-      y * 1.006,
-      z * 1.025,
-    );
+    paintPositions.setXYZ(i, x * 1.003, y * 1.006, z * 1.025);
   }
 
   paintPositions.needsUpdate = true;
@@ -351,10 +291,7 @@ export function createAngelfish3DModel(): Fish3DModel {
     }),
   );
 
-  const paintBody = new THREE.Mesh(
-    paintGeometry,
-    paintMaterial,
-  );
+  const paintBody = new THREE.Mesh(paintGeometry, paintMaterial);
 
   paintBody.name = 'fish-paint-layer';
   paintBody.renderOrder = 2;
@@ -375,13 +312,9 @@ export function createAngelfish3DModel(): Fish3DModel {
     segments = 28,
     rows = 8,
   ) => {
-    const rootCurve = new THREE.CatmullRomCurve3(
-      rootPoints,
-    );
+    const rootCurve = new THREE.CatmullRomCurve3(rootPoints);
 
-    const edgeCurve = new THREE.CatmullRomCurve3(
-      edgePoints,
-    );
+    const edgeCurve = new THREE.CatmullRomCurve3(edgePoints);
 
     const vertices: number[] = [];
     const uvs: number[] = [];
@@ -396,22 +329,12 @@ export function createAngelfish3DModel(): Fish3DModel {
       for (let j = 0; j <= rows; j++) {
         const v = j / rows;
 
-        const point = root.clone().lerp(
-          edge,
-          v,
-        );
+        const point = root.clone().lerp(edge, v);
 
         // Gentle curvature through the fin.
-        point.z +=
-          Math.sin(v * Math.PI) *
-          Math.sin(u * Math.PI) *
-          0.045;
+        point.z += Math.sin(v * Math.PI) * Math.sin(u * Math.PI) * 0.045;
 
-        vertices.push(
-          point.x,
-          point.y,
-          point.z,
-        );
+        vertices.push(point.x, point.y, point.z);
 
         uvs.push(u, v);
       }
@@ -427,25 +350,11 @@ export function createAngelfish3DModel(): Fish3DModel {
       }
     }
 
-    const geometry = trackGeometry(
-      new THREE.BufferGeometry(),
-    );
+    const geometry = trackGeometry(new THREE.BufferGeometry());
 
-    geometry.setAttribute(
-      'position',
-      new THREE.Float32BufferAttribute(
-        vertices,
-        3,
-      ),
-    );
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
 
-    geometry.setAttribute(
-      'uv',
-      new THREE.Float32BufferAttribute(
-        uvs,
-        2,
-      ),
-    );
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
 
     geometry.setIndex(indices);
     geometry.computeVertexNormals();
@@ -463,15 +372,10 @@ export function createAngelfish3DModel(): Fish3DModel {
 
   const finRayGeometries: THREE.BufferGeometry[] = [];
 
-  const addFinRay = (
-    points: THREE.Vector3[],
-    radius = 0.007,
-  ) => {
+  const addFinRay = (points: THREE.Vector3[], radius = 0.007) => {
     const curve = new THREE.CatmullRomCurve3(points);
 
-    finRayGeometries.push(
-      new THREE.TubeGeometry(curve, 16, radius, 5, false),
-    );
+    finRayGeometries.push(new THREE.TubeGeometry(curve, 16, radius, 5, false));
   };
 
   const addFinRays = (
@@ -485,25 +389,15 @@ export function createAngelfish3DModel(): Fish3DModel {
       const root = rootCurve.getPoint(t);
       const edge = edgeCurve.getPoint(t);
 
-      const middle = root.clone().lerp(
-        edge,
-        0.55,
-      );
+      const middle = root.clone().lerp(edge, 0.55);
 
       middle.z += Math.sin(0.55 * Math.PI) * Math.sin(t * Math.PI) * 0.045 + 0.012;
 
-      const outer = root.clone().lerp(
-        edge,
-        0.94,
-      );
+      const outer = root.clone().lerp(edge, 0.94);
 
       outer.z += Math.sin(0.94 * Math.PI) * Math.sin(t * Math.PI) * 0.045 + 0.012;
 
-      addFinRay([
-        root,
-        middle,
-        outer,
-      ]);
+      addFinRay([root, middle, outer]);
     }
   };
 
@@ -528,18 +422,11 @@ export function createAngelfish3DModel(): Fish3DModel {
     ],
   );
 
-  const dorsalFin = new THREE.Mesh(
-    dorsal.geometry,
-    finMaterial,
-  );
+  const dorsalFin = new THREE.Mesh(dorsal.geometry, finMaterial);
 
   group.add(dorsalFin);
 
-  addFinRays(
-    dorsal.rootCurve,
-    dorsal.edgeCurve,
-    12,
-  );
+  addFinRays(dorsal.rootCurve, dorsal.edgeCurve, 12);
 
   // --------------------------------------------------
   // Anal fin
@@ -555,25 +442,18 @@ export function createAngelfish3DModel(): Fish3DModel {
     ],
     [
       new THREE.Vector3(-1.18, -0.76, 0),
-      new THREE.Vector3(-1.34, -1.50, 0),
+      new THREE.Vector3(-1.34, -1.5, 0),
       new THREE.Vector3(-1.14, -2.09, 0),
       new THREE.Vector3(-0.34, -1.68, 0),
       new THREE.Vector3(0.68, -0.6, 0),
     ],
   );
 
-  const analFin = new THREE.Mesh(
-    anal.geometry,
-    finMaterial,
-  );
+  const analFin = new THREE.Mesh(anal.geometry, finMaterial);
 
   group.add(analFin);
 
-  addFinRays(
-    anal.rootCurve,
-    anal.edgeCurve,
-    12,
-  );
+  addFinRays(anal.rootCurve, anal.edgeCurve, 12);
 
   // --------------------------------------------------
   // Tail
@@ -598,18 +478,11 @@ export function createAngelfish3DModel(): Fish3DModel {
     8,
   );
 
-  const tail = new THREE.Mesh(
-    tailData.geometry,
-    finMaterial,
-  );
+  const tail = new THREE.Mesh(tailData.geometry, finMaterial);
 
   group.add(tail);
 
-  addFinRays(
-    tailData.rootCurve,
-    tailData.edgeCurve,
-    9,
-  );
+  addFinRays(tailData.rootCurve, tailData.edgeCurve, 9);
 
   // Merge static decorative fin rays into one draw call.
   // Keep the tail and pectoral fin meshes separate for animation.
@@ -641,22 +514,20 @@ export function createAngelfish3DModel(): Fish3DModel {
   const sideFinShape = new THREE.Shape();
   sideFinShape.moveTo(0.06, 0.04);
   sideFinShape.bezierCurveTo(-0.14, 0.08, -0.35, -0.04, -0.53, -0.22);
-  sideFinShape.bezierCurveTo(-0.60, -0.32, -0.53, -0.39, -0.40, -0.37);
-  sideFinShape.bezierCurveTo(-0.20, -0.33, -0.03, -0.12, 0.06, 0.04);
+  sideFinShape.bezierCurveTo(-0.6, -0.32, -0.53, -0.39, -0.4, -0.37);
+  sideFinShape.bezierCurveTo(-0.2, -0.33, -0.03, -0.12, 0.06, 0.04);
 
-  const leftFinGeometry = trackGeometry(
-    new THREE.ShapeGeometry(sideFinShape, 24),
-  );
+  const leftFinGeometry = trackGeometry(new THREE.ShapeGeometry(sideFinShape, 24));
   const rightFinGeometry = trackGeometry(leftFinGeometry.clone());
 
   const leftFin = new THREE.Mesh(leftFinGeometry, finMaterial);
-  leftFin.position.set(0.30, -0.16, 0.37);
+  leftFin.position.set(0.3, -0.16, 0.37);
   leftFin.rotation.y = -0.16;
   leftFin.rotation.z = -0.08;
   group.add(leftFin);
 
   const rightFin = new THREE.Mesh(rightFinGeometry, finMaterial);
-  rightFin.position.set(0.30, -0.16, -0.37);
+  rightFin.position.set(0.3, -0.16, -0.37);
   rightFin.rotation.y = 0.16;
   rightFin.rotation.z = -0.08;
   group.add(rightFin);
@@ -665,88 +536,36 @@ export function createAngelfish3DModel(): Fish3DModel {
   // Eyes
   // --------------------------------------------------
 
-  const eyeGeometry = trackGeometry(
-    new THREE.SphereGeometry(
-      0.135,
-      24,
-      16,
-    ),
-  );
+  const eyeGeometry = trackGeometry(new THREE.SphereGeometry(0.135, 24, 16));
 
-  const irisGeometry = trackGeometry(
-    new THREE.SphereGeometry(
-      0.089,
-      20,
-      14,
-    ),
-  );
+  const irisGeometry = trackGeometry(new THREE.SphereGeometry(0.089, 20, 14));
 
-  const pupilGeometry = trackGeometry(
-    new THREE.SphereGeometry(
-      0.055,
-      20,
-      14,
-    ),
-  );
+  const pupilGeometry = trackGeometry(new THREE.SphereGeometry(0.055, 20, 14));
 
-  const highlightGeometry = trackGeometry(
-    new THREE.SphereGeometry(
-      0.019,
-      12,
-      8,
-    ),
-  );
+  const highlightGeometry = trackGeometry(new THREE.SphereGeometry(0.019, 12, 8));
 
   for (const side of [-1, 1]) {
-    const eye = new THREE.Mesh(
-      eyeGeometry,
-      eyeWhiteMaterial,
-    );
+    const eye = new THREE.Mesh(eyeGeometry, eyeWhiteMaterial);
 
-    eye.position.set(
-      0.72,
-      0.18,
-      side * 0.205,
-    );
+    eye.position.set(0.72, 0.18, side * 0.205);
 
     group.add(eye);
 
-    const iris = new THREE.Mesh(
-      irisGeometry,
-      irisMaterial,
-    );
+    const iris = new THREE.Mesh(irisGeometry, irisMaterial);
 
-    iris.position.set(
-      0.745,
-      0.18,
-      side * 0.30,
-    );
+    iris.position.set(0.745, 0.18, side * 0.3);
 
     group.add(iris);
 
-    const pupil = new THREE.Mesh(
-      pupilGeometry,
-      pupilMaterial,
-    );
+    const pupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
 
-    pupil.position.set(
-      0.755,
-      0.18,
-      side * 0.375,
-    );
+    pupil.position.set(0.755, 0.18, side * 0.375);
 
     group.add(pupil);
 
-    const highlight = new THREE.Mesh(
-      highlightGeometry,
-      highlightMaterial,
-    );
+    const highlight = new THREE.Mesh(highlightGeometry, highlightMaterial);
 
-    highlight.position.set(
-      0.748,
-      0.21,
-      side * 0.425,
-    );
+    highlight.position.set(0.748, 0.21, side * 0.425);
 
     group.add(highlight);
   }
@@ -763,20 +582,9 @@ export function createAngelfish3DModel(): Fish3DModel {
       new THREE.Vector3(0.52, -0.37, side * 0.19),
     ]);
 
-    const gillGeometry = trackGeometry(
-      new THREE.TubeGeometry(
-        gillCurve,
-        24,
-        0.008,
-        5,
-        false,
-      ),
-    );
+    const gillGeometry = trackGeometry(new THREE.TubeGeometry(gillCurve, 24, 0.008, 5, false));
 
-    const gill = new THREE.Mesh(
-      gillGeometry,
-      detailMaterial,
-    );
+    const gill = new THREE.Mesh(gillGeometry, detailMaterial);
 
     group.add(gill);
   }
@@ -785,30 +593,13 @@ export function createAngelfish3DModel(): Fish3DModel {
   // Mouth
   // --------------------------------------------------
 
-  const mouthGeometry = trackGeometry(
-    new THREE.SphereGeometry(
-      0.075,
-      16,
-      12,
-    ),
-  );
+  const mouthGeometry = trackGeometry(new THREE.SphereGeometry(0.075, 16, 12));
 
-  const mouth = new THREE.Mesh(
-    mouthGeometry,
-    bodyMaterial,
-  );
+  const mouth = new THREE.Mesh(mouthGeometry, bodyMaterial);
 
-  mouth.position.set(
-    1.08,
-    -0.13,
-    0,
-  );
+  mouth.position.set(1.08, -0.13, 0);
 
-  mouth.scale.set(
-    0.55,
-    0.65,
-    0.9,
-  );
+  mouth.scale.set(0.55, 0.65, 0.9);
 
   group.add(mouth);
 
@@ -819,16 +610,12 @@ export function createAngelfish3DModel(): Fish3DModel {
   // Customization
   // --------------------------------------------------
 
-  const setBodyColor = (
-    color: string,
-  ) => {
+  const setBodyColor = (color: string) => {
     bodyMaterial.color.set(color);
     bodyMaterial.emissive.set(color);
   };
 
-  const setFinColor = (
-    color: string,
-  ) => {
+  const setFinColor = (color: string) => {
     finMaterial.color.set(color);
   };
 
@@ -839,18 +626,11 @@ export function createAngelfish3DModel(): Fish3DModel {
   let disposed = false;
   let paintLoadVersion = 0;
 
-  const setPaintImage = (
-    image?: string,
-  ) => {
+  const setPaintImage = (image?: string) => {
     const version = ++paintLoadVersion;
     paintBody.visible = false;
 
-    paintContext.clearRect(
-      0,
-      0,
-      paintCanvas.width,
-      paintCanvas.height,
-    );
+    paintContext.clearRect(0, 0, paintCanvas.width, paintCanvas.height);
 
     if (!image) {
       paintTexture.needsUpdate = true;
@@ -860,43 +640,24 @@ export function createAngelfish3DModel(): Fish3DModel {
     const source = new Image();
 
     source.onload = () => {
-      if (
-        disposed ||
-        version !== paintLoadVersion
-      ) {
+      if (disposed || version !== paintLoadVersion) {
         return;
       }
 
-      paintContext.clearRect(
-        0,
-        0,
-        paintCanvas.width,
-        paintCanvas.height,
-      );
+      paintContext.clearRect(0, 0, paintCanvas.width, paintCanvas.height);
 
-      paintContext.drawImage(
-        source,
-        0,
-        0,
-        paintCanvas.width,
-        paintCanvas.height,
-      );
+      paintContext.drawImage(source, 0, 0, paintCanvas.width, paintCanvas.height);
 
       paintTexture.needsUpdate = true;
       paintBody.visible = true;
     };
 
     source.onerror = () => {
-      if (
-        disposed ||
-        version !== paintLoadVersion
-      ) {
+      if (disposed || version !== paintLoadVersion) {
         return;
       }
 
-      console.error(
-        'Failed to load angelfish paint image.',
-      );
+      console.error('Failed to load angelfish paint image.');
     };
 
     source.src = image;

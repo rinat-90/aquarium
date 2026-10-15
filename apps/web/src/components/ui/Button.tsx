@@ -1,4 +1,3 @@
-
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import './ui.css';
 
@@ -8,18 +7,14 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 export function Button({
-                         variant = 'primary',
-                         className = '',
-                         children,
-                         type = 'button',
-                         ...props
-                       }: ButtonProps) {
+  variant = 'primary',
+  className = '',
+  children,
+  type = 'button',
+  ...props
+}: ButtonProps) {
   return (
-    <button
-      {...props}
-      type={type}
-      className={`ui-button ui-button--${variant} ${className}`}
-    >
+    <button {...props} type={type} className={`ui-button ui-button--${variant} ${className}`}>
       {children}
     </button>
   );

@@ -1,4 +1,3 @@
-
 import * as THREE from 'three';
 import type { AquariumSubstrate } from '../../features/aquarium-customization/types';
 
@@ -8,10 +7,7 @@ import type { AquariumSubstrate } from '../../features/aquarium-customization/ty
  * Drawn in the main scene after the background and
  * before fish. No additional WebGL canvas or 3D floor.
  */
-export function createSandCaustics(
-  scene: THREE.Scene,
-  camera: THREE.PerspectiveCamera,
-) {
+export function createSandCaustics(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
   const substrateIds: Record<AquariumSubstrate, number> = {
     sand: 0,
     'white-sand': 1,

@@ -1,44 +1,34 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type PointerEvent,
-} from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 
 import { cropDrawing } from '@aquarium/drawing';
 import './FishDrawingCanvas.css';
 
-import {
-  Fish3DPreview
-} from '../Fish3D/Fish3DPreview';
+import { Fish3DPreview } from '../Fish3D/Fish3DPreview';
 
 export type FishCreation =
   | {
-  type: 'drawn';
-  image: string;
-  size: number;
-  headDirection?: 'left' | 'right';
-}
+      type: 'drawn';
+      image: string;
+      size: number;
+      headDirection?: 'left' | 'right';
+    }
   | {
-  type: '3d';
-  model: 'classic' | 'angelfish' | 'guppy';
-  bodyColor: string;
-  finColor: string;
-  paintImage?: string;
-  size: number;
-};
+      type: '3d';
+      model: 'classic' | 'angelfish' | 'guppy';
+      bodyColor: string;
+      finColor: string;
+      paintImage?: string;
+      size: number;
+    };
 
 type FishDrawingCanvasProps = {
   mode?: 'draw' | 'color-3d';
-  onDone: (
-    fish: FishCreation,
-  ) => void;
+  onDone: (fish: FishCreation) => void;
   onCancel: () => void;
   remainingCapacity: number;
 };
 
 type Tool = 'brush' | 'eraser';
-
 
 const COLORS = [
   '#ff6b35',
@@ -68,58 +58,38 @@ const BRUSH_SIZES = [
 ];
 
 export function FishDrawingCanvas({
-                                    mode = 'draw',
-                                    onDone,
-                                    onCancel,
-                                    remainingCapacity,
-                                  }: FishDrawingCanvasProps) {
-  const canvasRef =
-    useRef<HTMLCanvasElement>(null);
+  mode = 'draw',
+  onDone,
+  onCancel,
+  remainingCapacity,
+}: FishDrawingCanvasProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const historyRef =
-    useRef<ImageData[]>([]);
+  const historyRef = useRef<ImageData[]>([]);
 
-  const [isDrawing, setIsDrawing] =
-    useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
 
-  const [color, setColor] =
-    useState('#ff6b35');
+  const [color, setColor] = useState('#ff6b35');
 
-  const [brushSize, setBrushSize] =
-    useState(14);
+  const [brushSize, setBrushSize] = useState(14);
 
-  const [tool, setTool] =
-    useState<Tool>('brush');
+  const [tool, setTool] = useState<Tool>('brush');
 
-  const [canUndo, setCanUndo] =
-    useState(false);
+  const [canUndo, setCanUndo] = useState(false);
 
+  const [bodyColor, setBodyColor] = useState('#ff8a3d');
 
-  const [bodyColor, setBodyColor] =
-    useState('#ff8a3d');
+  const [finColor, setFinColor] = useState('#ffb347');
 
-  const [finColor, setFinColor] =
-    useState('#ffb347');
-
-  const [
-    paintImage,
-    setPaintImage,
-  ] = useState<string | null>(
-    null,
-  );
+  const [paintImage, setPaintImage] = useState<string | null>(null);
 
   type FishSpecies = 'basic' | 'angelfish' | 'guppy';
 
-  const [fishSpecies, setFishSpecies] =
-    useState<FishSpecies>('basic');
+  const [fishSpecies, setFishSpecies] = useState<FishSpecies>('basic');
 
-  const [
-    fishSize,
-    setFishSize,
-  ] = useState(1);
+  const [fishSize, setFishSize] = useState(1);
 
-  const [headDirection, setHeadDirection] =
-    useState<'left' | 'right'>('right');
+  const [headDirection, setHeadDirection] = useState<'left' | 'right'>('right');
 
   const fishSizeLabel =
     fishSize < 0.75
@@ -132,23 +102,18 @@ export function FishDrawingCanvas({
             ? 'Large'
             : 'Huge';
 
-  const fishCapacityCost =
-    fishSize * fishSize;
+  const fishCapacityCost = fishSize * fishSize;
 
-  const hasCapacity =
-    fishCapacityCost <=
-    remainingCapacity + 0.0001;
+  const hasCapacity = fishCapacityCost <= remainingCapacity + 0.0001;
 
   useEffect(() => {
-    const canvas =
-      canvasRef.current;
+    const canvas = canvasRef.current;
 
     if (!canvas) {
       return;
     }
 
-    const context =
-      canvas.getContext('2d');
+    const context = canvas.getContext('2d');
 
     if (!context) {
       return;
@@ -158,27 +123,15 @@ export function FishDrawingCanvas({
     context.lineJoin = 'round';
   }, []);
 
-  const getPosition = (
-    event: PointerEvent<HTMLCanvasElement>,
-  ) => {
-    const canvas =
-      canvasRef.current!;
+  const getPosition = (event: PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current!;
 
-    const rect =
-      canvas.getBoundingClientRect();
+    const rect = canvas.getBoundingClientRect();
 
     return {
-      x:
-        (event.clientX -
-          rect.left) *
-        (canvas.width /
-          rect.width),
+      x: (event.clientX - rect.left) * (canvas.width / rect.width),
 
-      y:
-        (event.clientY -
-          rect.top) *
-        (canvas.height /
-          rect.height),
+      y: (event.clientY - rect.top) * (canvas.height / rect.height),
     };
   };
 
@@ -187,57 +140,40 @@ export function FishDrawingCanvas({
    * Undo restores this snapshot.
    */
   const saveHistory = () => {
-    const canvas =
-      canvasRef.current;
+    const canvas = canvasRef.current;
 
     if (!canvas) {
       return;
     }
 
-    const context =
-      canvas.getContext('2d');
+    const context = canvas.getContext('2d');
 
     if (!context) {
       return;
     }
 
-    const snapshot =
-      context.getImageData(
-        0,
-        0,
-        canvas.width,
-        canvas.height,
-      );
+    const snapshot = context.getImageData(0, 0, canvas.width, canvas.height);
 
-    historyRef.current.push(
-      snapshot,
-    );
+    historyRef.current.push(snapshot);
 
     /**
      * Prevent unlimited memory growth.
      */
-    if (
-      historyRef.current.length >
-      30
-    ) {
+    if (historyRef.current.length > 30) {
       historyRef.current.shift();
     }
 
     setCanUndo(true);
   };
 
-  const startDrawing = (
-    event: PointerEvent<HTMLCanvasElement>,
-  ) => {
-    const canvas =
-      canvasRef.current;
+  const startDrawing = (event: PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
 
     if (!canvas) {
       return;
     }
 
-    const context =
-      canvas.getContext('2d');
+    const context = canvas.getContext('2d');
 
     if (!context) {
       return;
@@ -245,19 +181,13 @@ export function FishDrawingCanvas({
 
     saveHistory();
 
-    const position =
-      getPosition(event);
+    const position = getPosition(event);
 
-    canvas.setPointerCapture(
-      event.pointerId,
-    );
+    canvas.setPointerCapture(event.pointerId);
 
     context.beginPath();
 
-    context.moveTo(
-      position.x,
-      position.y,
-    );
+    context.moveTo(position.x, position.y);
 
     /**
      * Draw a small dot immediately.
@@ -266,109 +196,68 @@ export function FishDrawingCanvas({
      * something instead of requiring
      * pointer movement.
      */
-    context.globalCompositeOperation =
-      tool === 'eraser'
-        ? 'destination-out'
-        : 'source-over';
+    context.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
 
-    context.strokeStyle =
-      color;
+    context.strokeStyle = color;
 
-    context.fillStyle =
-      color;
+    context.fillStyle = color;
 
-    context.lineWidth =
-      brushSize;
+    context.lineWidth = brushSize;
 
     context.beginPath();
 
-    context.arc(
-      position.x,
-      position.y,
-      brushSize / 2,
-      0,
-      Math.PI * 2,
-    );
+    context.arc(position.x, position.y, brushSize / 2, 0, Math.PI * 2);
 
     context.fill();
 
     context.beginPath();
 
-    context.moveTo(
-      position.x,
-      position.y,
-    );
+    context.moveTo(position.x, position.y);
 
     setIsDrawing(true);
   };
 
-  const draw = (
-    event: PointerEvent<HTMLCanvasElement>,
-  ) => {
+  const draw = (event: PointerEvent<HTMLCanvasElement>) => {
     if (!isDrawing) {
       return;
     }
 
-    const canvas =
-      canvasRef.current;
+    const canvas = canvasRef.current;
 
     if (!canvas) {
       return;
     }
 
-    const context =
-      canvas.getContext('2d');
+    const context = canvas.getContext('2d');
 
     if (!context) {
       return;
     }
 
-    const position =
-      getPosition(event);
+    const position = getPosition(event);
 
-    context.globalCompositeOperation =
-      tool === 'eraser'
-        ? 'destination-out'
-        : 'source-over';
+    context.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
 
-    context.strokeStyle =
-      color;
+    context.strokeStyle = color;
 
-    context.lineWidth =
-      brushSize;
+    context.lineWidth = brushSize;
 
-    context.lineTo(
-      position.x,
-      position.y,
-    );
+    context.lineTo(position.x, position.y);
 
     context.stroke();
   };
 
-  const stopDrawing = (
-    event?: PointerEvent<HTMLCanvasElement>,
-  ) => {
-    const canvas =
-      canvasRef.current;
+  const stopDrawing = (event?: PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
 
-    if (
-      canvas &&
-      event &&
-      canvas.hasPointerCapture(
-        event.pointerId,
-      )
-    ) {
-      canvas.releasePointerCapture(
-        event.pointerId,
-      );
+    if (canvas && event && canvas.hasPointerCapture(event.pointerId)) {
+      canvas.releasePointerCapture(event.pointerId);
     }
 
     setIsDrawing(false);
   };
 
-  const selectColor = (
-    nextColor: string,
-  ) => {
+  const selectColor = (nextColor: string) => {
     setColor(nextColor);
 
     /**
@@ -379,48 +268,37 @@ export function FishDrawingCanvas({
   };
 
   const undo = () => {
-    const canvas =
-      canvasRef.current;
+    const canvas = canvasRef.current;
 
     if (!canvas) {
       return;
     }
 
-    const context =
-      canvas.getContext('2d');
+    const context = canvas.getContext('2d');
 
     if (!context) {
       return;
     }
 
-    const previous =
-      historyRef.current.pop();
+    const previous = historyRef.current.pop();
 
     if (!previous) {
       return;
     }
 
-    context.putImageData(
-      previous,
-      0,
-      0,
-    );
+    context.putImageData(previous, 0, 0);
 
-    setCanUndo(
-      historyRef.current.length > 0,
-    );
+    setCanUndo(historyRef.current.length > 0);
   };
 
   const clear = () => {
-    const canvas =
-      canvasRef.current;
+    const canvas = canvasRef.current;
 
     if (!canvas) {
       return;
     }
 
-    const context =
-      canvas.getContext('2d');
+    const context = canvas.getContext('2d');
 
     if (!context) {
       return;
@@ -431,12 +309,7 @@ export function FishDrawingCanvas({
      */
     saveHistory();
 
-    context.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height,
-    );
+    context.clearRect(0, 0, canvas.width, canvas.height);
   };
 
   const finish = () => {
@@ -444,8 +317,7 @@ export function FishDrawingCanvas({
       return;
     }
 
-    const canvas =
-      canvasRef.current;
+    const canvas = canvasRef.current;
 
     if (!canvas) {
       return;
@@ -454,21 +326,15 @@ export function FishDrawingCanvas({
     /**
      * Reset compositing before export.
      */
-    const context =
-      canvas.getContext('2d');
+    const context = canvas.getContext('2d');
 
     if (context) {
-      context.globalCompositeOperation =
-        'source-over';
+      context.globalCompositeOperation = 'source-over';
     }
 
-    const image =
-      cropDrawing(
-        canvas,
-        {
-          padding: 16,
-        },
-      );
+    const image = cropDrawing(canvas, {
+      padding: 16,
+    });
 
     if (!image) {
       return;
@@ -495,8 +361,8 @@ export function FishDrawingCanvas({
       size: fishSize,
       ...(paintImage
         ? {
-          paintImage,
-        }
+            paintImage,
+          }
         : {}),
     });
   };
@@ -527,16 +393,44 @@ export function FishDrawingCanvas({
   return (
     <div className="fish-editor">
       <div className="fish-editor__workspace">
-        <section className="fish-editor__stage" aria-label={mode === 'draw' ? 'Fish drawing canvas' : '3D fish preview'}>
+        <section
+          className="fish-editor__stage"
+          aria-label={mode === 'draw' ? 'Fish drawing canvas' : '3D fish preview'}
+        >
           {mode === 'draw' ? (
             <div className="fish-editor__canvas-wrap">
               <div className="fish-editor__guide" aria-hidden="true">
                 <svg viewBox="0 0 600 320" width="100%" height="100%">
-                  <path d="M155 160 C110 130 72 96 38 72 C48 116 50 140 50 160 C50 180 48 204 38 248 C72 224 110 190 155 160 Z" fill="none" stroke="currentColor" strokeWidth="5" />
-                  <path d="M145 160 C190 78 300 60 405 86 C485 106 540 132 555 160 C540 188 485 214 405 234 C300 260 190 242 145 160 Z" fill="none" stroke="currentColor" strokeWidth="5" strokeDasharray="11 9" strokeLinecap="round" />
-                  <path d="M280 82 C305 42 345 35 375 76 M295 239 C320 276 355 278 380 230" fill="none" stroke="currentColor" strokeWidth="5" strokeDasharray="9 8" strokeLinecap="round" />
+                  <path
+                    d="M155 160 C110 130 72 96 38 72 C48 116 50 140 50 160 C50 180 48 204 38 248 C72 224 110 190 155 160 Z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="5"
+                  />
+                  <path
+                    d="M145 160 C190 78 300 60 405 86 C485 106 540 132 555 160 C540 188 485 214 405 234 C300 260 190 242 145 160 Z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="5"
+                    strokeDasharray="11 9"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M280 82 C305 42 345 35 375 76 M295 239 C320 276 355 278 380 230"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="5"
+                    strokeDasharray="9 8"
+                    strokeLinecap="round"
+                  />
                   <circle cx="475" cy="137" r="10" fill="currentColor" />
-                  <path d="M510 170 Q525 180 538 168" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                  <path
+                    d="M510 170 Q525 180 538 168"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </div>
               <canvas
@@ -577,10 +471,17 @@ export function FishDrawingCanvas({
                       type="button"
                       key={species}
                       className={fishSpecies === species ? 'is-active' : ''}
-                      onClick={() => { setFishSpecies(species); setPaintImage(null); }}
+                      onClick={() => {
+                        setFishSpecies(species);
+                        setPaintImage(null);
+                      }}
                       aria-pressed={fishSpecies === species}
                     >
-                      {species === 'basic' ? 'Classic' : species === 'angelfish' ? 'Angelfish' : 'Guppy'}
+                      {species === 'basic'
+                        ? 'Classic'
+                        : species === 'angelfish'
+                          ? 'Angelfish'
+                          : 'Guppy'}
                     </button>
                   ))}
                 </div>
@@ -593,7 +494,9 @@ export function FishDrawingCanvas({
                 <h2>Fins &amp; Tail</h2>
                 {palette(finColor, setFinColor)}
               </div>
-              <p className="fish-editor__hint">Use the Paint / Rotate controls over the fish to paint directly on the model.</p>
+              <p className="fish-editor__hint">
+                Use the Paint / Rotate controls over the fish to paint directly on the model.
+              </p>
             </>
           ) : (
             <>
@@ -609,17 +512,32 @@ export function FishDrawingCanvas({
                       type="button"
                       key={brush.size}
                       className={tool === 'brush' && brushSize === brush.size ? 'is-active' : ''}
-                      onClick={() => { setBrushSize(brush.size); setTool('brush'); }}
-                    >{brush.label}</button>
+                      onClick={() => {
+                        setBrushSize(brush.size);
+                        setTool('brush');
+                      }}
+                    >
+                      {brush.label}
+                    </button>
                   ))}
                 </div>
               </div>
               <div className="fish-editor__section">
                 <h2>Tools</h2>
                 <div className="fish-editor__tool-grid">
-                  <button type="button" className={tool === 'eraser' ? 'is-active' : ''} onClick={() => setTool('eraser')}>Eraser</button>
-                  <button type="button" onClick={undo} disabled={!canUndo}>Undo</button>
-                  <button type="button" onClick={clear}>Clear</button>
+                  <button
+                    type="button"
+                    className={tool === 'eraser' ? 'is-active' : ''}
+                    onClick={() => setTool('eraser')}
+                  >
+                    Eraser
+                  </button>
+                  <button type="button" onClick={undo} disabled={!canUndo}>
+                    Undo
+                  </button>
+                  <button type="button" onClick={clear}>
+                    Clear
+                  </button>
                 </div>
               </div>
             </>
@@ -650,7 +568,10 @@ export function FishDrawingCanvas({
           )}
 
           <div className="fish-editor__section fish-editor__capacity">
-            <div className="fish-editor__size-header"><h2>Fish Size</h2><span>{fishSizeLabel}</span></div>
+            <div className="fish-editor__size-header">
+              <h2>Fish Size</h2>
+              <span>{fishSizeLabel}</span>
+            </div>
             <input
               type="range"
               min={0.6}
@@ -660,7 +581,10 @@ export function FishDrawingCanvas({
               onChange={(event) => setFishSize(Number(event.target.value))}
               aria-label="Fish size"
             />
-            <div className="fish-editor__range-labels"><span>Small</span><span>Big</span></div>
+            <div className="fish-editor__range-labels">
+              <span>Small</span>
+              <span>Big</span>
+            </div>
             <p className={hasCapacity ? 'fish-editor__capacity-ok' : 'fish-editor__capacity-full'}>
               {hasCapacity
                 ? `${remainingCapacity.toFixed(1)} space left · this fish uses ${fishCapacityCost.toFixed(1)}`
@@ -668,8 +592,15 @@ export function FishDrawingCanvas({
             </p>
           </div>
           <div className="fish-editor__actions">
-            <button type="button" className="fish-editor__cancel" onClick={onCancel}>Cancel</button>
-            <button type="button" className="fish-editor__save" onClick={mode === 'draw' ? finish : finish3D} disabled={!hasCapacity}>
+            <button type="button" className="fish-editor__cancel" onClick={onCancel}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="fish-editor__save"
+              onClick={mode === 'draw' ? finish : finish3D}
+              disabled={!hasCapacity}
+            >
               {hasCapacity ? 'Save Fish' : 'Aquarium Full'}
             </button>
           </div>
@@ -678,4 +609,3 @@ export function FishDrawingCanvas({
     </div>
   );
 }
-

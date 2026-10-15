@@ -1,4 +1,3 @@
-
 import { prisma } from '@aquarium/database';
 
 export async function ensureDefaultAquarium(ownerId: string) {
@@ -33,10 +32,7 @@ export async function ensureDefaultAquarium(ownerId: string) {
       where: {
         ownerId,
       },
-      orderBy: [
-        { createdAt: 'asc' },
-        { id: 'asc' },
-      ],
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
 
     if (existingAquarium) {

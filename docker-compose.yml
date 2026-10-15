@@ -8,11 +8,11 @@ services:
       POSTGRES_PASSWORD: aquarium_dev
       POSTGRES_DB: aquarium
     ports:
-      - "5434:5432"
+      - '5434:5432'
     volumes:
       - aquarium-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U aquarium -d aquarium"]
+      test: ['CMD-SHELL', 'pg_isready -U aquarium -d aquarium']
       interval: 5s
       timeout: 5s
       retries: 5

@@ -15,6 +15,7 @@ The long-term goal is to build a playful underwater world where children and par
 ## Features
 
 ### Aquarium
+
 - Interactive 3D aquarium environment
 - Animated fish with natural swimming behavior
 - Species-specific movement and fin animations
@@ -24,6 +25,7 @@ The long-term goal is to build a playful underwater world where children and par
 - Default aquarium management
 
 ### Fish Creation
+
 - Create and customize 3D fish
 - Classic fish and angelfish models
 - Fish painting and color customization
@@ -32,6 +34,7 @@ The long-term goal is to build a playful underwater world where children and par
 - Persistent fish data and textures
 
 ### Accounts and Data
+
 - User authentication
 - Private, user-owned aquariums
 - PostgreSQL-backed persistence
@@ -40,17 +43,17 @@ The long-term goal is to build a playful underwater world where children and par
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 19, TypeScript, Vite |
-| 3D Graphics | Three.js |
-| Backend | Node.js, Fastify 5 |
-| Database | PostgreSQL 17 |
-| ORM | Prisma 7 |
-| Authentication | Better Auth |
-| Validation | Zod |
-| Monorepo | pnpm, Turborepo |
-| Deployment | Railway (planned) |
+| Layer          | Technology                 |
+| -------------- | -------------------------- |
+| Frontend       | React 19, TypeScript, Vite |
+| 3D Graphics    | Three.js                   |
+| Backend        | Node.js, Fastify 5         |
+| Database       | PostgreSQL 17              |
+| ORM            | Prisma 7                   |
+| Authentication | Better Auth                |
+| Validation     | Zod                        |
+| Monorepo       | pnpm, Turborepo            |
+| Deployment     | Railway (planned)          |
 
 ## Project Structure
 

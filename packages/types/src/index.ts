@@ -9,13 +9,9 @@ export type Vector3 = {
   z: number;
 };
 
-export type FishDirection =
-  | 'left'
-  | 'right';
+export type FishDirection = 'left' | 'right';
 
-export type FishBehavior =
-  | 'wandering'
-  | 'seeking-food';
+export type FishBehavior = 'wandering' | 'seeking-food';
 
 export type Fish = {
   id: string;

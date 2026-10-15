@@ -8,7 +8,10 @@ type AquariumCardProps = { aquarium: ApiAquarium; isBroadcasting?: boolean };
 type PreviewStyle = CSSProperties & { '--fish-body'?: string; '--fish-fin'?: string };
 
 const THEME_BACKGROUNDS: Record<string, string> = {
-  coral: 'sunny-reef', ocean: 'ocean-garden', 'deep-sea': 'midnight-sea', fantasy: 'magic-lagoon',
+  coral: 'sunny-reef',
+  ocean: 'ocean-garden',
+  'deep-sea': 'midnight-sea',
+  fantasy: 'magic-lagoon',
 };
 const VALID_COLOR = /^#[\da-fA-F]{6}$/;
 
@@ -42,12 +45,24 @@ export function AquariumCard({ aquarium, isBroadcasting = false }: AquariumCardP
   const count = aquarium.fish.length;
 
   return (
-    <article className={`aquarium-card aquarium-card--${themeId}${isBroadcasting ? ' aquarium-card--broadcasting' : ''}`}>
-      <Link className="aquarium-card__preview" to={aquariumUrl} aria-label={`Open ${aquarium.name}`}>
+    <article
+      className={`aquarium-card aquarium-card--${themeId}${isBroadcasting ? ' aquarium-card--broadcasting' : ''}`}
+    >
+      <Link
+        className="aquarium-card__preview"
+        to={aquariumUrl}
+        aria-label={`Open ${aquarium.name}`}
+      >
         <div className="aquarium-card__water">
           <span className="aquarium-card__light" aria-hidden="true" />
           <span className="aquarium-card__preview-scenery" aria-hidden="true">
-            {themeId === 'sunny-reef' ? '🪸 🪨 🪸' : themeId === 'ocean-garden' ? '🌿 🌱 🌿' : themeId === 'midnight-sea' ? '🌿 ✨ 🌱' : '🍄 ✨ 🍄'}
+            {themeId === 'sunny-reef'
+              ? '🪸 🪨 🪸'
+              : themeId === 'ocean-garden'
+                ? '🌿 🌱 🌿'
+                : themeId === 'midnight-sea'
+                  ? '🌿 ✨ 🌱'
+                  : '🍄 ✨ 🍄'}
           </span>
           {aquarium.fish.slice(0, 5).map((fish, index) => (
             <span
@@ -57,21 +72,42 @@ export function AquariumCard({ aquarium, isBroadcasting = false }: AquariumCardP
               aria-hidden="true"
             />
           ))}
-          {count === 0 && <span className="aquarium-card__empty-preview">Your underwater world is waiting for fish!</span>}
+          {count === 0 && (
+            <span className="aquarium-card__empty-preview">
+              Your underwater world is waiting for fish!
+            </span>
+          )}
           <span className="aquarium-card__sand" aria-hidden="true" />
         </div>
       </Link>
       {isBroadcasting && (
-        <span className="aquarium-card__live-badge"><span className="aquarium-card__live-dot" aria-hidden="true" />Live on TV</span>
+        <span className="aquarium-card__live-badge">
+          <span className="aquarium-card__live-dot" aria-hidden="true" />
+          Live on TV
+        </span>
       )}
       <div className="aquarium-card__footer">
         <div className="aquarium-card__info">
           <Link to={aquariumUrl}>{aquarium.name}</Link>
-          <span>{count} {count === 1 ? 'fish' : 'fish'} · {theme?.name ?? 'Custom World'}</span>
+          <span>
+            {count} {count === 1 ? 'fish' : 'fish'} · {theme?.name ?? 'Custom World'}
+          </span>
         </div>
         <div className="aquarium-card__actions">
-          <Link className="aquarium-card__action aquarium-card__action--open" to={aquariumUrl} aria-label={`Open ${aquarium.name}`}><span aria-hidden="true">▷</span> Open</Link>
-          <Link className="aquarium-card__action aquarium-card__action--edit" to={`/aquariums/edit/${encodeURIComponent(aquarium.id)}`} aria-label={`Edit ${aquarium.name}`}><span aria-hidden="true">⚙</span> Edit</Link>
+          <Link
+            className="aquarium-card__action aquarium-card__action--open"
+            to={aquariumUrl}
+            aria-label={`Open ${aquarium.name}`}
+          >
+            <span aria-hidden="true">▷</span> Open
+          </Link>
+          <Link
+            className="aquarium-card__action aquarium-card__action--edit"
+            to={`/aquariums/edit/${encodeURIComponent(aquarium.id)}`}
+            aria-label={`Edit ${aquarium.name}`}
+          >
+            <span aria-hidden="true">⚙</span> Edit
+          </Link>
         </div>
       </div>
     </article>

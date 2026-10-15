@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { ScanPaperFish } from '../ScanPaperFish/ScanPaperFish';
 import './AquariumRemote.css';
@@ -28,21 +27,21 @@ type AquariumRemoteProps = {
 };
 
 export function AquariumRemote({
-                                 aquariumId,
-                                 name,
-                                 fish,
-                                 onBack,
-                                 onFeed,
-                                 onAddFish,
-                                 onViewFish,
-                                 onSettings,
-                                 feedCooldownSeconds,
-                                 feedPending,
-                                 onEndBroadcast,
-                                 endingBroadcast,
-                                 isBroadcasting,
-                                 onDecorate,
-                               }: AquariumRemoteProps) {
+  aquariumId,
+  name,
+  fish,
+  onBack,
+  onFeed,
+  onAddFish,
+  onViewFish,
+  onSettings,
+  feedCooldownSeconds,
+  feedPending,
+  onEndBroadcast,
+  endingBroadcast,
+  isBroadcasting,
+  onDecorate,
+}: AquariumRemoteProps) {
   const [isScanning, setIsScanning] = useState(false);
 
   if (isScanning) {
@@ -109,21 +108,14 @@ export function AquariumRemote({
           onClick={onViewFish}
           aria-label="View your fish collection"
         >
-          <span className="aquarium-remote__hero-icon">
-            🐠
-          </span>
+          <span className="aquarium-remote__hero-icon">🐠</span>
 
           <span className="aquarium-remote__hero-content">
             <strong>Your fish are swimming!</strong>
-            <small>
-              {fish.length} fish in your aquarium
-            </small>
+            <small>{fish.length} fish in your aquarium</small>
           </span>
 
-          <span
-            className="aquarium-remote__hero-chevron"
-            aria-hidden="true"
-          >
+          <span className="aquarium-remote__hero-chevron" aria-hidden="true">
             ›
           </span>
         </button>
@@ -136,9 +128,7 @@ export function AquariumRemote({
           onClick={onFeed}
           disabled={feedPending || feedCooldownSeconds > 0}
         >
-  <span className="aquarium-remote__action-icon">
-    🍽️
-  </span>
+          <span className="aquarium-remote__action-icon">🍽️</span>
 
           <strong>
             {feedPending
@@ -148,21 +138,11 @@ export function AquariumRemote({
                 : 'Feed Fish'}
           </strong>
 
-          <small>
-            {feedCooldownSeconds > 0
-              ? 'Let your fish eat'
-              : 'Drop some food'}
-          </small>
+          <small>{feedCooldownSeconds > 0 ? 'Let your fish eat' : 'Drop some food'}</small>
         </button>
 
-        <button
-          type="button"
-          className="aquarium-remote__action"
-          onClick={onAddFish}
-        >
-          <span className="aquarium-remote__action-icon">
-            🐟
-          </span>
+        <button type="button" className="aquarium-remote__action" onClick={onAddFish}>
+          <span className="aquarium-remote__action-icon">🐟</span>
           <strong>Add Fish</strong>
           <small>Create a new friend</small>
         </button>
@@ -172,9 +152,7 @@ export function AquariumRemote({
           className="aquarium-remote__action aquarium-remote__action--scan"
           onClick={() => setIsScanning(true)}
         >
-          <span className="aquarium-remote__action-icon">
-            📸
-          </span>
+          <span className="aquarium-remote__action-icon">📸</span>
           <strong>Scan Drawing</strong>
           <small>Bring your drawing to life</small>
         </button>
@@ -183,18 +161,19 @@ export function AquariumRemote({
           className="aquarium-remote__action aquarium-remote__action--scan"
           onClick={onDecorate}
         >
-          <span className="aquarium-remote__action-icon">
-            🎨
-          </span>
+          <span className="aquarium-remote__action-icon">🎨</span>
           <strong>Decorate Aquarium</strong>
           <small>Make your own underwater world</small>
         </button>
       </div>
       {isBroadcasting && (
         <div className="aquarium-remote__broadcast-controls">
-          <button type="button"
+          <button
+            type="button"
             className="aquarium-remote__end-broadcast aquarium-remote__end-broadcast--ocean"
-            onClick={onEndBroadcast} disabled={endingBroadcast}>
+            onClick={onEndBroadcast}
+            disabled={endingBroadcast}
+          >
             <span aria-hidden="true">■</span>
             {endingBroadcast ? 'Ending broadcast…' : 'End Broadcast'}
           </button>

@@ -23,9 +23,7 @@ export function getOnlineTvDisplaySessionIds(): Set<string> {
   for (const socket of io.sockets.sockets.values()) {
     if (!socket.connected) continue;
 
-    const sessionId = socket.data.displaySessionId as
-      | string
-      | null;
+    const sessionId = socket.data.displaySessionId as string | null;
 
     if (sessionId) {
       onlineSessionIds.add(sessionId);
@@ -49,10 +47,7 @@ export function disconnectTvDisplaySession(sessionId: string) {
   }
 }
 
-export function switchTvDisplayAquarium(
-  sessionId: string,
-  aquariumId: string,
-) {
+export function switchTvDisplayAquarium(sessionId: string, aquariumId: string) {
   const server = io;
   if (!server) return;
 
@@ -72,10 +67,7 @@ export function switchTvDisplayAquarium(
   }
 }
 
-export function initializeSocket(
-  httpServer: HttpServer,
-  webOrigin: string | string[],
-) {
+export function initializeSocket(httpServer: HttpServer, webOrigin: string | string[]) {
   io = new Server(httpServer, {
     cors: {
       origin: webOrigin,
@@ -92,7 +84,11 @@ export function initializeSocket(
 
       const displayToken = socket.handshake.auth?.displayToken;
       if (displayToken !== undefined) {
-        if (typeof displayToken !== 'string' || displayToken.length < 32 || displayToken.length > 512) {
+        if (
+          typeof displayToken !== 'string' ||
+          displayToken.length < 32 ||
+          displayToken.length > 512
+        ) {
           return next(new Error('Invalid display token'));
         }
         const session = await prisma.tvDisplaySession.findUnique({
@@ -149,23 +145,26 @@ export function initializeSocket(
       if (expiryTimer) clearTimeout(expiryTimer);
     });
 
-    socket.on('aquarium:join', async (aquariumId: unknown, acknowledge?: (result: JoinResult) => void) => {
-      if (typeof aquariumId !== 'string' || !socket.data.userId) {
-        acknowledge?.({ ok: false });
-        return;
-      }
-      try {
-        const aquarium = await prisma.aquarium.findFirst({
-          where: { id: aquariumId, ownerId: socket.data.userId },
-          select: { id: true },
-        });
-        if (!aquarium || !socket.connected) return acknowledge?.({ ok: false });
-        await socket.join(aquariumRoom(aquariumId));
-        acknowledge?.({ ok: true });
-      } catch {
-        acknowledge?.({ ok: false });
-      }
-    });
+    socket.on(
+      'aquarium:join',
+      async (aquariumId: unknown, acknowledge?: (result: JoinResult) => void) => {
+        if (typeof aquariumId !== 'string' || !socket.data.userId) {
+          acknowledge?.({ ok: false });
+          return;
+        }
+        try {
+          const aquarium = await prisma.aquarium.findFirst({
+            where: { id: aquariumId, ownerId: socket.data.userId },
+            select: { id: true },
+          });
+          if (!aquarium || !socket.connected) return acknowledge?.({ ok: false });
+          await socket.join(aquariumRoom(aquariumId));
+          acknowledge?.({ ok: true });
+        } catch {
+          acknowledge?.({ ok: false });
+        }
+      },
+    );
 
     socket.on('tv:join', async (acknowledge?: (result: JoinResult) => void) => {
       const sessionId = socket.data.displaySessionId as string | null;
@@ -173,7 +172,12 @@ export function initializeSocket(
       if (!sessionId || !aquariumId) return acknowledge?.({ ok: false });
       try {
         const session = await prisma.tvDisplaySession.findUnique({ where: { id: sessionId } });
-        if (!session || session.revokedAt || session.expiresAt <= new Date() || session.aquariumId !== aquariumId) {
+        if (
+          !session ||
+          session.revokedAt ||
+          session.expiresAt <= new Date() ||
+          session.aquariumId !== aquariumId
+        ) {
           return acknowledge?.({ ok: false });
         }
         const aquarium = await prisma.aquarium.findFirst({
@@ -201,11 +205,8 @@ export function initializeSocket(
           return acknowledge?.({ ok: false });
         }
 
-// The aquarium may have changed while tv:join was running.
-        if (
-          stillValid.aquariumId !== aquariumId ||
-          socket.data.displayAquariumId !== aquariumId
-        ) {
+        // The aquarium may have changed while tv:join was running.
+        if (stillValid.aquariumId !== aquariumId || socket.data.displayAquariumId !== aquariumId) {
           socket.leave(aquariumRoom(aquariumId));
 
           // Tell the TV to synchronize with its current session.
@@ -228,20 +229,11 @@ export function initializeSocket(
       'aquarium:feed',
       async (
         aquariumId: unknown,
-        acknowledge?: (
-          result: {
-            ok: boolean;
-            retryAfterMs?: number;
-          },
-        ) => void,
+        acknowledge?: (result: { ok: boolean; retryAfterMs?: number }) => void,
       ) => {
         const userId = socket.data.userId as string | null;
 
-        if (
-          typeof aquariumId !== 'string' ||
-          !aquariumId ||
-          !userId
-        ) {
+        if (typeof aquariumId !== 'string' || !aquariumId || !userId) {
           acknowledge?.({ ok: false });
           return;
         }
@@ -289,10 +281,7 @@ export function initializeSocket(
     );
     socket.on(
       'aquarium:appearance-preview',
-      async (
-        payload: unknown,
-        acknowledge?: (result: { ok: boolean }) => void,
-      ) => {
+      async (payload: unknown, acknowledge?: (result: { ok: boolean }) => void) => {
         const userId = socket.data.userId as string | null;
 
         if (
@@ -337,13 +326,10 @@ export function initializeSocket(
 
           // Forward the live preview to the TV.
           // Do not persist it to PostgreSQL.
-          socket.to(aquariumRoom(aquariumId)).emit(
-            'aquarium:appearance-preview',
-            {
-              aquariumId,
-              appearance,
-            },
-          );
+          socket.to(aquariumRoom(aquariumId)).emit('aquarium:appearance-preview', {
+            aquariumId,
+            appearance,
+          });
 
           acknowledge?.({ ok: true });
         } catch (error) {
@@ -376,11 +362,7 @@ export async function closeSocket() {
   await new Promise<void>((resolve) => server.close(() => resolve()));
 }
 
-
-export function setTvDisplayPaused(
-  sessionId: string,
-  paused: boolean,
-) {
+export function setTvDisplayPaused(sessionId: string, paused: boolean) {
   const server = io;
   if (!server) return;
 
@@ -389,9 +371,7 @@ export function setTvDisplayPaused(
       continue;
     }
 
-    const aquariumId = socket.data.displayAquariumId as
-      | string
-      | null;
+    const aquariumId = socket.data.displayAquariumId as string | null;
 
     socket.data.displayPaused = paused;
 
@@ -409,4 +389,3 @@ export function setTvDisplayPaused(
     });
   }
 }
-

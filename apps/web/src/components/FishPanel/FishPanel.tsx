@@ -1,4 +1,3 @@
-
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -31,39 +30,23 @@ function getFishColor(fish: CreatedFish): string {
 function getFishType(fish: CreatedFish): string {
   if (fish.type === 'drawn') return 'Hand-drawn Fish';
 
-  return fish.model === 'angelfish'
-    ? 'Angelfish'
-    : 'Classic Fish';
+  return fish.model === 'angelfish' ? 'Angelfish' : 'Classic Fish';
 }
 
-function FishPreview({
-                       fish,
-                       large = false,
-                     }: {
-  fish: CreatedFish;
-  large?: boolean;
-}) {
+function FishPreview({ fish, large = false }: { fish: CreatedFish; large?: boolean }) {
   return (
     <div
-      className={`fish-panel__avatar ${
-        large ? 'fish-panel__avatar--large' : ''
-      }`}
+      className={`fish-panel__avatar ${large ? 'fish-panel__avatar--large' : ''}`}
       style={{
         background: `radial-gradient(circle at 30% 30%, ${getFishColor(fish)}, #103b60)`,
       }}
     >
       {fish.type === 'drawn' ? (
-        <img
-          src={fish.image}
-          alt={fish.name}
-          className="fish-panel__image"
-        />
+        <img src={fish.image} alt={fish.name} className="fish-panel__image" />
       ) : large ? (
         <Fish3DPreview
           key={`${fish.id}-${fish.model}`}
-          species={
-            fish.model === 'angelfish' ? 'angelfish' : 'classic'
-          }
+          species={fish.model === 'angelfish' ? 'angelfish' : 'classic'}
           bodyColor={fish.bodyColor}
           finColor={fish.finColor}
           paintImage={fish.paintImage}
@@ -89,23 +72,21 @@ type FishDetailsProps = {
 };
 
 function FishDetails({
-                       fish,
-                       aquariums,
-                       currentAquariumId,
-                       onBack,
-                       onRename,
-                       onMove,
-                       onRelease,
-                     }: FishDetailsProps) {
+  fish,
+  aquariums,
+  currentAquariumId,
+  onBack,
+  onRename,
+  onMove,
+  onRelease,
+}: FishDetailsProps) {
   const [name, setName] = useState(fish.name);
   const [destinationId, setDestinationId] = useState('');
   const [confirmingRelease, setConfirmingRelease] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const destinations = aquariums.filter(
-    (aquarium) => aquarium.id !== currentAquariumId,
-  );
+  const destinations = aquariums.filter((aquarium) => aquarium.id !== currentAquariumId);
 
   useEffect(() => {
     setName(fish.name);
@@ -119,17 +100,14 @@ function FishDetails({
   const formattedDate = Number.isNaN(createdDate.getTime())
     ? 'Unknown'
     : createdDate.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
 
   const trimmedName = name.trim();
 
-  const canSaveName =
-    trimmedName.length > 0 &&
-    trimmedName !== fish.name &&
-    !busy;
+  const canSaveName = trimmedName.length > 0 && trimmedName !== fish.name && !busy;
 
   async function handleRename() {
     if (!canSaveName) return;
@@ -140,11 +118,7 @@ function FishDetails({
     try {
       await onRename(fish.id, trimmedName);
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : 'Failed to rename fish.',
-      );
+      setError(error instanceof Error ? error.message : 'Failed to rename fish.');
     } finally {
       setBusy(false);
     }
@@ -160,11 +134,7 @@ function FishDetails({
       await onMove(fish.id, destinationId);
       onBack();
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : 'Failed to move fish.',
-      );
+      setError(error instanceof Error ? error.message : 'Failed to move fish.');
     } finally {
       setBusy(false);
     }
@@ -180,11 +150,7 @@ function FishDetails({
       await onRelease(fish.id);
       onBack();
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : 'Failed to release fish.',
-      );
+      setError(error instanceof Error ? error.message : 'Failed to release fish.');
     } finally {
       setBusy(false);
     }
@@ -198,18 +164,14 @@ function FishDetails({
         <h3>{fish.name}</h3>
         <span>{getFishType(fish)}</span>
 
-        <p className="fish-panel__created">
-          Created {formattedDate}
-        </p>
+        <p className="fish-panel__created">Created {formattedDate}</p>
       </div>
 
       <div className="fish-panel__details">
         <div className="fish-panel__detail">
           <span>Aquarium</span>
           <strong>
-            {aquariums.find(
-              (item) => item.id === currentAquariumId,
-            )?.name ?? 'My Aquarium'}
+            {aquariums.find((item) => item.id === currentAquariumId)?.name ?? 'My Aquarium'}
           </strong>
         </div>
 
@@ -223,10 +185,7 @@ function FishDetails({
         <h3>Rename Fish</h3>
         <p>Give your little swimmer a new name.</p>
 
-        <label
-          className="fish-panel__label"
-          htmlFor="fish-panel-name"
-        >
+        <label className="fish-panel__label" htmlFor="fish-panel-name">
           Fish name
         </label>
 
@@ -306,8 +265,7 @@ function FishDetails({
         ) : (
           <div className="fish-panel__confirm">
             <p>
-              Are you sure you want to release{' '}
-              <strong>{fish.name}</strong>?
+              Are you sure you want to release <strong>{fish.name}</strong>?
             </p>
 
             <div className="fish-panel__confirm-actions">
@@ -343,25 +301,24 @@ function FishDetails({
 }
 
 export function FishPanel({
-                            open,
-                            fish,
-                            selectedFishId,
-                            onSelectFish,
-                            onClose,
-                            onAddFish,
-                            onViewAquarium,
-                            onRename,
-                            onRelease,
-                            onMove,
-                            aquariums,
-                            currentAquariumId,
-                          }: FishPanelProps) {
+  open,
+  fish,
+  selectedFishId,
+  onSelectFish,
+  onClose,
+  onAddFish,
+  onViewAquarium,
+  onRename,
+  onRelease,
+  onMove,
+  aquariums,
+  currentAquariumId,
+}: FishPanelProps) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
 
-  const selectedFish =
-    fish.find((item) => item.id === selectedFishId) ?? null;
+  const selectedFish = fish.find((item) => item.id === selectedFishId) ?? null;
 
   useEffect(() => {
     if (!open) return;
@@ -393,10 +350,7 @@ export function FishPanel({
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
         last.focus();
-      } else if (
-        !event.shiftKey &&
-        document.activeElement === last
-      ) {
+      } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault();
         first.focus();
       }
@@ -447,14 +401,10 @@ export function FishPanel({
             )}
 
             <div>
-              <h2 id={titleId}>
-                {selectedFish ? 'Fish Profile' : 'My Fish'}
-              </h2>
+              <h2 id={titleId}>{selectedFish ? 'Fish Profile' : 'My Fish'}</h2>
 
               <p>
-                {selectedFish
-                  ? 'Meet your little swimmer'
-                  : `${fish.length} fish in this aquarium`}
+                {selectedFish ? 'Meet your little swimmer' : `${fish.length} fish in this aquarium`}
               </p>
             </div>
           </div>
@@ -486,15 +436,9 @@ export function FishPanel({
             <div className="fish-panel__empty">
               <span aria-hidden="true">🐠</span>
               <h3>No fish yet</h3>
-              <p>
-                Create your first fish and add it to your aquarium.
-              </p>
+              <p>Create your first fish and add it to your aquarium.</p>
 
-              <button
-                type="button"
-                className="fish-panel__primary"
-                onClick={onAddFish}
-              >
+              <button type="button" className="fish-panel__primary" onClick={onAddFish}>
                 + Add Fish
               </button>
             </div>
@@ -514,10 +458,7 @@ export function FishPanel({
                     <span>{getFishType(item)}</span>
                   </div>
 
-                  <span
-                    className="fish-panel__arrow"
-                    aria-hidden="true"
-                  >
+                  <span className="fish-panel__arrow" aria-hidden="true">
                     ›
                   </span>
                 </button>
@@ -528,11 +469,7 @@ export function FishPanel({
 
         {!selectedFish && onViewAquarium && (
           <div className="fish-panel__mobile-view">
-            <button
-              type="button"
-              className="fish-panel__view-aquarium"
-              onClick={onViewAquarium}
-            >
+            <button type="button" className="fish-panel__view-aquarium" onClick={onViewAquarium}>
               <span aria-hidden="true">▣</span>
 
               <span className="fish-panel__view-aquarium-info">
@@ -547,11 +484,7 @@ export function FishPanel({
 
         {!selectedFish && fish.length > 0 && (
           <footer className="fish-panel__footer">
-            <button
-              type="button"
-              className="fish-panel__primary"
-              onClick={onAddFish}
-            >
+            <button type="button" className="fish-panel__primary" onClick={onAddFish}>
               + Add Fish
             </button>
           </footer>

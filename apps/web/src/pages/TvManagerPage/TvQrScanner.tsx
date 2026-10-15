@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { BrowserQRCodeReader } from '@zxing/browser';
 
@@ -42,24 +41,17 @@ export function TvQrScanner({ onClose, onScanned }: Props) {
       try {
         setError('');
 
-        const devices =
-          await BrowserQRCodeReader.listVideoInputDevices();
+        const devices = await BrowserQRCodeReader.listVideoInputDevices();
 
         if (cancelled) return;
 
-        const rearCamera = devices.find((device) =>
-          /back|rear|environment/i.test(device.label),
-        );
+        const rearCamera = devices.find((device) => /back|rear|environment/i.test(device.label));
 
         controls = await reader.decodeFromVideoDevice(
           rearCamera?.deviceId,
           videoRef.current,
           (result) => {
-            if (
-              !result ||
-              cancelled ||
-              scanCompletedRef.current
-            ) {
+            if (!result || cancelled || scanCompletedRef.current) {
               return;
             }
 
@@ -71,9 +63,7 @@ export function TvQrScanner({ onClose, onScanned }: Props) {
                 /^\/tv\/pair\/[^/]+\/?$/.test(url.pathname);
 
               if (!isValidPairingUrl) {
-                setError(
-                  'Scan a Family Aquarium TV QR code.',
-                );
+                setError('Scan a Family Aquarium TV QR code.');
                 return;
               }
 
@@ -85,9 +75,7 @@ export function TvQrScanner({ onClose, onScanned }: Props) {
 
               controls?.stop();
 
-              onScannedRef.current(
-                url.pathname + url.search,
-              );
+              onScannedRef.current(url.pathname + url.search);
             } catch {
               setError('Invalid QR code. Try again.');
             }
@@ -113,30 +101,18 @@ export function TvQrScanner({ onClose, onScanned }: Props) {
             }
           } catch (playbackError) {
             if (!cancelled) {
-              console.warn(
-                '[TV Scanner] Video playback failed:',
-                playbackError,
-              );
+              console.warn('[TV Scanner] Video playback failed:', playbackError);
 
-              setError(
-                'Camera started, but video playback failed.',
-              );
+              setError('Camera started, but video playback failed.');
             }
           }
         }
       } catch (cameraError) {
         if (cancelled) return;
 
-        console.error(
-          '[TV Scanner] Camera error:',
-          cameraError,
-        );
+        console.error('[TV Scanner] Camera error:', cameraError);
 
-        setError(
-          cameraError instanceof Error
-            ? cameraError.message
-            : 'Unable to start camera.',
-        );
+        setError(cameraError instanceof Error ? cameraError.message : 'Unable to start camera.');
       }
     }
 
@@ -149,48 +125,25 @@ export function TvQrScanner({ onClose, onScanned }: Props) {
   }, []);
 
   return (
-    <div
-      className="tv-qr-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Scan TV QR Code"
-    >
+    <div className="tv-qr-overlay" role="dialog" aria-modal="true" aria-label="Scan TV QR Code">
       <div className="tv-qr-panel">
         <div className="tv-qr-heading">
           <h2>Scan TV QR Code</h2>
 
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close scanner"
-          >
+          <button type="button" onClick={onClose} aria-label="Close scanner">
             ✕
           </button>
         </div>
 
-        <p>
-          Point your camera at the QR code on your TV.
-        </p>
+        <p>Point your camera at the QR code on your TV.</p>
 
         <div className="tv-qr-camera">
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-          />
+          <video ref={videoRef} autoPlay muted playsInline />
 
-          <div
-            className={`tv-qr-frame ${
-              scanned ? 'tv-qr-frame--success' : ''
-            }`}
-          />
+          <div className={`tv-qr-frame ${scanned ? 'tv-qr-frame--success' : ''}`} />
         </div>
 
-        <p
-          className="tv-qr-status"
-          aria-live="polite"
-        >
+        <p className="tv-qr-status" aria-live="polite">
           {scanned
             ? 'QR code detected! Connecting...'
             : error
@@ -201,19 +154,12 @@ export function TvQrScanner({ onClose, onScanned }: Props) {
         </p>
 
         {error && (
-          <p
-            role="alert"
-            className="tv-qr-error"
-          >
+          <p role="alert" className="tv-qr-error">
             {error}
           </p>
         )}
 
-        <button
-          type="button"
-          className="tv-qr-cancel"
-          onClick={onClose}
-        >
+        <button type="button" className="tv-qr-cancel" onClick={onClose}>
           Cancel
         </button>
       </div>

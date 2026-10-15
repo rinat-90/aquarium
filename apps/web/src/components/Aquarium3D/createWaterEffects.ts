@@ -2,18 +2,11 @@ import * as THREE from 'three';
 import type { AquariumLighting } from '../../features/aquarium-customization/types';
 
 export type WaterEffects = {
-  setCamera: (
-    camera: THREE.PerspectiveCamera,
-  ) => void;
+  setCamera: (camera: THREE.PerspectiveCamera) => void;
 
-  resize: (
-    camera: THREE.PerspectiveCamera,
-  ) => void;
+  resize: (camera: THREE.PerspectiveCamera) => void;
 
-  update: (
-    deltaTime: number,
-    elapsed: number,
-  ) => void;
+  update: (deltaTime: number, elapsed: number) => void;
 
   setQuality: (quality: WaterQuality) => void;
 
@@ -93,40 +86,34 @@ void main() {
 }
 `;
 
-  const geometry =
-    new THREE.PlaneGeometry(
-      2,
-      2,
-    );
+  const geometry = new THREE.PlaneGeometry(2, 2);
 
-  const material =
-    new THREE.ShaderMaterial({
-      transparent: true,
-      depthTest: false,
-      depthWrite: false,
+  const material = new THREE.ShaderMaterial({
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
 
-      blending:
-      THREE.AdditiveBlending,
+    blending: THREE.AdditiveBlending,
 
-      toneMapped: false,
+    toneMapped: false,
 
-      uniforms: {
-        uTime: {
-          value: 0,
-        },
-
-        uAspect: {
-          value: 1,
-        },
-
-        uMoodIntensity: { value: 1 },
-
-        uCenterGlow: {
-          value: 1,
-        },
+    uniforms: {
+      uTime: {
+        value: 0,
       },
 
-      vertexShader: `
+      uAspect: {
+        value: 1,
+      },
+
+      uMoodIntensity: { value: 1 },
+
+      uCenterGlow: {
+        value: 1,
+      },
+    },
+
+    vertexShader: `
 varying vec2 vUv;
 
 void main() {
@@ -145,7 +132,7 @@ void main() {
 }
 `,
 
-      fragmentShader: `
+    fragmentShader: `
 varying vec2 vUv;
 
 uniform float uTime;
@@ -585,7 +572,7 @@ void main() {
     );
 }
 `,
-    });
+  });
 
   // Create both materials once; share uniform values so quality
   // changes do not reset animation time or aspect ratio.
@@ -603,29 +590,22 @@ void main() {
     surface.visible = true;
   };
 
-  const surface =
-    new THREE.Mesh(
-      geometry,
-      quality === 'low' ? lowMaterial : material,
-    );
+  const surface = new THREE.Mesh(geometry, quality === 'low' ? lowMaterial : material);
 
   /*
    * The vertex shader is screen-space, so normal
    * frustum calculations are irrelevant.
    */
-  surface.frustumCulled =
-    false;
+  surface.frustumCulled = false;
 
   /*
    * Transparent objects with larger renderOrder values
    * are rendered later. This intentionally places the
    * water overlay over the normal aquarium scene.
    */
-  surface.renderOrder =
-    10000;
+  surface.renderOrder = 10000;
 
   scene.add(surface);
-
 
   /*
    * ANIMATED SUNLIGHT SHAFTS
@@ -636,36 +616,30 @@ void main() {
    * widths and intensity drift slowly so they feel tied
    * to moving surface refraction rather than spotlights.
    */
-  const rayGeometry =
-    new THREE.PlaneGeometry(
-      2,
-      2,
-    );
+  const rayGeometry = new THREE.PlaneGeometry(2, 2);
 
-  const rayMaterial =
-    new THREE.ShaderMaterial({
-      transparent: true,
-      depthTest: false,
-      depthWrite: false,
+  const rayMaterial = new THREE.ShaderMaterial({
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
 
-      blending:
-      THREE.AdditiveBlending,
+    blending: THREE.AdditiveBlending,
 
-      toneMapped: false,
+    toneMapped: false,
 
-      uniforms: {
-        uTime: {
-          value: 0,
-        },
-
-        uAspect: {
-          value: 1,
-        },
-
-        uMoodIntensity: { value: 1 },
+    uniforms: {
+      uTime: {
+        value: 0,
       },
 
-      vertexShader: `
+      uAspect: {
+        value: 1,
+      },
+
+      uMoodIntensity: { value: 1 },
+    },
+
+    vertexShader: `
 varying vec2 vUv;
 
 void main() {
@@ -680,7 +654,7 @@ void main() {
 }
 `,
 
-      fragmentShader: `
+    fragmentShader: `
 varying vec2 vUv;
 
 uniform float uTime;
@@ -914,23 +888,17 @@ void main() {
     );
 }
 `,
-    });
+  });
 
-  const rays =
-    new THREE.Mesh(
-      rayGeometry,
-      rayMaterial,
-    );
+  const rays = new THREE.Mesh(rayGeometry, rayMaterial);
 
-  rays.frustumCulled =
-    false;
+  rays.frustumCulled = false;
 
   /*
    * Rays render after the aquarium but before the bright
    * surface layer, so the surface remains the visual source.
    */
-  rays.renderOrder =
-    9999;
+  rays.renderOrder = 9999;
 
   scene.add(rays);
 
@@ -941,41 +909,24 @@ void main() {
     rayMaterial.uniforms.uMoodIntensity.value = raysIntensity;
   };
 
-  const setAspect = (
-    camera: THREE.PerspectiveCamera,
-  ) => {
-    material.uniforms
-      .uAspect.value =
-      camera.aspect;
+  const setAspect = (camera: THREE.PerspectiveCamera) => {
+    material.uniforms.uAspect.value = camera.aspect;
 
-    rayMaterial.uniforms
-      .uAspect.value =
-      camera.aspect;
+    rayMaterial.uniforms.uAspect.value = camera.aspect;
   };
 
-  const setCamera = (
-    camera: THREE.PerspectiveCamera,
-  ) => {
+  const setCamera = (camera: THREE.PerspectiveCamera) => {
     setAspect(camera);
   };
 
-  const resize = (
-    camera: THREE.PerspectiveCamera,
-  ) => {
+  const resize = (camera: THREE.PerspectiveCamera) => {
     setAspect(camera);
   };
 
-  const update = (
-    _deltaTime: number,
-    elapsed: number,
-  ) => {
-    material.uniforms
-      .uTime.value =
-      elapsed;
+  const update = (_deltaTime: number, elapsed: number) => {
+    material.uniforms.uTime.value = elapsed;
 
-    rayMaterial.uniforms
-      .uTime.value =
-      elapsed;
+    rayMaterial.uniforms.uTime.value = elapsed;
   };
 
   const destroy = () => {

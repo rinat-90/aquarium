@@ -1,16 +1,8 @@
-
 import { z } from 'zod';
 
-const colorSchema = z
-  .string()
-  .regex(/^#[0-9a-fA-F]{6}$/, 'Must be a valid hex color');
+const colorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Must be a valid hex color');
 
-const speciesSchema = z.enum([
-  'classic',
-  'angelfish',
-  'guppy',
-  'drawn',
-]);
+const speciesSchema = z.enum(['classic', 'angelfish', 'guppy', 'drawn']);
 
 const sizeSchema = z.number().min(0.1).max(5);
 
@@ -40,7 +32,4 @@ export const updateFishSchema = z
     size: sizeSchema.optional(),
     aquariumId: z.string().min(1).nullable().optional(),
   })
-  .refine(
-    (data) => Object.keys(data).length > 0,
-    'At least one field is required',
-  );
+  .refine((data) => Object.keys(data).length > 0, 'At least one field is required');

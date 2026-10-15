@@ -1,13 +1,8 @@
-
 import * as THREE from 'three';
 
-import {
-  createFish3DModel,
-} from '../Fish3D/createFish3DModel';
+import { createFish3DModel } from '../Fish3D/createFish3DModel';
 
-import {
-  createAngelfish3DModel,
-} from '../Fish3D/createAngelfish3DModel';
+import { createAngelfish3DModel } from '../Fish3D/createAngelfish3DModel';
 import { createGuppy3DModel } from '../Fish3D/createGuppy3DModel';
 
 type FishDirection = 'left' | 'right';
@@ -68,29 +63,15 @@ export function createThreeModelFish(
     depthVelocity: number,
     horizontalVelocity?: number,
   ) => {
-    const deltaTime =
-      lastTime === null
-        ? 1 / 60
-        : THREE.MathUtils.clamp(
-          time - lastTime,
-          0,
-          0.05,
-        );
+    const deltaTime = lastTime === null ? 1 / 60 : THREE.MathUtils.clamp(time - lastTime, 0, 0.05);
 
     lastTime = time;
 
-    const speedBlend =
-      1 - Math.exp(-4 * deltaTime);
+    const speedBlend = 1 - Math.exp(-4 * deltaTime);
 
-    smoothedSpeed +=
-      (Math.max(0, speed) - smoothedSpeed) *
-      speedBlend;
+    smoothedSpeed += (Math.max(0, speed) - smoothedSpeed) * speedBlend;
 
-    const activity = THREE.MathUtils.clamp(
-      smoothedSpeed,
-      0,
-      1.5,
-    );
+    const activity = THREE.MathUtils.clamp(smoothedSpeed, 0, 1.5);
 
     // Different swimming rhythms for each species.
     const tailFrequency = isAngelfish ? 1.15 : isGuppy ? 2.5 : 1.9;
@@ -99,25 +80,17 @@ export function createThreeModelFish(
     const swim = Math.sin(time * tailFrequency);
 
     // Keep the tail moving gently even when idling.
-    model.tail.rotation.y =
-      swim *
-      tailAmplitude *
-      (0.3 + activity * 0.7);
+    model.tail.rotation.y = swim * tailAmplitude * (0.3 + activity * 0.7);
 
     // Side fins paddle continuously.
     const finFrequency = isAngelfish ? 1.7 : isGuppy ? 3.2 : 2.6;
     const finAmplitude = isAngelfish ? 0.11 : isGuppy ? 0.065 : 0.085;
 
-    const finMovement =
-      Math.sin(time * finFrequency) *
-      finAmplitude *
-      (0.45 + activity * 0.55);
+    const finMovement = Math.sin(time * finFrequency) * finAmplitude * (0.45 + activity * 0.55);
 
-    model.leftFin.rotation.z =
-      baseLeftFinRotation + finMovement;
+    model.leftFin.rotation.z = baseLeftFinRotation + finMovement;
 
-    model.rightFin.rotation.z =
-      baseRightFinRotation - finMovement;
+    model.rightFin.rotation.z = baseRightFinRotation - finMovement;
 
     // Gentle body sway.
     const bodySway =
@@ -125,20 +98,12 @@ export function createThreeModelFish(
       (isAngelfish ? 0.012 : isGuppy ? 0.018 : 0.025) *
       (0.3 + activity * 0.7);
 
-    const velocityX =
-      horizontalVelocity ??
-      (direction === 'right' ? 1 : -1);
+    const velocityX = horizontalVelocity ?? (direction === 'right' ? 1 : -1);
 
-    const horizontalSpeed = Math.hypot(
-      velocityX,
-      depthVelocity,
-    );
+    const horizontalSpeed = Math.hypot(velocityX, depthVelocity);
 
     if (horizontalSpeed > 0.03) {
-      const targetYaw = Math.atan2(
-        -depthVelocity,
-        velocityX,
-      );
+      const targetYaw = Math.atan2(-depthVelocity, velocityX);
 
       const yawDifference = Math.atan2(
         Math.sin(targetYaw - currentYaw),
@@ -146,13 +111,9 @@ export function createThreeModelFish(
       );
 
       // Angelfish rotate more gracefully.
-      const turnResponsiveness =
-        isAngelfish ? 2.1 : isGuppy ? 3.5 : 4.2;
+      const turnResponsiveness = isAngelfish ? 2.1 : isGuppy ? 3.5 : 4.2;
 
-      const turnAmount =
-        1 - Math.exp(
-          -turnResponsiveness * deltaTime,
-        );
+      const turnAmount = 1 - Math.exp(-turnResponsiveness * deltaTime);
 
       currentYaw += yawDifference * turnAmount;
 
@@ -169,11 +130,9 @@ export function createThreeModelFish(
           0.09,
         );
 
-        const leanBlend =
-          1 - Math.exp(-3 * deltaTime);
+        const leanBlend = 1 - Math.exp(-3 * deltaTime);
 
-        turnLean +=
-          (desiredLean - turnLean) * leanBlend;
+        turnLean += (desiredLean - turnLean) * leanBlend;
       }
 
       previousTargetYaw = targetYaw;
@@ -181,8 +140,7 @@ export function createThreeModelFish(
       turnLean *= Math.exp(-3 * deltaTime);
     }
 
-    model.group.rotation.y =
-      currentYaw + bodySway;
+    model.group.rotation.y = currentYaw + bodySway;
 
     // Very small banking motion during turns.
     model.group.rotation.x = turnLean;

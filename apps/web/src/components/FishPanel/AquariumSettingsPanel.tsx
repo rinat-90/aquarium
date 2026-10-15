@@ -1,4 +1,3 @@
-
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -21,17 +20,17 @@ type AquariumSettingsPanelProps = {
 };
 
 export function AquariumSettingsPanel({
-                                        open,
-                                        onClose,
-                                        name,
-                                        fishCount,
-                                        onRename,
-                                        broadcastStatus,
-                                        onReleaseAll,
-                                        onDelete,
-                                        onStartBroadcast,
-                                        onEndBroadcast,
-                                      }: AquariumSettingsPanelProps) {
+  open,
+  onClose,
+  name,
+  fishCount,
+  onRename,
+  broadcastStatus,
+  onReleaseAll,
+  onDelete,
+  onStartBroadcast,
+  onEndBroadcast,
+}: AquariumSettingsPanelProps) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -40,23 +39,16 @@ export function AquariumSettingsPanel({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-
-  const [dangerAction, setDangerAction] = useState<
-    'release' | 'delete' | null
-  >(null);
+  const [dangerAction, setDangerAction] = useState<'release' | 'delete' | null>(null);
   const [confirmName, setConfirmName] = useState('');
   const [processing, setProcessing] = useState(false);
   const [dangerError, setDangerError] = useState<string | null>(null);
-
 
   const [broadcastBusy, setBroadcastBusy] = useState(false);
   const [broadcastError, setBroadcastError] = useState<string | null>(null);
 
   async function handleBroadcastAction() {
-    if (
-      broadcastBusy ||
-      !['live', 'paused', 'disconnected', 'offline'].includes(broadcastStatus)
-    ) {
+    if (broadcastBusy || !['live', 'paused', 'disconnected', 'offline'].includes(broadcastStatus)) {
       return;
     }
 
@@ -77,16 +69,11 @@ export function AquariumSettingsPanel({
         await onStartBroadcast();
       }
     } catch (err) {
-      setBroadcastError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to update TV broadcast.',
-      );
+      setBroadcastError(err instanceof Error ? err.message : 'Failed to update TV broadcast.');
     } finally {
       setBroadcastBusy(false);
     }
   }
-
 
   const broadcastKnown =
     broadcastStatus === 'live' ||
@@ -94,10 +81,7 @@ export function AquariumSettingsPanel({
     broadcastStatus === 'disconnected' ||
     broadcastStatus === 'offline';
 
-  const canDelete =
-    broadcastStatus === 'offline' &&
-    !processing &&
-    !saving;
+  const canDelete = broadcastStatus === 'offline' && !processing && !saving;
 
   async function handleDangerAction() {
     if (!dangerAction || processing) return;
@@ -120,15 +104,12 @@ export function AquariumSettingsPanel({
       setConfirmName('');
     } catch (err) {
       setDangerError(
-        err instanceof Error
-          ? err.message
-          : 'Something went wrong. Please try again.',
+        err instanceof Error ? err.message : 'Something went wrong. Please try again.',
       );
     } finally {
       setProcessing(false);
     }
   }
-
 
   useEffect(() => {
     if (!open) return;
@@ -139,10 +120,7 @@ export function AquariumSettingsPanel({
 
   const trimmedName = draftName.trim();
 
-  const canSave =
-    trimmedName.length > 0 &&
-    trimmedName !== name &&
-    !saving;
+  const canSave = trimmedName.length > 0 && trimmedName !== name && !saving;
 
   async function handleSaveName() {
     if (!canSave) return;
@@ -153,16 +131,11 @@ export function AquariumSettingsPanel({
     try {
       await onRename(trimmedName);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to rename aquarium.',
-      );
+      setError(err instanceof Error ? err.message : 'Failed to rename aquarium.');
     } finally {
       setSaving(false);
     }
   }
-
 
   useEffect(() => {
     if (!open) return;
@@ -267,10 +240,7 @@ export function AquariumSettingsPanel({
             <h3>Rename Aquarium</h3>
             <p>Give your aquarium a new name.</p>
 
-            <label
-              className="fish-panel__label"
-              htmlFor="aquarium-settings-name"
-            >
+            <label className="fish-panel__label" htmlFor="aquarium-settings-name">
               Aquarium name
             </label>
 
@@ -304,24 +274,26 @@ export function AquariumSettingsPanel({
             )}
           </section>
 
-
-
           <section className="fish-panel__section">
             <div className="aquarium-settings__broadcast">
               <h3>TV Broadcast</h3>
 
               {broadcastStatus === 'live' && (
                 <span className="aquarium-settings__status aquarium-settings__status--live">
-        <span className="aquarium-settings__status-dot" />
-        Live
-      </span>
+                  <span className="aquarium-settings__status-dot" />
+                  Live
+                </span>
               )}
 
               {broadcastStatus !== 'live' && broadcastKnown && (
                 <span className="aquarium-settings__status aquarium-settings__status--offline">
-        <span className="aquarium-settings__status-dot" />
-                  {broadcastStatus === 'paused' ? 'Paused' : broadcastStatus === 'disconnected' ? 'Disconnected' : 'Offline'}
-      </span>
+                  <span className="aquarium-settings__status-dot" />
+                  {broadcastStatus === 'paused'
+                    ? 'Paused'
+                    : broadcastStatus === 'disconnected'
+                      ? 'Disconnected'
+                      : 'Offline'}
+                </span>
               )}
             </div>
 
@@ -369,15 +341,14 @@ export function AquariumSettingsPanel({
             )}
           </section>
 
-
           <section className="fish-panel__section aquarium-settings__danger">
             <h3>Danger Zone</h3>
 
             <div className="aquarium-settings__danger-item">
               <h4>Release All Fish</h4>
               <p>
-                Remove all {fishCount} fish from this aquarium.
-                The aquarium and any active TV broadcast will remain.
+                Remove all {fishCount} fish from this aquarium. The aquarium and any active TV
+                broadcast will remain.
               </p>
 
               <button
@@ -394,10 +365,7 @@ export function AquariumSettingsPanel({
 
             <div className="aquarium-settings__danger-item">
               <h4>Delete Aquarium</h4>
-              <p>
-                Permanently delete this aquarium and all its fish.
-                This cannot be undone.
-              </p>
+              <p>Permanently delete this aquarium and all its fish. This cannot be undone.</p>
 
               <button
                 type="button"
@@ -413,14 +381,13 @@ export function AquariumSettingsPanel({
 
               {broadcastStatus !== 'offline' && broadcastKnown && (
                 <p role="status">
-                  Disconnect the paired TV session before deleting this aquarium. Pausing does not remove the pairing.
+                  Disconnect the paired TV session before deleting this aquarium. Pausing does not
+                  remove the pairing.
                 </p>
               )}
 
               {!broadcastKnown && (
-                <p role="status">
-                  Deletion is unavailable until broadcast status is verified.
-                </p>
+                <p role="status">Deletion is unavailable until broadcast status is verified.</p>
               )}
             </div>
 
@@ -452,19 +419,14 @@ export function AquariumSettingsPanel({
                   type="button"
                   disabled={
                     processing ||
-                    (dangerAction === 'delete' &&
-                      (!canDelete || confirmName !== name))
+                    (dangerAction === 'delete' && (!canDelete || confirmName !== name))
                   }
                   onClick={() => void handleDangerAction()}
                 >
                   {processing ? 'Processing...' : 'Confirm'}
                 </button>
 
-                <button
-                  type="button"
-                  disabled={processing}
-                  onClick={() => setDangerAction(null)}
-                >
+                <button type="button" disabled={processing} onClick={() => setDangerAction(null)}>
                   Cancel
                 </button>
               </div>
@@ -476,15 +438,10 @@ export function AquariumSettingsPanel({
               </p>
             )}
           </section>
-
         </div>
 
         <footer className="fish-panel__footer">
-          <button
-            type="button"
-            className="fish-panel__primary"
-            onClick={onClose}
-          >
+          <button type="button" className="fish-panel__primary" onClick={onClose}>
             Done
           </button>
         </footer>

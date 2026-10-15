@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { tvPairingApi } from '../../lib/tv-pairing-api';
@@ -15,12 +14,11 @@ type PairingChallenge = {
 };
 
 export function TvPairingScreen({
-                                  onPaired,
-                                }: {
+  onPaired,
+}: {
   onPaired: (credentials: TvDisplayCredentials) => void;
 }) {
-  const [challenge, setChallenge] =
-    useState<PairingChallenge | null>(null);
+  const [challenge, setChallenge] = useState<PairingChallenge | null>(null);
 
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -108,11 +106,7 @@ export function TvPairingScreen({
 
             console.error('[TV] Pairing poll failed:', err);
 
-            setError(
-              err instanceof Error
-                ? err.message
-                : 'Pairing failed',
-            );
+            setError(err instanceof Error ? err.message : 'Pairing failed');
 
             return;
           }
@@ -128,11 +122,7 @@ export function TvPairingScreen({
 
         console.error('[TV] Failed to create pairing:', err);
 
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Could not create pairing code',
-        );
+        setError(err instanceof Error ? err.message : 'Could not create pairing code');
       }
     }
 
@@ -150,9 +140,7 @@ export function TvPairingScreen({
   }, [attempt]);
 
   const url = challenge
-    ? `${window.location.origin}/tv/pair/${encodeURIComponent(
-      challenge.code,
-    )}`
+    ? `${window.location.origin}/tv/pair/${encodeURIComponent(challenge.code)}`
     : '';
 
   return (
@@ -177,9 +165,7 @@ export function TvPairingScreen({
       >
         <h1>Pair your aquarium TV</h1>
 
-        <p>
-          Scan this QR code with your phone and select an aquarium.
-        </p>
+        <p>Scan this QR code with your phone and select an aquarium.</p>
 
         {challenge && !error ? (
           <div

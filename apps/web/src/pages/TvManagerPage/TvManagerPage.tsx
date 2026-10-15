@@ -1,6 +1,5 @@
-
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
-import {useNavigate} from "react-router";
+import { useNavigate } from 'react-router';
 import { tvPairingApi } from '../../lib/tv-pairing-api';
 import { aquariumApi } from '../../lib/aquarium-api';
 const TvQrScanner = lazy(() =>
@@ -8,13 +7,9 @@ const TvQrScanner = lazy(() =>
 );
 import './TvManagerPage.css';
 
-type TvSession = Awaited<
-  ReturnType<typeof tvPairingApi.sessions>
->['sessions'][number];
+type TvSession = Awaited<ReturnType<typeof tvPairingApi.sessions>>['sessions'][number];
 
-type Aquarium = Awaited<
-  ReturnType<typeof aquariumApi.list>
->[number];
+type Aquarium = Awaited<ReturnType<typeof aquariumApi.list>>[number];
 
 export function TvManagerPage() {
   const navigate = useNavigate();
@@ -37,9 +32,7 @@ export function TvManagerPage() {
       ]);
 
       const activeSessions = sessionResult.sessions.filter(
-        (session) =>
-          session.isOnline &&
-          Date.parse(session.expiresAt) > Date.now(),
+        (session) => session.isOnline && Date.parse(session.expiresAt) > Date.now(),
       );
 
       setSessions(activeSessions);
@@ -58,16 +51,12 @@ export function TvManagerPage() {
           ? current
           : activeSessions.length === 1
             ? activeSessions[0].aquariumId
-            : aquariumResult[0]?.id ?? '',
+            : (aquariumResult[0]?.id ?? ''),
       );
 
       setError(null);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to load TV connections.',
-      );
+      setError(err instanceof Error ? err.message : 'Failed to load TV connections.');
     } finally {
       setLoading(false);
     }
@@ -77,20 +66,13 @@ export function TvManagerPage() {
     void load();
   }, [load]);
 
-  const selectedSession = sessions.find(
-    (session) => session.id === selectedSessionId,
-  );
+  const selectedSession = sessions.find((session) => session.id === selectedSessionId);
 
-  const currentAquarium = aquariums.find(
-    (aquarium) => aquarium.id === selectedSession?.aquariumId,
-  );
+  const currentAquarium = aquariums.find((aquarium) => aquarium.id === selectedSession?.aquariumId);
 
-  const selectedAquarium = aquariums.find(
-    (aquarium) => aquarium.id === selectedAquariumId,
-  );
+  const selectedAquarium = aquariums.find((aquarium) => aquarium.id === selectedAquariumId);
 
-  const isCurrentAquarium =
-    selectedSession?.aquariumId === selectedAquariumId;
+  const isCurrentAquarium = selectedSession?.aquariumId === selectedAquariumId;
 
   async function handleSwitchAquarium() {
     if (!selectedSession || !selectedAquariumId || actionPending) return;
@@ -100,18 +82,11 @@ export function TvManagerPage() {
     setError(null);
 
     try {
-      await tvPairingApi.switchAquarium(
-        selectedSession.id,
-        selectedAquariumId,
-      );
+      await tvPairingApi.switchAquarium(selectedSession.id, selectedAquariumId);
 
       await load();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to switch aquarium.',
-      );
+      setError(err instanceof Error ? err.message : 'Failed to switch aquarium.');
     } finally {
       setActionPending(false);
     }
@@ -129,11 +104,7 @@ export function TvManagerPage() {
       await tvPairingApi.revoke(selectedSession.id);
       await load();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to end broadcast.',
-      );
+      setError(err instanceof Error ? err.message : 'Failed to end broadcast.');
     } finally {
       setActionPending(false);
     }
@@ -169,9 +140,7 @@ export function TvManagerPage() {
 
               <h2>Connect Your TV</h2>
 
-              <p>
-                Display your aquarium on the big screen.
-              </p>
+              <p>Display your aquarium on the big screen.</p>
 
               <ol>
                 <li>Open Family Aquarium on your TV.</li>
@@ -188,8 +157,8 @@ export function TvManagerPage() {
               </button>
 
               <small>
-                QR scanner is coming next. You can currently use
-                your phone camera to scan the TV code.
+                QR scanner is coming next. You can currently use your phone camera to scan the TV
+                code.
               </small>
             </section>
           ) : (
@@ -201,18 +170,14 @@ export function TvManagerPage() {
                 </div>
               ) : (
                 <div className="tv-manager__section">
-                  <label htmlFor="tv-session">
-                    Select TV Session
-                  </label>
+                  <label htmlFor="tv-session">Select TV Session</label>
 
                   <select
                     id="tv-session"
                     value={selectedSessionId}
                     onChange={(event) => {
                       const nextId = event.target.value;
-                      const session = sessions.find(
-                        (item) => item.id === nextId,
-                      );
+                      const session = sessions.find((item) => item.id === nextId);
 
                       setSelectedSessionId(nextId);
 
@@ -226,16 +191,14 @@ export function TvManagerPage() {
                     {sessions.map((session, index) => (
                       <option key={session.id} value={session.id}>
                         TV Session {index + 1} —{' '}
-                        {aquariums.find(
-                          (item) => item.id === session.aquariumId,
-                        )?.name ?? 'Unknown Aquarium'}
+                        {aquariums.find((item) => item.id === session.aquariumId)?.name ??
+                          'Unknown Aquarium'}
                       </option>
                     ))}
                   </select>
 
                   <small>
-                    Multiple unexpired sessions found. Select the TV
-                    you want to control.
+                    Multiple unexpired sessions found. Select the TV you want to control.
                   </small>
                 </div>
               )}
@@ -243,27 +206,19 @@ export function TvManagerPage() {
               {selectedSession ? (
                 <>
                   <div className="tv-manager__section">
-                    <span className="tv-manager__label">
-                      Currently Broadcasting
-                    </span>
+                    <span className="tv-manager__label">Currently Broadcasting</span>
 
                     <button
                       type="button"
                       className="tv-manager__current"
                       onClick={() =>
-                        navigate(
-                          `/aquariums/${encodeURIComponent(
-                            selectedSession.aquariumId,
-                          )}`,
-                        )
+                        navigate(`/aquariums/${encodeURIComponent(selectedSession.aquariumId)}`)
                       }
                     >
                       <span className="tv-manager__fish-icon">🐠</span>
 
                       <span className="tv-manager__current-info">
-                        <strong>
-                          {currentAquarium?.name ?? 'My Aquarium'}
-                        </strong>
+                        <strong>{currentAquarium?.name ?? 'My Aquarium'}</strong>
                         <small>Open Aquarium</small>
                       </span>
 
@@ -280,11 +235,9 @@ export function TvManagerPage() {
 
                     <div className="tv-manager__aquarium-list">
                       {aquariums.map((aquarium) => {
-                        const selected =
-                          selectedAquariumId === aquarium.id;
+                        const selected = selectedAquariumId === aquarium.id;
 
-                        const onTv =
-                          selectedSession.aquariumId === aquarium.id;
+                        const onTv = selectedSession.aquariumId === aquarium.id;
 
                         return (
                           <button
@@ -292,31 +245,19 @@ export function TvManagerPage() {
                             type="button"
                             className={[
                               'tv-manager__aquarium-option',
-                              selected
-                                ? 'tv-manager__aquarium-option--selected'
-                                : '',
+                              selected ? 'tv-manager__aquarium-option--selected' : '',
                             ].join(' ')}
-                            onClick={() =>
-                              setSelectedAquariumId(aquarium.id)
-                            }
+                            onClick={() => setSelectedAquariumId(aquarium.id)}
                           >
-                            <span className="tv-manager__fish-icon">
-                              🐠
-                            </span>
+                            <span className="tv-manager__fish-icon">🐠</span>
 
                             <span className="tv-manager__aquarium-info">
                               <strong>{aquarium.name}</strong>
 
-                              {onTv && (
-                                <small className="tv-manager__on-tv">
-                                  On TV
-                                </small>
-                              )}
+                              {onTv && <small className="tv-manager__on-tv">On TV</small>}
                             </span>
 
-                            <span className="tv-manager__radio">
-                              {selected ? '✓' : ''}
-                            </span>
+                            <span className="tv-manager__radio">{selected ? '✓' : ''}</span>
                           </button>
                         );
                       })}
@@ -327,11 +268,7 @@ export function TvManagerPage() {
                     <button
                       type="button"
                       className="tv-manager__primary"
-                      disabled={
-                        actionPending ||
-                        !selectedAquarium ||
-                        isCurrentAquarium
-                      }
+                      disabled={actionPending || !selectedAquarium || isCurrentAquarium}
                       onClick={() => void handleSwitchAquarium()}
                     >
                       {actionPending

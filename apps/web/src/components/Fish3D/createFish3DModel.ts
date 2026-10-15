@@ -129,19 +129,19 @@ export function createFish3DModel(): Fish3DModel {
   // Rounded dorsal fin with a root tucked into the back.
   const dorsalShape = new THREE.Shape();
   dorsalShape.moveTo(-0.85, -0.18);
-  dorsalShape.bezierCurveTo(-0.82, 0.12, -0.68, 0.48, -0.40, 0.68);
+  dorsalShape.bezierCurveTo(-0.82, 0.12, -0.68, 0.48, -0.4, 0.68);
   dorsalShape.bezierCurveTo(-0.28, 0.72, -0.26, 0.54, -0.16, 0.38);
-  dorsalShape.bezierCurveTo(0.02, 0.12, 0.28, -0.04, 0.52, -0.20);
-  dorsalShape.quadraticCurveTo(-0.12, -0.30, -0.85, -0.18);
+  dorsalShape.bezierCurveTo(0.02, 0.12, 0.28, -0.04, 0.52, -0.2);
+  dorsalShape.quadraticCurveTo(-0.12, -0.3, -0.85, -0.18);
   const dorsalFin = makeFin(dorsalShape, 0.04);
-  dorsalFin.position.set(-0.20, 0.56, 0);
+  dorsalFin.position.set(-0.2, 0.56, 0);
   group.add(dorsalFin);
 
   // Smaller anal fin swept toward the tail.
   const analShape = new THREE.Shape();
   analShape.moveTo(-0.55, 0.16);
-  analShape.bezierCurveTo(-0.62, -0.08, -0.57, -0.35, -0.38, -0.50);
-  analShape.bezierCurveTo(-0.24, -0.48, -0.16, -0.24, -0.02, -0.10);
+  analShape.bezierCurveTo(-0.62, -0.08, -0.57, -0.35, -0.38, -0.5);
+  analShape.bezierCurveTo(-0.24, -0.48, -0.16, -0.24, -0.02, -0.1);
   analShape.quadraticCurveTo(0.12, 0.04, 0.28, 0.16);
   analShape.quadraticCurveTo(-0.12, 0.08, -0.55, 0.16);
   const analFin = makeFin(analShape, 0.035);
@@ -152,7 +152,7 @@ export function createFish3DModel(): Fish3DModel {
   const sideShape = new THREE.Shape();
   sideShape.moveTo(0.08, 0.04);
   sideShape.bezierCurveTo(-0.12, 0.12, -0.36, 0.02, -0.62, -0.16);
-  sideShape.bezierCurveTo(-0.76, -0.28, -0.68, -0.40, -0.49, -0.39);
+  sideShape.bezierCurveTo(-0.76, -0.28, -0.68, -0.4, -0.49, -0.39);
   sideShape.bezierCurveTo(-0.26, -0.36, -0.04, -0.16, 0.08, 0.04);
 
   const leftFin = makeFin(sideShape, 0.035);
@@ -197,8 +197,8 @@ export function createFish3DModel(): Fish3DModel {
       { x: 1.35, y: -0.205 },
       { x: 1.41, y: -0.19 },
     ];
-    const points = mouthPoints.map(({ x, y }) =>
-      new THREE.Vector3(x, y, side * (getBodySurfaceZ(x, y) + 0.025)),
+    const points = mouthPoints.map(
+      ({ x, y }) => new THREE.Vector3(x, y, side * (getBodySurfaceZ(x, y) + 0.025)),
     );
     const smile = new THREE.QuadraticBezierCurve3(points[0], points[1], points[2]);
     const mouthGeometry = new THREE.TubeGeometry(smile, 16, 0.013, 6, false);
@@ -258,8 +258,16 @@ export function createFish3DModel(): Fish3DModel {
   };
 
   return {
-    group, body, paintCanvas, paintTexture,
-    tail, leftFin, rightFin,
-    setBodyColor, setFinColor, setPaintImage, dispose,
+    group,
+    body,
+    paintCanvas,
+    paintTexture,
+    tail,
+    leftFin,
+    rightFin,
+    setBodyColor,
+    setFinColor,
+    setPaintImage,
+    dispose,
   };
 }

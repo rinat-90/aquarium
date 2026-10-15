@@ -15,9 +15,9 @@
   padding: 0 !important;
   border-radius: 0 !important;
   border: 0 !important;
-  border-left: 1px solid rgba(95, 220, 255, .2) !important;
+  border-left: 1px solid rgba(95, 220, 255, 0.2) !important;
   background: #08243a !important;
-  box-shadow: -14px 0 50px rgba(0, 12, 28, .45) !important;
+  box-shadow: -14px 0 50px rgba(0, 12, 28, 0.45) !important;
   z-index: 110;
   display: flex !important;
   flex-direction: column !important;
@@ -27,15 +27,21 @@
   transform: none;
 }
 @keyframes aquarium-decorate-drawer-in {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 .aquarium-appearance-editor.aquarium-workspace:not(.is-embedded) .aquarium-appearance-header {
   flex: 0 0 auto;
-  border-bottom: 1px solid rgba(95, 220, 255, .16);
+  border-bottom: 1px solid rgba(95, 220, 255, 0.16);
   padding-top: max(22px, env(safe-area-inset-top));
 }
-.aquarium-appearance-editor.aquarium-workspace:not(.is-embedded) .aquarium-editor-tabs { flex: 0 0 auto; }
+.aquarium-appearance-editor.aquarium-workspace:not(.is-embedded) .aquarium-editor-tabs {
+  flex: 0 0 auto;
+}
 .aquarium-appearance-editor.aquarium-workspace:not(.is-embedded) .aquarium-appearance-scroll {
   flex: 1 1 auto !important;
   min-height: 0 !important;
@@ -45,19 +51,25 @@
 .aquarium-appearance-editor.aquarium-workspace:not(.is-embedded) .aquarium-appearance-footer {
   flex: 0 0 auto;
   background: #08243a;
-  border-top: 1px solid rgba(95, 220, 255, .16);
+  border-top: 1px solid rgba(95, 220, 255, 0.16);
   padding-bottom: max(20px, env(safe-area-inset-bottom));
 }
 /* The drawer is no longer a collapsible bottom sheet. */
-.aquarium-appearance-editor.aquarium-workspace:not(.is-embedded) .aquarium-workspace-sheet-toggle { display: none !important; }
+.aquarium-appearance-editor.aquarium-workspace:not(.is-embedded) .aquarium-workspace-sheet-toggle {
+  display: none !important;
+}
 .aquarium-appearance-editor.aquarium-workspace:not(.is-embedded).is-collapsed {
   height: 100dvh !important;
   max-height: 100dvh !important;
   transform: none !important;
 }
 @media (max-width: 767px) {
-  .aquarium-appearance-editor.aquarium-workspace:not(.is-embedded) { width: 100vw !important; }
+  .aquarium-appearance-editor.aquarium-workspace:not(.is-embedded) {
+    width: 100vw !important;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .aquarium-appearance-editor.aquarium-workspace:not(.is-embedded) { animation: none; }
+  .aquarium-appearance-editor.aquarium-workspace:not(.is-embedded) {
+    animation: none;
+  }
 }

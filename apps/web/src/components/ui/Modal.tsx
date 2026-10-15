@@ -1,10 +1,4 @@
-
-import {
-  useEffect,
-  useId,
-  useRef,
-  type ReactNode,
-} from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import './ui.css';
 
@@ -17,14 +11,7 @@ type ModalProps = {
   footer?: ReactNode;
 };
 
-export function Modal({
-                        open,
-                        title,
-                        description,
-                        onClose,
-                        children,
-                        footer,
-                      }: ModalProps) {
+export function Modal({ open, title, description, onClose, children, footer }: ModalProps) {
   const titleId = useId();
   const descriptionId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -43,9 +30,7 @@ export function Modal({
     document.body.style.overflow = 'hidden';
 
     const dialog = dialogRef.current;
-    dialog?.querySelector<HTMLElement>(
-      '[autofocus], input, button, select, textarea',
-    )?.focus();
+    dialog?.querySelector<HTMLElement>('[autofocus], input, button, select, textarea')?.focus();
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
@@ -111,9 +96,7 @@ export function Modal({
         <div className="ui-modal-header">
           <div>
             <h2 id={titleId}>{title}</h2>
-            {description && (
-              <p id={descriptionId}>{description}</p>
-            )}
+            {description && <p id={descriptionId}>{description}</p>}
           </div>
 
           <button
@@ -128,9 +111,7 @@ export function Modal({
 
         <div className="ui-modal-body">{children}</div>
 
-        {footer && (
-          <div className="ui-modal-footer">{footer}</div>
-        )}
+        {footer && <div className="ui-modal-footer">{footer}</div>}
       </div>
     </div>,
     document.body,

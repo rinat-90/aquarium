@@ -16,10 +16,7 @@ export type AquariumEnvironmentPreset = {
   };
 };
 
-export const ENVIRONMENT_PRESETS: Record<
-  AquariumBackground,
-  AquariumEnvironmentPreset
-> = {
+export const ENVIRONMENT_PRESETS: Record<AquariumBackground, AquariumEnvironmentPreset> = {
   ocean: {
     id: 'ocean',
     background: {

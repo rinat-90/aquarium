@@ -26,8 +26,7 @@ export function useLiveAquariumFish(aquariumId?: string) {
 
     let cancelled = false;
 
-    const aquariumChanged =
-      previousAquariumId.current !== aquariumId;
+    const aquariumChanged = previousAquariumId.current !== aquariumId;
 
     previousAquariumId.current = aquariumId;
 
@@ -44,13 +43,9 @@ export function useLiveAquariumFish(aquariumId?: string) {
       try {
         const items = await fishApi.list();
 
-        const matching = items.filter(
-          (item) => item.aquariumId === aquariumId,
-        );
+        const matching = items.filter((item) => item.aquariumId === aquariumId);
 
-        const mapped = await Promise.all(
-          matching.map(mapApiFish),
-        );
+        const mapped = await Promise.all(matching.map(mapApiFish));
 
         if (cancelled || version !== requestVersion.current) {
           return;
@@ -63,11 +58,7 @@ export function useLiveAquariumFish(aquariumId?: string) {
           return;
         }
 
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Failed to load fish',
-        );
+        setError(err instanceof Error ? err.message : 'Failed to load fish');
       } finally {
         if (!cancelled && version === requestVersion.current) {
           setLoading(false);
@@ -90,17 +81,13 @@ export function useLiveAquariumFish(aquariumId?: string) {
     };
 
     const join = () => {
-      socket.emit(
-        'aquarium:join',
-        aquariumId,
-        (result: { ok: boolean }) => {
-          if (result.ok) {
-            refresh();
-          } else {
-            console.warn('Failed to join aquarium room');
-          }
-        },
-      );
+      socket.emit('aquarium:join', aquariumId, (result: { ok: boolean }) => {
+        if (result.ok) {
+          refresh();
+        } else {
+          console.warn('Failed to join aquarium room');
+        }
+      });
     };
 
     const changed = (event: { aquariumId: string }) => {

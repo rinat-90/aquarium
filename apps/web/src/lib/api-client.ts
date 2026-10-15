@@ -1,4 +1,3 @@
-
 const API_URL = window.location.origin;
 
 class ApiError extends Error {
@@ -11,10 +10,7 @@ class ApiError extends Error {
   }
 }
 
-export async function apiFetch<T>(
-  path: string,
-  options: RequestInit = {},
-): Promise<T> {
+export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers);
 
   if (options.body && !(options.body instanceof FormData)) {
@@ -31,10 +27,7 @@ export async function apiFetch<T>(
     const data: unknown = await response.json().catch(() => null);
 
     const message =
-      data &&
-      typeof data === 'object' &&
-      'error' in data &&
-      typeof data.error === 'string'
+      data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
         ? data.error
         : `Request failed (${response.status})`;
 

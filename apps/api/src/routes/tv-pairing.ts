@@ -6,7 +6,7 @@ import {
   disconnectTvDisplaySession,
   switchTvDisplayAquarium,
   getOnlineTvDisplaySessionIds,
-  setTvDisplayPaused
+  setTvDisplayPaused,
 } from '../realtime/socket.js';
 
 import { readFile } from 'node:fs/promises';
@@ -16,8 +16,7 @@ const PAIRING_TTL_MS = 5 * 60 * 1000;
 const DISPLAY_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 const generateSecret = () => randomBytes(32).toString('base64url');
-const hashSecret = (value: string) =>
-  createHash('sha256').update(value).digest('hex');
+const hashSecret = (value: string) => createHash('sha256').update(value).digest('hex');
 
 function bearerToken(request: FastifyRequest): string | null {
   const authorization = request.headers.authorization;
@@ -48,52 +47,59 @@ export async function tvPairingRoutes(app: FastifyInstance) {
 
   // TV: poll with its original secret. Only the TV that holds this code
   // should redeem the approval. Redemption is atomic and single-use.
-  app.get<{ Params: { code: string } }>(
-    '/api/tv/pairing/:code',
-    async (request, reply) => {
-      const { code } = request.params;
-      if (code.length < 32 || code.length > 512) {
-        return reply.code(404).send({ error: 'Pairing not found' });
-      }
-      const codeHash = hashSecret(code);
-      const pairing = await prisma.tvPairingSession.findUnique({ where: { codeHash } });
-      if (!pairing) return reply.code(404).send({ error: 'Pairing not found' });
-      if (pairing.expiresAt <= new Date()) {
-        return reply.code(410).send({ status: 'expired' });
-      }
-      if (pairing.status === 'pending') return { status: 'pending' };
-      if (pairing.status !== 'approved' || !pairing.aquariumId || !pairing.approvedByUserId) {
-        return reply.code(410).send({ status: 'unavailable' });
-      }
+  app.get<{ Params: { code: string } }>('/api/tv/pairing/:code', async (request, reply) => {
+    const { code } = request.params;
+    if (code.length < 32 || code.length > 512) {
+      return reply.code(404).send({ error: 'Pairing not found' });
+    }
+    const codeHash = hashSecret(code);
+    const pairing = await prisma.tvPairingSession.findUnique({ where: { codeHash } });
+    if (!pairing) return reply.code(404).send({ error: 'Pairing not found' });
+    if (pairing.expiresAt <= new Date()) {
+      return reply.code(410).send({ status: 'expired' });
+    }
+    if (pairing.status === 'pending') return { status: 'pending' };
+    if (pairing.status !== 'approved' || !pairing.aquariumId || !pairing.approvedByUserId) {
+      return reply.code(410).send({ status: 'unavailable' });
+    }
 
-      const token = generateSecret();
-      const expiresAt = new Date(Date.now() + DISPLAY_TTL_MS);
-      const redeemed = await prisma.$transaction(async (tx) => {
-        const claimed = await tx.tvPairingSession.updateMany({
-          where: { id: pairing.id, status: 'approved', consumedAt: null, expiresAt: { gt: new Date() } },
-          data: { status: 'consumed', consumedAt: new Date() },
-        });
-        if (claimed.count !== 1) return false;
-        // Ownership may have changed between approval and redemption.
-        const aquarium = await tx.aquarium.findFirst({
-          where: { id: pairing.aquariumId!, ownerId: pairing.approvedByUserId! },
-          select: { id: true },
-        });
-        if (!aquarium) return false;
-        await tx.tvDisplaySession.create({
-          data: {
-            tokenHash: hashSecret(token),
-            aquariumId: aquarium.id,
-            ownerId: pairing.approvedByUserId!,
-            expiresAt,
-          },
-        });
-        return true;
+    const token = generateSecret();
+    const expiresAt = new Date(Date.now() + DISPLAY_TTL_MS);
+    const redeemed = await prisma.$transaction(async (tx) => {
+      const claimed = await tx.tvPairingSession.updateMany({
+        where: {
+          id: pairing.id,
+          status: 'approved',
+          consumedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+        data: { status: 'consumed', consumedAt: new Date() },
       });
-      if (!redeemed) return reply.code(409).send({ status: 'unavailable' });
-      return { status: 'paired', token, aquariumId: pairing.aquariumId, expiresAt: expiresAt.toISOString() };
-    },
-  );
+      if (claimed.count !== 1) return false;
+      // Ownership may have changed between approval and redemption.
+      const aquarium = await tx.aquarium.findFirst({
+        where: { id: pairing.aquariumId!, ownerId: pairing.approvedByUserId! },
+        select: { id: true },
+      });
+      if (!aquarium) return false;
+      await tx.tvDisplaySession.create({
+        data: {
+          tokenHash: hashSecret(token),
+          aquariumId: aquarium.id,
+          ownerId: pairing.approvedByUserId!,
+          expiresAt,
+        },
+      });
+      return true;
+    });
+    if (!redeemed) return reply.code(409).send({ status: 'unavailable' });
+    return {
+      status: 'paired',
+      token,
+      aquariumId: pairing.aquariumId,
+      expiresAt: expiresAt.toISOString(),
+    };
+  });
 
   // Phone: owner approves the challenge after scanning the QR URL.
   app.post<{
@@ -116,7 +122,8 @@ export async function tvPairingRoutes(app: FastifyInstance) {
       where: { codeHash: hashSecret(code), status: 'pending', expiresAt: { gt: new Date() } },
       data: { status: 'approved', aquariumId, approvedByUserId: userId, approvedAt: new Date() },
     });
-    if (updated.count !== 1) return reply.code(409).send({ error: 'Pairing expired or already used' });
+    if (updated.count !== 1)
+      return reply.code(409).send({ error: 'Pairing expired or already used' });
     return { ok: true };
   });
 
@@ -166,11 +173,7 @@ export async function tvPairingRoutes(app: FastifyInstance) {
         },
       });
 
-      if (
-        !session ||
-        session.revokedAt ||
-        session.expiresAt <= new Date()
-      ) {
+      if (!session || session.revokedAt || session.expiresAt <= new Date()) {
         return reply.code(401).send({
           error: 'Invalid or expired display token',
         });
@@ -218,24 +221,14 @@ export async function tvPairingRoutes(app: FastifyInstance) {
         });
       }
 
-      const storageDir =
-        process.env.STORAGE_DIR ??
-        join(process.cwd(), 'storage', 'fish-textures');
+      const storageDir = process.env.STORAGE_DIR ?? join(process.cwd(), 'storage', 'fish-textures');
 
       try {
-        const buffer = await readFile(
-          join(storageDir, fish.paintKey),
-        );
+        const buffer = await readFile(join(storageDir, fish.paintKey));
 
-        return reply
-          .type('image/png')
-          .header('Cache-Control', 'private, no-store')
-          .send(buffer);
+        return reply.type('image/png').header('Cache-Control', 'private, no-store').send(buffer);
       } catch (error) {
-        request.log.error(
-          { err: error },
-          'Failed to read TV fish texture',
-        );
+        request.log.error({ err: error }, 'Failed to read TV fish texture');
 
         return reply.code(404).send({
           error: 'Texture file not found',
@@ -290,69 +283,66 @@ export async function tvPairingRoutes(app: FastifyInstance) {
   app.post<{
     Params: { sessionId: string };
     Body: { aquariumId?: string };
-  }>(
-    '/api/tv/display/sessions/:sessionId/switch',
-    async (request, reply) => {
-      const userId = await authenticatedUserId(request);
+  }>('/api/tv/display/sessions/:sessionId/switch', async (request, reply) => {
+    const userId = await authenticatedUserId(request);
 
-      if (!userId) {
-        return reply.code(401).send({
-          error: 'Authentication required',
-        });
-      }
-
-      const { sessionId } = request.params;
-      const aquariumId = request.body?.aquariumId;
-
-      if (
-        typeof sessionId !== 'string' ||
-        !sessionId ||
-        sessionId.length > 256 ||
-        typeof aquariumId !== 'string' ||
-        !aquariumId
-      ) {
-        return reply.code(400).send({
-          error: 'Invalid session or aquarium ID',
-        });
-      }
-
-      // Verify the user owns the destination aquarium.
-      const aquarium = await prisma.aquarium.findFirst({
-        where: {
-          id: aquariumId,
-          ownerId: userId,
-        },
-        select: { id: true },
+    if (!userId) {
+      return reply.code(401).send({
+        error: 'Authentication required',
       });
+    }
 
-      if (!aquarium) {
-        return reply.code(403).send({
-          error: 'Aquarium access denied',
-        });
-      }
+    const { sessionId } = request.params;
+    const aquariumId = request.body?.aquariumId;
 
-      // Update only an active session owned by this user.
-      const result = await prisma.tvDisplaySession.updateMany({
-        where: {
-          id: sessionId,
-          ownerId: userId,
-          revokedAt: null,
-          expiresAt: { gt: new Date() },
-        },
-        data: { aquariumId },
+    if (
+      typeof sessionId !== 'string' ||
+      !sessionId ||
+      sessionId.length > 256 ||
+      typeof aquariumId !== 'string' ||
+      !aquariumId
+    ) {
+      return reply.code(400).send({
+        error: 'Invalid session or aquarium ID',
       });
+    }
 
-      if (result.count !== 1) {
-        return reply.code(404).send({
-          error: 'Active display session not found',
-        });
-      }
+    // Verify the user owns the destination aquarium.
+    const aquarium = await prisma.aquarium.findFirst({
+      where: {
+        id: aquariumId,
+        ownerId: userId,
+      },
+      select: { id: true },
+    });
 
-      switchTvDisplayAquarium(sessionId, aquariumId);
+    if (!aquarium) {
+      return reply.code(403).send({
+        error: 'Aquarium access denied',
+      });
+    }
 
-      return { ok: true };
-    },
-  );
+    // Update only an active session owned by this user.
+    const result = await prisma.tvDisplaySession.updateMany({
+      where: {
+        id: sessionId,
+        ownerId: userId,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      data: { aquariumId },
+    });
+
+    if (result.count !== 1) {
+      return reply.code(404).send({
+        error: 'Active display session not found',
+      });
+    }
+
+    switchTvDisplayAquarium(sessionId, aquariumId);
+
+    return { ok: true };
+  });
 
   // Owner: revoke an active TV display session.
   app.post<{ Params: { sessionId: string } }>(
@@ -375,7 +365,6 @@ export async function tvPairingRoutes(app: FastifyInstance) {
       return { ok: true };
     },
   );
-
 
   app.post<{ Params: { sessionId: string } }>(
     '/api/tv/display/sessions/:sessionId/pause',
@@ -462,6 +451,4 @@ export async function tvPairingRoutes(app: FastifyInstance) {
       return { ok: true };
     },
   );
-
-
 }

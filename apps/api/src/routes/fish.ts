@@ -1,4 +1,3 @@
-
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 
@@ -6,11 +5,7 @@ import { prisma } from '@aquarium/database';
 import { getAuthenticatedUser } from '../lib/get-authenticated-user.js';
 import { notifyAquariumChanged } from '../realtime/socket.js';
 
-import {
-  fishIdParamsSchema,
-  createFishSchema,
-  updateFishSchema,
-} from '../schemas/fish.schema.js';
+import { fishIdParamsSchema, createFishSchema, updateFishSchema } from '../schemas/fish.schema.js';
 
 export async function fishRoutes(app: FastifyInstance) {
   const api = app.withTypeProvider<ZodTypeProvider>();
@@ -52,15 +47,7 @@ export async function fishRoutes(app: FastifyInstance) {
         });
       }
 
-      const {
-        name,
-        species,
-        bodyColor,
-        finColor,
-        size,
-        aquariumId,
-        headDirection,
-      } = request.body;
+      const { name, species, bodyColor, finColor, size, aquariumId, headDirection } = request.body;
 
       if (aquariumId) {
         const aquarium = await prisma.aquarium.findFirst({
@@ -154,15 +141,7 @@ export async function fishRoutes(app: FastifyInstance) {
         });
       }
 
-      const {
-        name,
-        species,
-        bodyColor,
-        finColor,
-        size,
-        aquariumId,
-        headDirection,
-      } = request.body;
+      const { name, species, bodyColor, finColor, size, aquariumId, headDirection } = request.body;
 
       // Verify ownership before assigning an aquarium.
       if (aquariumId) {
@@ -230,10 +209,7 @@ export async function fishRoutes(app: FastifyInstance) {
       });
 
       // Notify both aquariums if the fish was moved.
-      const affectedAquariums = new Set([
-        previousFish.aquariumId,
-        updatedFish?.aquariumId,
-      ]);
+      const affectedAquariums = new Set([previousFish.aquariumId, updatedFish?.aquariumId]);
 
       for (const id of affectedAquariums) {
         if (id) {

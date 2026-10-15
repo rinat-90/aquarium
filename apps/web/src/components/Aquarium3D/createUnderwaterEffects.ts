@@ -3,10 +3,7 @@ import type { AquariumBubbles } from '../../features/aquarium-customization/type
 import { BUBBLE_PRESETS } from './environment/presets';
 
 export type UnderwaterEffects = {
-  update: (
-    deltaTime: number,
-    elapsed: number,
-  ) => void;
+  update: (deltaTime: number, elapsed: number) => void;
   setBubbles: (preset: AquariumBubbles) => void;
   destroy: () => void;
 };
@@ -29,19 +26,17 @@ export function createUnderwaterEffects(
   tankHeight: number,
   tankDepth: number,
 ): UnderwaterEffects {
-  const bubbleGeometry =
-    new THREE.PlaneGeometry(1, 1);
+  const bubbleGeometry = new THREE.PlaneGeometry(1, 1);
 
-  const bubbleMaterial =
-    new THREE.ShaderMaterial({
-      transparent: true,
-      depthWrite: false,
-      depthTest: true,
-      side: THREE.DoubleSide,
+  const bubbleMaterial = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    depthTest: true,
+    side: THREE.DoubleSide,
 
-      uniforms: {},
+    uniforms: {},
 
-      vertexShader: `
+    vertexShader: `
         varying vec2 vUv;
 
         void main() {
@@ -55,7 +50,7 @@ export function createUnderwaterEffects(
         }
       `,
 
-      fragmentShader: `
+    fragmentShader: `
         varying vec2 vUv;
 
         void main() {
@@ -139,23 +134,16 @@ export function createUnderwaterEffects(
             );
         }
       `,
-    });
+  });
 
   const bubbles: Bubble[] = [];
   const bubbleCount = BUBBLE_PRESETS.lots;
   let activeBubbleCount = BUBBLE_PRESETS.some;
 
   // One mesh renders all 65 bubbles.
-  const bubbleMesh =
-    new THREE.InstancedMesh(
-      bubbleGeometry,
-      bubbleMaterial,
-      bubbleCount,
-    );
+  const bubbleMesh = new THREE.InstancedMesh(bubbleGeometry, bubbleMaterial, bubbleCount);
 
-  bubbleMesh.instanceMatrix.setUsage(
-    THREE.DynamicDrawUsage,
-  );
+  bubbleMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 
   // Bubbles move around the aquarium,
   // so avoid stale bounding-volume culling.
@@ -188,17 +176,8 @@ export function createUnderwaterEffects(
     },
   ];
 
-  const resetBubble = (
-    bubble: Bubble,
-    initial = false,
-  ) => {
-    const source =
-      bubbleSources[
-        Math.floor(
-          Math.random() *
-          bubbleSources.length,
-        )
-        ];
+  const resetBubble = (bubble: Bubble, initial = false) => {
+    const source = bubbleSources[Math.floor(Math.random() * bubbleSources.length)];
 
     // Mostly small bubbles,
     // with occasional larger ones.
@@ -209,70 +188,42 @@ export function createUnderwaterEffects(
         ? 0.055 + Math.random() * 0.065
         : random < 0.94
           ? 0.12 + Math.random() * 0.075
-          : 0.20 + Math.random() * 0.06;
+          : 0.2 + Math.random() * 0.06;
 
-    bubble.scale.set(
-      diameter,
-      diameter *
-      (0.94 + Math.random() * 0.12),
-      1,
-    );
+    bubble.scale.set(diameter, diameter * (0.94 + Math.random() * 0.12), 1);
 
-    bubble.originX =
-      source.x +
-      (Math.random() - 0.5) * 0.85;
+    bubble.originX = source.x + (Math.random() - 0.5) * 0.85;
 
-    bubble.originZ =
-      source.z +
-      (Math.random() - 0.5) * 0.8;
+    bubble.originZ = source.z + (Math.random() - 0.5) * 0.8;
 
     bubble.position.set(
       bubble.originX,
-      initial
-        ? -tankHeight / 2 +
-        Math.random() * tankHeight
-        : -tankHeight / 2 + 0.25,
+      initial ? -tankHeight / 2 + Math.random() * tankHeight : -tankHeight / 2 + 0.25,
       bubble.originZ,
     );
 
-    bubble.speed =
-      0.32 + Math.random() * 0.48;
+    bubble.speed = 0.32 + Math.random() * 0.48;
 
-    bubble.drift =
-      0.06 + Math.random() * 0.12;
+    bubble.drift = 0.06 + Math.random() * 0.12;
 
-    bubble.phase =
-      Math.random() * Math.PI * 2;
+    bubble.phase = Math.random() * Math.PI * 2;
 
-    bubble.age =
-      initial
-        ? Math.random() * 10
-        : 0;
+    bubble.age = initial ? Math.random() * 10 : 0;
 
     bubble.lifetime = 30;
   };
 
-  const writeBubbleMatrix = (
-    bubble: Bubble,
-    index: number,
-  ) => {
+  const writeBubbleMatrix = (bubble: Bubble, index: number) => {
     dummy.position.copy(bubble.position);
     dummy.scale.copy(bubble.scale);
     dummy.rotation.set(0, 0, 0);
     dummy.updateMatrix();
 
-    bubbleMesh.setMatrixAt(
-      index,
-      dummy.matrix,
-    );
+    bubbleMesh.setMatrixAt(index, dummy.matrix);
   };
 
   // Initialize bubbles and their transforms.
-  for (
-    let index = 0;
-    index < bubbleCount;
-    index++
-  ) {
+  for (let index = 0; index < bubbleCount; index++) {
     const bubble: Bubble = {
       position: new THREE.Vector3(),
       scale: new THREE.Vector3(1, 1, 1),
@@ -289,10 +240,7 @@ export function createUnderwaterEffects(
 
     bubbles.push(bubble);
 
-    writeBubbleMatrix(
-      bubble,
-      index,
-    );
+    writeBubbleMatrix(bubble, index);
   }
 
   bubbleMesh.instanceMatrix.needsUpdate = true;
@@ -300,56 +248,31 @@ export function createUnderwaterEffects(
   // Tiny suspended underwater particles.
   const particleCount = 150;
 
-  const particlePositions =
-    new Float32Array(
-      particleCount * 3,
-    );
+  const particlePositions = new Float32Array(particleCount * 3);
 
-  for (
-    let index = 0;
-    index < particleCount;
-    index++
-  ) {
+  for (let index = 0; index < particleCount; index++) {
     const offset = index * 3;
 
-    particlePositions[offset] =
-      (Math.random() - 0.5) *
-      tankWidth;
+    particlePositions[offset] = (Math.random() - 0.5) * tankWidth;
 
-    particlePositions[offset + 1] =
-      (Math.random() - 0.5) *
-      tankHeight;
+    particlePositions[offset + 1] = (Math.random() - 0.5) * tankHeight;
 
-    particlePositions[offset + 2] =
-      (Math.random() - 0.5) *
-      tankDepth;
+    particlePositions[offset + 2] = (Math.random() - 0.5) * tankDepth;
   }
 
-  const particleGeometry =
-    new THREE.BufferGeometry();
+  const particleGeometry = new THREE.BufferGeometry();
 
-  particleGeometry.setAttribute(
-    'position',
-    new THREE.BufferAttribute(
-      particlePositions,
-      3,
-    ),
-  );
+  particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
 
-  const particleMaterial =
-    new THREE.PointsMaterial({
-      color: 0xc7f5ff,
-      size: 0.018,
-      transparent: true,
-      opacity: 0.22,
-      depthWrite: false,
-    });
+  const particleMaterial = new THREE.PointsMaterial({
+    color: 0xc7f5ff,
+    size: 0.018,
+    transparent: true,
+    opacity: 0.22,
+    depthWrite: false,
+  });
 
-  const particles =
-    new THREE.Points(
-      particleGeometry,
-      particleMaterial,
-    );
+  const particles = new THREE.Points(particleGeometry, particleMaterial);
 
   scene.add(particles);
 
@@ -369,69 +292,32 @@ export function createUnderwaterEffects(
     bubbleMesh.count = nextCount;
   };
 
-  const update = (
-    deltaTime: number,
-    elapsed: number,
-  ) => {
-    const dt = Math.min(
-      deltaTime,
-      0.05,
-    );
+  const update = (deltaTime: number, elapsed: number) => {
+    const dt = Math.min(deltaTime, 0.05);
 
-    for (
-      let index = 0;
-      index < activeBubbleCount;
-      index++
-    ) {
+    for (let index = 0; index < activeBubbleCount; index++) {
       const bubble = bubbles[index];
 
       bubble.age += dt;
 
-      bubble.position.y +=
-        bubble.speed * dt;
+      bubble.position.y += bubble.speed * dt;
 
       // Gentle sideways wobble.
-      bubble.position.x =
-        bubble.originX +
-        Math.sin(
-          elapsed * 1.2 +
-          bubble.phase,
-        ) *
-        bubble.drift;
+      bubble.position.x = bubble.originX + Math.sin(elapsed * 1.2 + bubble.phase) * bubble.drift;
 
       bubble.position.z =
-        bubble.originZ +
-        Math.cos(
-          elapsed * 0.7 +
-          bubble.phase,
-        ) *
-        bubble.drift *
-        0.35;
+        bubble.originZ + Math.cos(elapsed * 0.7 + bubble.phase) * bubble.drift * 0.35;
 
       // Slight natural deformation.
-      const wobble =
-        1 +
-        Math.sin(
-          elapsed * 3 +
-          bubble.phase,
-        ) * 0.035;
+      const wobble = 1 + Math.sin(elapsed * 3 + bubble.phase) * 0.035;
 
-      bubble.scale.y =
-        bubble.scale.x *
-        wobble;
+      bubble.scale.y = bubble.scale.x * wobble;
 
-      if (
-        bubble.position.y >
-        tankHeight / 2 - 0.15 ||
-        bubble.age > bubble.lifetime
-      ) {
+      if (bubble.position.y > tankHeight / 2 - 0.15 || bubble.age > bubble.lifetime) {
         resetBubble(bubble);
       }
 
-      writeBubbleMatrix(
-        bubble,
-        index,
-      );
+      writeBubbleMatrix(bubble, index);
     }
 
     // Upload all updated transforms once.
@@ -439,15 +325,9 @@ export function createUnderwaterEffects(
       bubbleMesh.instanceMatrix.needsUpdate = true;
     }
 
-    particles.rotation.y =
-      Math.sin(
-        elapsed * 0.08,
-      ) * 0.02;
+    particles.rotation.y = Math.sin(elapsed * 0.08) * 0.02;
 
-    particles.position.y =
-      Math.sin(
-        elapsed * 0.15,
-      ) * 0.025;
+    particles.position.y = Math.sin(elapsed * 0.15) * 0.025;
   };
 
   const destroy = () => {

@@ -39,18 +39,13 @@ function createRocks(color: string): DecorationObject {
 
   const geometry = new THREE.SphereGeometry(1, 20, 14);
 
-  const colors = [
-    tint(color, 0.82),
-    tint(color, 1.08),
-    tint(color, 0.95),
-    tint(color, 1.22),
-  ];
+  const colors = [tint(color, 0.82), tint(color, 1.08), tint(color, 0.95), tint(color, 1.22)];
 
   const rocks = [
     {
       position: [-0.42, 0.23, 0.04],
-      scale: [0.40, 0.29, 0.34],
-      rotation: 0.20,
+      scale: [0.4, 0.29, 0.34],
+      rotation: 0.2,
     },
     {
       position: [0.02, 0.33, -0.12],
@@ -58,22 +53,19 @@ function createRocks(color: string): DecorationObject {
       rotation: -0.12,
     },
     {
-      position: [0.47, 0.20, 0.08],
-      scale: [0.36, 0.26, 0.30],
+      position: [0.47, 0.2, 0.08],
+      scale: [0.36, 0.26, 0.3],
       rotation: 0.14,
     },
     {
       position: [0.15, 0.15, 0.28],
-      scale: [0.30, 0.19, 0.25],
+      scale: [0.3, 0.19, 0.25],
       rotation: 0.08,
     },
   ];
 
   rocks.forEach((rock, index) => {
-    const mesh = new THREE.Mesh(
-      geometry,
-      material(colors[index]),
-    );
+    const mesh = new THREE.Mesh(geometry, material(colors[index]));
 
     mesh.position.fromArray(rock.position);
     mesh.scale.fromArray(rock.scale);
@@ -89,11 +81,7 @@ function createRocks(color: string): DecorationObject {
  * A curved, thick 3D leaf with a rounded tip.
  * Geometry is created once, not animated per frame.
  */
-function createLeafGeometry(
-  height: number,
-  width: number,
-  curve: number,
-): THREE.BufferGeometry {
+function createLeafGeometry(height: number, width: number, curve: number): THREE.BufferGeometry {
   const segments = 12;
   const radialSegments = 7;
 
@@ -106,23 +94,15 @@ function createLeafGeometry(
     const y = t * height;
 
     const centerX =
-      Math.sin(t * Math.PI * 0.85) * curve +
-      Math.sin(t * Math.PI * 1.8) * curve * 0.13;
+      Math.sin(t * Math.PI * 0.85) * curve + Math.sin(t * Math.PI * 1.8) * curve * 0.13;
 
     // Wide middle, rounded narrowing toward the tip.
-    const radius =
-      width *
-      (0.18 + 0.82 * Math.pow(Math.sin(Math.PI * t), 0.7));
+    const radius = width * (0.18 + 0.82 * Math.pow(Math.sin(Math.PI * t), 0.7));
 
     for (let j = 0; j <= radialSegments; j++) {
-      const angle =
-        (j / radialSegments) * Math.PI * 2;
+      const angle = (j / radialSegments) * Math.PI * 2;
 
-      vertices.push(
-        centerX + Math.cos(angle) * radius,
-        y,
-        Math.sin(angle) * radius * 0.28,
-      );
+      vertices.push(centerX + Math.cos(angle) * radius, y, Math.sin(angle) * radius * 0.28);
     }
   }
 
@@ -138,10 +118,7 @@ function createLeafGeometry(
 
   const geometry = new THREE.BufferGeometry();
 
-  geometry.setAttribute(
-    'position',
-    new THREE.Float32BufferAttribute(vertices, 3),
-  );
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
 
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
@@ -181,14 +158,14 @@ function createSeaweed(color: string): DecorationObject {
     },
     {
       x: 0.08,
-      z: -0.10,
+      z: -0.1,
       height: 1.38,
       width: 0.19,
       curve: 0.22,
       phase: 1.4,
     },
     {
-      x: 0.30,
+      x: 0.3,
       z: 0.03,
       height: 1.04,
       width: 0.15,
@@ -207,7 +184,7 @@ function createSeaweed(color: string): DecorationObject {
 
   const sharedMaterial = [
     material(tint(color, 0.84)),
-    material(tint(color, 1.10)),
+    material(tint(color, 1.1)),
     material(tint(color, 0.96)),
   ];
 
@@ -217,11 +194,7 @@ function createSeaweed(color: string): DecorationObject {
     pivot.position.set(leaf.x, 0, leaf.z);
 
     const mesh = new THREE.Mesh(
-      createLeafGeometry(
-        leaf.height,
-        leaf.width,
-        leaf.curve,
-      ),
+      createLeafGeometry(leaf.height, leaf.width, leaf.curve),
       sharedMaterial[index % sharedMaterial.length],
     );
 
@@ -242,9 +215,7 @@ function createSeaweed(color: string): DecorationObject {
 
     update(elapsed) {
       for (const leaf of leaves) {
-        leaf.pivot.rotation.z =
-          Math.sin(elapsed * 0.65 + leaf.phase) *
-          leaf.amplitude;
+        leaf.pivot.rotation.z = Math.sin(elapsed * 0.65 + leaf.phase) * leaf.amplitude;
       }
     },
   };
@@ -259,11 +230,7 @@ function createCoral(color: string): DecorationObject {
   const bodyMaterial = material(color);
   const tipMaterial = material(tint(color, 1.2));
 
-  const sphereGeometry = new THREE.SphereGeometry(
-    1,
-    12,
-    10,
-  );
+  const sphereGeometry = new THREE.SphereGeometry(1, 12, 10);
 
   const branches: Array<{
     start: [number, number, number];
@@ -287,7 +254,7 @@ function createCoral(color: string): DecorationObject {
     },
     {
       start: [-0.23, 0.62, 0.04],
-      end: [-0.40, 0.99, 0.08],
+      end: [-0.4, 0.99, 0.08],
       radius: 0.09,
     },
     {
@@ -297,8 +264,8 @@ function createCoral(color: string): DecorationObject {
     },
     {
       start: [0.08, 0.42, 0],
-      end: [0.10, 0.94, 0.18],
-      radius: 0.10,
+      end: [0.1, 0.94, 0.18],
+      radius: 0.1,
     },
   ];
 
@@ -308,36 +275,22 @@ function createCoral(color: string): DecorationObject {
     const start = new THREE.Vector3(...branch.start);
     const end = new THREE.Vector3(...branch.end);
 
-    const direction = new THREE.Vector3().subVectors(
-      end,
-      start,
-    );
+    const direction = new THREE.Vector3().subVectors(end, start);
 
     const length = direction.length();
 
     const cylinder = new THREE.Mesh(
-      new THREE.CylinderGeometry(
-        branch.radius * 0.83,
-        branch.radius,
-        length,
-        12,
-      ),
+      new THREE.CylinderGeometry(branch.radius * 0.83, branch.radius, length, 12),
       bodyMaterial,
     );
 
     cylinder.position.copy(start).add(end).multiplyScalar(0.5);
 
-    cylinder.quaternion.setFromUnitVectors(
-      up,
-      direction.normalize(),
-    );
+    cylinder.quaternion.setFromUnitVectors(up, direction.normalize());
 
     group.add(cylinder);
 
-    const tip = new THREE.Mesh(
-      sphereGeometry,
-      index % 2 === 0 ? tipMaterial : bodyMaterial,
-    );
+    const tip = new THREE.Mesh(sphereGeometry, index % 2 === 0 ? tipMaterial : bodyMaterial);
 
     tip.position.copy(end);
     tip.scale.setScalar(branch.radius * 1.05);
@@ -345,10 +298,7 @@ function createCoral(color: string): DecorationObject {
     group.add(tip);
   });
 
-  const base = new THREE.Mesh(
-    sphereGeometry,
-    bodyMaterial,
-  );
+  const base = new THREE.Mesh(sphereGeometry, bodyMaterial);
 
   base.position.y = 0.12;
   base.scale.set(0.25, 0.18, 0.22);
@@ -358,10 +308,7 @@ function createCoral(color: string): DecorationObject {
   return { group };
 }
 
-const factories: Record<
-  DecorationType,
-  (color: string) => DecorationObject
-> = {
+const factories: Record<DecorationType, (color: string) => DecorationObject> = {
   rocks: createRocks,
   seaweed: createSeaweed,
   coral: createCoral,
@@ -376,9 +323,7 @@ function disposeObject(group: THREE.Group) {
 
     geometries.add(child.geometry);
 
-    const meshMaterials = Array.isArray(child.material)
-      ? child.material
-      : [child.material];
+    const meshMaterials = Array.isArray(child.material) ? child.material : [child.material];
 
     meshMaterials.forEach((item) => materials.add(item));
   });
@@ -386,7 +331,6 @@ function disposeObject(group: THREE.Group) {
   geometries.forEach((geometry) => geometry.dispose());
   materials.forEach((item) => item.dispose());
 }
-
 
 export function createAquariumDecorations(scene: THREE.Scene) {
   const root = new THREE.Group();
@@ -412,9 +356,7 @@ export function createAquariumDecorations(scene: THREE.Scene) {
 
     managed.object.group.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
-      const materials = Array.isArray(child.material)
-        ? child.material
-        : [child.material];
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
 
       for (const item of materials) {
         if (!(item instanceof THREE.MeshLambertMaterial)) continue;
@@ -446,16 +388,12 @@ export function createAquariumDecorations(scene: THREE.Scene) {
     }
 
     for (const instance of instances) {
-      const color =
-        instance.color ?? DEFAULT_COLORS[instance.type];
+      const color = instance.color ?? DEFAULT_COLORS[instance.type];
 
       let managed = objects.get(instance.id);
 
       // Recreate only when the asset or color changes.
-      if (
-        managed &&
-        (managed.type !== instance.type || managed.color !== color)
-      ) {
+      if (managed && (managed.type !== instance.type || managed.color !== color)) {
         removeDecoration(instance.id);
         managed = undefined;
       }
@@ -483,8 +421,6 @@ export function createAquariumDecorations(scene: THREE.Scene) {
     }
   }
 
-
-
   return {
     setDecorations,
 
@@ -502,19 +438,14 @@ export function createAquariumDecorations(scene: THREE.Scene) {
       if (draggingId) updateHighlight(draggingId);
     },
 
-    getDecorationAtPoint(
-      raycaster: THREE.Raycaster,
-    ): string | null {
+    getDecorationAtPoint(raycaster: THREE.Raycaster): string | null {
       const meshes: THREE.Object3D[] = [];
 
       for (const managed of objects.values()) {
         meshes.push(managed.object.group);
       }
 
-      const intersections = raycaster.intersectObjects(
-        meshes,
-        true,
-      );
+      const intersections = raycaster.intersectObjects(meshes, true);
 
       if (intersections.length === 0) {
         return null;
@@ -537,17 +468,12 @@ export function createAquariumDecorations(scene: THREE.Scene) {
       return null;
     },
 
-    moveDecoration(
-      id: string,
-      x: number,
-      y: number,
-    ) {
+    moveDecoration(id: string, x: number, y: number) {
       const managed = objects.get(id);
       if (!managed) return;
 
       managed.object.group.position.set(x, y, 0);
     },
-
 
     update(elapsed: number) {
       for (const managed of objects.values()) {

@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 
 type GuidedFishCameraProps = {
@@ -6,10 +5,7 @@ type GuidedFishCameraProps = {
   onClose: () => void;
 };
 
-export function GuidedFishCamera({
-                                   onCapture,
-                                   onClose,
-                                 }: GuidedFishCameraProps) {
+export function GuidedFishCamera({ onCapture, onClose }: GuidedFishCameraProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -22,20 +18,17 @@ export function GuidedFishCamera({
     const startCamera = async () => {
       try {
         if (!navigator.mediaDevices?.getUserMedia) {
-          throw new Error(
-            'Camera access requires HTTPS or localhost.',
-          );
+          throw new Error('Camera access requires HTTPS or localhost.');
         }
 
-        const stream =
-          await navigator.mediaDevices.getUserMedia({
-            audio: false,
-            video: {
-              facingMode: { ideal: 'environment' },
-              width: { ideal: 1920 },
-              height: { ideal: 1080 },
-            },
-          });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+        });
 
         if (cancelled) {
           stream.getTracks().forEach((track) => track.stop());
@@ -54,11 +47,7 @@ export function GuidedFishCamera({
         }
       } catch (err) {
         if (!cancelled) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'Unable to access camera.',
-          );
+          setError(err instanceof Error ? err.message : 'Unable to access camera.');
         }
       }
     };
@@ -73,7 +62,6 @@ export function GuidedFishCamera({
       streamRef.current = null;
     };
   }, []);
-
 
   const capture = () => {
     const video = videoRef.current;
@@ -92,16 +80,13 @@ export function GuidedFishCamera({
     // These values match the guide's CSS:
     // left/right: 5%, top: 30%, height: 40%.
     const guideLeft = bounds.width * 0.05;
-    const guideTop = bounds.height * 0.30;
-    const guideWidth = bounds.width * 0.90;
-    const guideHeight = bounds.height * 0.40;
+    const guideTop = bounds.height * 0.3;
+    const guideWidth = bounds.width * 0.9;
+    const guideHeight = bounds.height * 0.4;
 
     // The video uses object-fit: cover.
     // Calculate the visible portion of the camera image.
-    const scale = Math.max(
-      bounds.width / videoWidth,
-      bounds.height / videoHeight,
-    );
+    const scale = Math.max(bounds.width / videoWidth, bounds.height / videoHeight);
 
     const displayedWidth = videoWidth * scale;
     const displayedHeight = videoHeight * scale;
@@ -146,11 +131,7 @@ export function GuidedFishCamera({
           return;
         }
 
-        const file = new File(
-          [blob],
-          'fish-drawing.jpg',
-          { type: 'image/jpeg' },
-        );
+        const file = new File([blob], 'fish-drawing.jpg', { type: 'image/jpeg' });
 
         onCapture(file);
       },
@@ -158,7 +139,6 @@ export function GuidedFishCamera({
       0.95,
     );
   };
-
 
   return (
     <div

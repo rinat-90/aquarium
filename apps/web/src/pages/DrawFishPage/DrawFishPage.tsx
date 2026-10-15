@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
@@ -8,10 +7,7 @@ import {
 } from '../../components/FishDrawing/FishDrawingCanvas';
 
 import { fishApi, type ApiFish } from '../../lib/aquarium-api';
-import {
-  AQUARIUM_CAPACITY,
-  createFish,
-} from '../../lib/create-fish';
+import { AQUARIUM_CAPACITY, createFish } from '../../lib/create-fish';
 
 import './DrawFishPage.css';
 
@@ -49,17 +45,11 @@ export function DrawFishPage() {
 
         if (cancelled) return;
 
-        setFish(
-          items.filter((item) => item.aquariumId === aquariumId),
-        );
+        setFish(items.filter((item) => item.aquariumId === aquariumId));
       } catch (err) {
         if (cancelled) return;
 
-        setLoadError(
-          err instanceof Error
-            ? err.message
-            : 'Failed to load aquarium fish',
-        );
+        setLoadError(err instanceof Error ? err.message : 'Failed to load aquarium fish');
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -74,23 +64,15 @@ export function DrawFishPage() {
     };
   }, [aquariumId]);
 
-  const usedCapacity = fish.reduce(
-    (total, item) => total + item.size * item.size,
-    0,
-  );
+  const usedCapacity = fish.reduce((total, item) => total + item.size * item.size, 0);
 
-  const remainingCapacity = Math.max(
-    0,
-    AQUARIUM_CAPACITY - usedCapacity,
-  );
+  const remainingCapacity = Math.max(0, AQUARIUM_CAPACITY - usedCapacity);
 
   const handleBack = () => {
     if (savingRef.current) return;
 
     navigate(
-      aquariumId
-        ? `/fish/create?aquariumId=${encodeURIComponent(aquariumId)}`
-        : '/aquariums',
+      aquariumId ? `/fish/create?aquariumId=${encodeURIComponent(aquariumId)}` : '/aquariums',
     );
   };
 
@@ -120,11 +102,7 @@ export function DrawFishPage() {
 
       navigate(`/aquariums/${encodeURIComponent(aquariumId)}`);
     } catch (err) {
-      setSaveError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to create fish',
-      );
+      setSaveError(err instanceof Error ? err.message : 'Failed to create fish');
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -138,10 +116,7 @@ export function DrawFishPage() {
           <h1>No aquarium selected</h1>
           <p>Please select an aquarium before creating a fish.</p>
 
-          <button
-            type="button"
-            onClick={() => navigate('/aquariums')}
-          >
+          <button type="button" onClick={() => navigate('/aquariums')}>
             My Aquariums
           </button>
         </div>
@@ -180,17 +155,12 @@ export function DrawFishPage() {
       )}
 
       {loading ? (
-        <div className="draw-fish-page__empty">
-          Loading aquarium...
-        </div>
+        <div className="draw-fish-page__empty">Loading aquarium...</div>
       ) : loadError ? (
         <div className="draw-fish-page__empty">
           <p>Unable to load aquarium capacity.</p>
 
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-          >
+          <button type="button" onClick={() => window.location.reload()}>
             Retry
           </button>
         </div>

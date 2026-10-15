@@ -1,17 +1,12 @@
-
 import { useCallback, useEffect, useState } from 'react';
-import {
-  aquariumApi,
-  type ApiAquarium,
-} from '../lib/aquarium-api';
+import { aquariumApi, type ApiAquarium } from '../lib/aquarium-api';
 
 export function useAquarium(aquariumId?: string) {
   const [aquariums, setAquariums] = useState<ApiAquarium[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const aquarium =
-    aquariums.find((item) => item.id === aquariumId) ?? null;
+  const aquarium = aquariums.find((item) => item.id === aquariumId) ?? null;
 
   const refreshAquariums = useCallback(async () => {
     setError(null);
@@ -21,11 +16,7 @@ export function useAquarium(aquariumId?: string) {
       setAquariums(items);
       return items;
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to load aquariums',
-      );
+      setError(err instanceof Error ? err.message : 'Failed to load aquariums');
       throw err;
     }
   }, []);
@@ -45,11 +36,7 @@ export function useAquarium(aquariumId?: string) {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'Failed to load aquariums',
-          );
+          setError(err instanceof Error ? err.message : 'Failed to load aquariums');
         }
       } finally {
         if (!cancelled) {
@@ -69,11 +56,7 @@ export function useAquarium(aquariumId?: string) {
     aquarium,
     aquariums,
     loading,
-    error:
-      error ??
-      (!loading && aquariumId && !aquarium
-        ? 'Aquarium not found'
-        : null),
+    error: error ?? (!loading && aquariumId && !aquarium ? 'Aquarium not found' : null),
     refreshAquariums,
   };
 }

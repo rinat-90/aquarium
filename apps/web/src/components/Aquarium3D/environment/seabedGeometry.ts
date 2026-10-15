@@ -1,4 +1,3 @@
-
 /**
  * Matches the duneHeight() function in createSandCaustics.ts.
  *

@@ -62,11 +62,7 @@ export async function createThreeFish(
   const tailDistances = new Float32Array(vertexCount);
 
   for (let i = 0; i < vertexCount; i += 1) {
-    const normalizedX = THREE.MathUtils.clamp(
-      (originalPositions[i * 3] + width / 2) / width,
-      0,
-      1,
-    );
+    const normalizedX = THREE.MathUtils.clamp((originalPositions[i * 3] + width / 2) / width, 0, 1);
     // The tail is opposite the head in the unflipped source texture.
     const tailAmount = orientation === 'right' ? 1 - normalizedX : normalizedX;
     tailDistances[i] = tailAmount;
@@ -92,9 +88,8 @@ export async function createThreeFish(
     const clampedIntensity = THREE.MathUtils.clamp(intensity, 0.35, 1.8);
     // This clock is supplied by the aquarium view and already scales with
     // swimming speed. Smooth effort in that same time domain to avoid pops.
-    const delta = lastElapsed === undefined
-      ? 0
-      : THREE.MathUtils.clamp(elapsed - lastElapsed, 0, 0.1);
+    const delta =
+      lastElapsed === undefined ? 0 : THREE.MathUtils.clamp(elapsed - lastElapsed, 0, 0.1);
     lastElapsed = elapsed;
 
     const glideFactor = 0.5 + 0.5 * Math.sin(elapsed * glideRate + glideOffset);
@@ -116,9 +111,7 @@ export async function createThreeFish(
     const depthTurn = THREE.MathUtils.clamp(depthVelocity * 0.16, -0.16, 0.16);
     body.rotation.y = THREE.MathUtils.lerp(body.rotation.y, depthTurn, 0.08);
 
-    const nibbleEnvelope = Math.sin(
-      Math.PI * THREE.MathUtils.clamp(nibbleProgress, 0, 1),
-    );
+    const nibbleEnvelope = Math.sin(Math.PI * THREE.MathUtils.clamp(nibbleProgress, 0, 1));
     const nibble = Math.sin(elapsed * 12) * nibbleEnvelope * 0.09;
     // The head stays mostly stable. These small motions are intentionally
     // independent of the tail phase so the whole fish doesn't wag as a unit.

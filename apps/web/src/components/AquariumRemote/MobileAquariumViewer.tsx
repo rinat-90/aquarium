@@ -11,11 +11,7 @@ type Props = {
   onClose: () => void;
 };
 
-export function MobileAquariumViewer({
-                                       fish,
-                                       feedSequence,
-                                       onClose,
-                                     }: Props) {
+export function MobileAquariumViewer({ fish, feedSequence, onClose }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [landscape, setLandscape] = useState(
@@ -60,10 +56,7 @@ export function MobileAquariumViewer({
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="mobile-aquarium-viewer"
-    >
+    <div ref={containerRef} className="mobile-aquarium-viewer">
       <button
         type="button"
         className="mobile-aquarium-viewer__close"
@@ -84,9 +77,7 @@ export function MobileAquariumViewer({
         </div>
       ) : (
         <div className="mobile-aquarium-viewer__rotate">
-          <div className="mobile-aquarium-viewer__rotate-icon">
-            📱
-          </div>
+          <div className="mobile-aquarium-viewer__rotate-icon">📱</div>
 
           <h2>Rotate your phone</h2>
           <p>Turn your phone sideways to view your aquarium.</p>

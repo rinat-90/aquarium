@@ -7,7 +7,11 @@ import { prisma } from '@aquarium/database';
 import { getAuthenticatedUser } from '../lib/get-authenticated-user.js';
 import { notifyAquariumChanged } from '../realtime/socket.js';
 import { ensureDefaultAquarium } from '../services/aquarium.service.js';
-import {aquariumIdParamsSchema, createAquariumSchema, updateAquariumSchema} from "../schemas/aquarium.schema.js";
+import {
+  aquariumIdParamsSchema,
+  createAquariumSchema,
+  updateAquariumSchema,
+} from '../schemas/aquarium.schema.js';
 
 // DELETE requests can have an optional JSON body.
 // Validate it manually to support both empty and non-empty aquariums.
@@ -137,12 +141,8 @@ export async function aquariumRoutes(app: FastifyInstance) {
           ownerId: user.id,
         },
         data: {
-          ...(request.body.name !== undefined
-            ? { name: request.body.name }
-            : {}),
-          ...(request.body.appearance !== undefined
-            ? { appearance: request.body.appearance }
-            : {}),
+          ...(request.body.name !== undefined ? { name: request.body.name } : {}),
+          ...(request.body.appearance !== undefined ? { appearance: request.body.appearance } : {}),
         },
       });
 
@@ -182,9 +182,7 @@ export async function aquariumRoutes(app: FastifyInstance) {
         });
       }
 
-      const parsedBody = deleteAquariumBodySchema.safeParse(
-        request.body ?? {},
-      );
+      const parsedBody = deleteAquariumBodySchema.safeParse(request.body ?? {});
 
       if (!parsedBody.success) {
         return reply.code(400).send({
@@ -194,8 +192,7 @@ export async function aquariumRoutes(app: FastifyInstance) {
       }
 
       const aquariumId = request.params.id;
-      const destinationId =
-        parsedBody.data.destinationAquariumId;
+      const destinationId = parsedBody.data.destinationAquariumId;
 
       const result = await prisma.$transaction(async (tx) => {
         // Serialize aquarium changes for this owner.
@@ -210,15 +207,10 @@ export async function aquariumRoutes(app: FastifyInstance) {
           where: {
             ownerId: user.id,
           },
-          orderBy: [
-            { createdAt: 'asc' },
-            { id: 'asc' },
-          ],
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
         });
 
-        const source = aquariums.find(
-          (item) => item.id === aquariumId,
-        );
+        const source = aquariums.find((item) => item.id === aquariumId);
 
         if (!source) {
           return {
@@ -227,9 +219,7 @@ export async function aquariumRoutes(app: FastifyInstance) {
           };
         }
 
-        const remaining = aquariums.filter(
-          (item) => item.id !== aquariumId,
-        );
+        const remaining = aquariums.filter((item) => item.id !== aquariumId);
 
         if (remaining.length === 0) {
           return {
@@ -252,12 +242,7 @@ export async function aquariumRoutes(app: FastifyInstance) {
           };
         }
 
-        if (
-          destinationId &&
-          !remaining.some(
-            (item) => item.id === destinationId,
-          )
-        ) {
+        if (destinationId && !remaining.some((item) => item.id === destinationId)) {
           return {
             status: 400 as const,
             error: 'Invalid destination aquarium.',
@@ -287,8 +272,7 @@ export async function aquariumRoutes(app: FastifyInstance) {
 
         // Assign a new default if necessary.
         if (source.isDefault) {
-          const nextDefaultId =
-            destinationId ?? remaining[0]!.id;
+          const nextDefaultId = destinationId ?? remaining[0]!.id;
 
           await tx.aquarium.updateMany({
             where: {
@@ -346,53 +330,51 @@ export async function aquariumRoutes(app: FastifyInstance) {
       const { id } = request.params;
 
       try {
-        const aquarium = await prisma.$transaction(
-          async (tx) => {
-            // Serialize default changes for this owner.
-            await tx.$queryRaw`
+        const aquarium = await prisma.$transaction(async (tx) => {
+          // Serialize default changes for this owner.
+          await tx.$queryRaw`
                 SELECT id
                 FROM "User"
                 WHERE id = ${user.id}
                     FOR UPDATE
             `;
 
-            const target = await tx.aquarium.findFirst({
-              where: {
-                id,
-                ownerId: user.id,
-              },
-            });
+          const target = await tx.aquarium.findFirst({
+            where: {
+              id,
+              ownerId: user.id,
+            },
+          });
 
-            if (!target) {
-              return null;
-            }
+          if (!target) {
+            return null;
+          }
 
-            if (target.isDefault) {
-              return target;
-            }
+          if (target.isDefault) {
+            return target;
+          }
 
-            // Clear the old default first to satisfy
-            // the partial unique index.
-            await tx.aquarium.updateMany({
-              where: {
-                ownerId: user.id,
-                isDefault: true,
-              },
-              data: {
-                isDefault: false,
-              },
-            });
+          // Clear the old default first to satisfy
+          // the partial unique index.
+          await tx.aquarium.updateMany({
+            where: {
+              ownerId: user.id,
+              isDefault: true,
+            },
+            data: {
+              isDefault: false,
+            },
+          });
 
-            return tx.aquarium.update({
-              where: {
-                id: target.id,
-              },
-              data: {
-                isDefault: true,
-              },
-            });
-          },
-        );
+          return tx.aquarium.update({
+            where: {
+              id: target.id,
+            },
+            data: {
+              isDefault: true,
+            },
+          });
+        });
 
         if (!aquarium) {
           return reply.code(404).send({
@@ -404,10 +386,7 @@ export async function aquariumRoutes(app: FastifyInstance) {
 
         return aquarium;
       } catch (error) {
-        request.log.error(
-          error,
-          'Failed to set default aquarium',
-        );
+        request.log.error(error, 'Failed to set default aquarium');
 
         return reply.code(500).send({
           error: 'Failed to set default aquarium',
@@ -415,7 +394,6 @@ export async function aquariumRoutes(app: FastifyInstance) {
       }
     },
   );
-
 
   api.delete(
     '/aquariums/:id/fish',
@@ -467,5 +445,4 @@ export async function aquariumRoutes(app: FastifyInstance) {
       return reply.code(204).send();
     },
   );
-
 }

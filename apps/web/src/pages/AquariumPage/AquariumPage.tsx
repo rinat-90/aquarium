@@ -2,11 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { socket } from '../../lib/socket';
 
-import {
-  aquariumApi,
-  fishApi,
-  type ApiAquarium,
-} from '../../lib/aquarium-api';
+import { aquariumApi, fishApi, type ApiAquarium } from '../../lib/aquarium-api';
 
 import {
   FishDrawingCanvas,
@@ -14,7 +10,10 @@ import {
 } from '../../components/FishDrawing/FishDrawingCanvas';
 import { ThreeAquariumView } from '../../components/Aquarium3D/ThreeAquariumView';
 import { AquariumAppearanceEditor } from '../../components/AquariumAppearanceEditor/AquariumAppearanceEditor';
-import { DEFAULT_AQUARIUM_CUSTOMIZATION, type AquariumCustomization } from '../../features/aquarium-customization/types';
+import {
+  DEFAULT_AQUARIUM_CUSTOMIZATION,
+  type AquariumCustomization,
+} from '../../features/aquarium-customization/types';
 import { useAquarium } from '../../hooks/useAquarium';
 import { AquariumHUD } from '../../components/AquariumHUD/AquariumHUD';
 import { FishPanel } from '../../components/FishPanel/FishPanel';
@@ -30,13 +29,9 @@ import { saveAquariumAppearance } from '../../lib/save-aquarium-appearance';
 import { FALLBACK_THEMES, fetchPublishedThemes } from '../../lib/content-themes';
 import type { AquariumTheme } from '../../features/aquarium-customization/themeRegistry';
 
-import {
-  AquariumRemote,
-} from '../../components/AquariumRemote/AquariumRemote';
+import { AquariumRemote } from '../../components/AquariumRemote/AquariumRemote';
 
-import {
-  MobileAquariumViewer,
-} from '../../components/AquariumRemote/MobileAquariumViewer';
+import { MobileAquariumViewer } from '../../components/AquariumRemote/MobileAquariumViewer';
 
 const AQUARIUM_CAPACITY = 8;
 
@@ -56,7 +51,12 @@ export function AquariumPage() {
     error: aquariumError,
   } = useAquarium(aquariumId);
 
-  const { fish, setFish, loading: fishLoading, error: fishError } = useLiveAquariumFish(aquarium?.id);
+  const {
+    fish,
+    setFish,
+    loading: fishLoading,
+    error: fishError,
+  } = useLiveAquariumFish(aquarium?.id);
   const [drawing, setDrawing] = useState(false);
   const [selectedFishId, setSelectedFishId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -87,10 +87,14 @@ export function AquariumPage() {
         if (active) setAvailableThemes(FALLBACK_THEMES);
       });
 
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const [appearance, setAppearance] = useState<AquariumCustomization>(DEFAULT_AQUARIUM_CUSTOMIZATION);
+  const [appearance, setAppearance] = useState<AquariumCustomization>(
+    DEFAULT_AQUARIUM_CUSTOMIZATION,
+  );
   const [appearanceSaving, setAppearanceSaving] = useState(false);
   const [appearanceSaveError, setAppearanceSaveError] = useState<string | null>(null);
   const hydratedAppearanceId = useRef<string | null>(null);
@@ -114,7 +118,6 @@ export function AquariumPage() {
       appearance: lastSavedAppearanceRef.current,
     });
   };
-
 
   // Hydrate only when switching aquariums; avoid overwriting live edits
   // when another request refreshes the current aquarium.
@@ -145,7 +148,9 @@ export function AquariumPage() {
       }
     } catch (err) {
       if (activeAquariumId.current === id) {
-        setAppearanceSaveError(err instanceof Error ? err.message : 'Could not save aquarium appearance.');
+        setAppearanceSaveError(
+          err instanceof Error ? err.message : 'Could not save aquarium appearance.',
+        );
       }
     } finally {
       setAppearanceSaving(false);
@@ -161,9 +166,7 @@ export function AquariumPage() {
 
   const [mobileViewerOpen, setMobileViewerOpen] = useState(false);
 
-  const [isMobile, setIsMobile] = useState(
-    () => window.matchMedia('(max-width: 767px)').matches,
-  );
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 767px)').matches);
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 767px)');
@@ -184,7 +187,7 @@ export function AquariumPage() {
   const aquariumName =
     renamedAquarium && renamedAquarium.id === aquarium?.id
       ? renamedAquarium.name
-      : aquarium?.name ?? 'My Aquarium';
+      : (aquarium?.name ?? 'My Aquarium');
 
   const activeAquariumId = useRef<string | null>(null);
   activeAquariumId.current = aquarium?.id ?? null;
@@ -195,7 +198,10 @@ export function AquariumPage() {
     'loading' | 'live' | 'paused' | 'disconnected' | 'offline' | 'error'
   >('loading');
 
-  const getBroadcastStatus = (sessions: Array<{ aquariumId: string; isOnline: boolean; pausedAt?: string | null }>, id: string) => {
+  const getBroadcastStatus = (
+    sessions: Array<{ aquariumId: string; isOnline: boolean; pausedAt?: string | null }>,
+    id: string,
+  ) => {
     const assigned = sessions.filter((session) => session.aquariumId === id);
     if (assigned.length === 0) return 'offline' as const;
     if (assigned.some((session) => session.isOnline && !session.pausedAt)) return 'live' as const;
@@ -215,9 +221,7 @@ export function AquariumPage() {
 
         if (cancelled) return;
 
-        setBroadcastStatus(
-          getBroadcastStatus(sessions, id),
-        );
+        setBroadcastStatus(getBroadcastStatus(sessions, id));
       } catch {
         if (!cancelled) setBroadcastStatus('error');
       }
@@ -227,18 +231,13 @@ export function AquariumPage() {
     void refreshBroadcastStatus();
 
     // Fallback refresh while the settings panel is open.
-    const interval = window.setInterval(
-      refreshBroadcastStatus,
-      5000,
-    );
+    const interval = window.setInterval(refreshBroadcastStatus, 5000);
 
     return () => {
       cancelled = true;
       window.clearInterval(interval);
     };
   }, [settingsOpen, isMobile, aquarium?.id]);
-
-
 
   const [feedCooldownUntil, setFeedCooldownUntil] = useState(0);
   const [feedCooldownSeconds, setFeedCooldownSeconds] = useState(0);
@@ -250,11 +249,8 @@ export function AquariumPage() {
       return;
     }
 
-
     const updateCountdown = () => {
-      setFeedCooldownSeconds(
-        Math.max(0, Math.ceil((feedCooldownUntil - Date.now()) / 1000)),
-      );
+      setFeedCooldownSeconds(Math.max(0, Math.ceil((feedCooldownUntil - Date.now()) / 1000)));
     };
 
     updateCountdown();
@@ -302,15 +298,9 @@ export function AquariumPage() {
     );
   };
 
-  const usedCapacity = fish.reduce(
-    (total, item) => total + item.size * item.size,
-    0,
-  );
+  const usedCapacity = fish.reduce((total, item) => total + item.size * item.size, 0);
 
-  const remainingCapacity = Math.max(
-    0,
-    AQUARIUM_CAPACITY - usedCapacity,
-  );
+  const remainingCapacity = Math.max(0, AQUARIUM_CAPACITY - usedCapacity);
 
   const handleFishCreated = async (creation: FishCreation) => {
     if (!aquarium || busy) return;
@@ -327,11 +317,7 @@ export function AquariumPage() {
     setError(null);
 
     try {
-      const saved = await createFish(
-        aquariumId,
-        creation,
-        fish.length,
-      );
+      const saved = await createFish(aquariumId, creation, fish.length);
 
       const mapped = await mapApiFish(saved);
 
@@ -340,11 +326,7 @@ export function AquariumPage() {
         setDrawing(false);
       }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to create fish',
-      );
+      setError(err instanceof Error ? err.message : 'Failed to create fish');
     } finally {
       setBusy(false);
     }
@@ -360,11 +342,7 @@ export function AquariumPage() {
     });
 
     setFish((previous) =>
-      previous.map((item) =>
-        item.id === fishId
-          ? { ...item, name: trimmedName }
-          : item,
-      ),
+      previous.map((item) => (item.id === fishId ? { ...item, name: trimmedName } : item)),
     );
   };
 
@@ -377,23 +355,16 @@ export function AquariumPage() {
     try {
       await fishApi.remove(selectedFishId);
 
-      setFish((current) =>
-        current.filter((item) => item.id !== selectedFishId),
-      );
+      setFish((current) => current.filter((item) => item.id !== selectedFishId));
       setSelectedFishId(null);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to release fish',
-      );
+      setError(err instanceof Error ? err.message : 'Failed to release fish');
     } finally {
       setBusy(false);
     }
   };
 
-  const handleMoveFish = async (
-    fishId: string,
-    destinationAquariumId: string,
-  ) => {
+  const handleMoveFish = async (fishId: string, destinationAquariumId: string) => {
     if (!aquarium) {
       throw new Error('No aquarium selected.');
     }
@@ -408,9 +379,7 @@ export function AquariumPage() {
     });
 
     // Only update the UI after the API succeeds.
-    setFish((previous) =>
-      previous.filter((fish) => fish.id !== fishId),
-    );
+    setFish((previous) => previous.filter((fish) => fish.id !== fishId));
 
     // Close the profile for the moved fish.
     setSelectedFishId(null);
@@ -453,10 +422,7 @@ export function AquariumPage() {
   useEffect(() => {
     if (!aquarium?.id) return;
 
-    const handleFeed = (event: {
-      aquariumId: string;
-      eventId: string;
-    }) => {
+    const handleFeed = (event: { aquariumId: string; eventId: string }) => {
       if (event.aquariumId !== aquarium.id) return;
 
       setFeedSequence((current) => current + 1);
@@ -473,15 +439,11 @@ export function AquariumPage() {
     if (!aquarium?.id || !appearanceOpen) return;
 
     const join = () => {
-      socket.emit(
-        'aquarium:join',
-        aquarium.id,
-        (result: { ok: boolean }) => {
-          if (!result.ok) {
-            console.warn('[Aquarium] Socket join rejected');
-          }
-        },
-      );
+      socket.emit('aquarium:join', aquarium.id, (result: { ok: boolean }) => {
+        if (!result.ok) {
+          console.warn('[Aquarium] Socket join rejected');
+        }
+      });
     };
 
     socket.on('connect', join);
@@ -499,7 +461,9 @@ export function AquariumPage() {
 
   async function handleEndBroadcast() {
     if (endingBroadcast) return;
-    const confirmed = window.confirm('Pause the TV broadcast? You can resume without pairing again.');
+    const confirmed = window.confirm(
+      'Pause the TV broadcast? You can resume without pairing again.',
+    );
     if (!confirmed) return;
 
     setEndingBroadcast(true);
@@ -532,7 +496,9 @@ export function AquariumPage() {
 
     const available = sessions.filter((session) => session.isOnline);
     if (available.length === 0) {
-      throw new Error('No paired TV is connected. Open the TV pairing screen and connect a TV first.');
+      throw new Error(
+        'No paired TV is connected. Open the TV pairing screen and connect a TV first.',
+      );
     }
     if (available.length > 1) {
       throw new Error('Multiple TVs are connected. Select a TV before starting the broadcast.');
@@ -570,9 +536,7 @@ export function AquariumPage() {
     try {
       const { sessions } = await tvPairingApi.sessions();
 
-      const matchingSessions = sessions.filter(
-        (session) => session.aquariumId === aquariumId,
-      );
+      const matchingSessions = sessions.filter((session) => session.aquariumId === aquariumId);
 
       if (matchingSessions.length === 0) {
         window.alert('No active TV broadcast found for this aquarium.');
@@ -580,30 +544,20 @@ export function AquariumPage() {
       }
 
       if (matchingSessions.length > 1) {
-        window.alert(
-          'Multiple TV broadcasts found. TV selection is required.',
-        );
+        window.alert('Multiple TV broadcasts found. TV selection is required.');
         return;
       }
 
-      await tvPairingApi.switchAquarium(
-        matchingSessions[0].id,
-        selectedAquariumId,
-      );
+      await tvPairingApi.switchAquarium(matchingSessions[0].id, selectedAquariumId);
 
       setSwitchDialogOpen(false);
       navigate(`/aquariums/${encodeURIComponent(selectedAquariumId)}`);
     } catch (error) {
-      window.alert(
-        error instanceof Error
-          ? error.message
-          : 'Failed to switch aquarium.',
-      );
+      window.alert(error instanceof Error ? error.message : 'Failed to switch aquarium.');
     } finally {
       setSwitchingAquarium(false);
     }
   }
-
 
   const handleReleaseAllFish = async () => {
     if (!aquarium?.id) {
@@ -644,10 +598,8 @@ export function AquariumPage() {
     navigate('/aquariums', { replace: true });
   };
 
-
   return (
     <div className="aquarium-page">
-
       {isMobile ? (
         mobileViewerOpen ? (
           <MobileAquariumViewer
@@ -665,9 +617,7 @@ export function AquariumPage() {
             onAddFish={() => {
               if (!aquarium?.id) return;
 
-              navigate(
-                `/fish/create?aquariumId=${encodeURIComponent(aquarium.id)}`,
-              );
+              navigate(`/fish/create?aquariumId=${encodeURIComponent(aquarium.id)}`);
             }}
             onViewFish={handleOpenFishList}
             onSettings={() => setSettingsOpen(true)}
@@ -680,7 +630,6 @@ export function AquariumPage() {
           />
         ) : null
       ) : (
-
         <>
           <AquariumHUD
             name={aquariumName}
@@ -691,9 +640,7 @@ export function AquariumPage() {
             onAddFish={() => {
               if (!aquarium?.id) return;
 
-              navigate(
-                `/fish/create?aquariumId=${encodeURIComponent(aquarium.id)}`,
-              );
+              navigate(`/fish/create?aquariumId=${encodeURIComponent(aquarium.id)}`);
             }}
             onViewFish={handleOpenFishList}
             onFeed={handleFeedFish}
@@ -708,12 +655,8 @@ export function AquariumPage() {
             onDecorationMove={(id, normalizedX) => {
               setAppearance((previous) => ({
                 ...previous,
-                decorationInstances: (
-                  previous.decorationInstances ?? []
-                ).map((decoration) =>
-                  decoration.id === id
-                    ? { ...decoration, x: normalizedX }
-                    : decoration,
+                decorationInstances: (previous.decorationInstances ?? []).map((decoration) =>
+                  decoration.id === id ? { ...decoration, x: normalizedX } : decoration,
                 ),
               }));
 
@@ -822,9 +765,7 @@ export function AquariumPage() {
 
           handleCloseFishPanel();
 
-          navigate(
-            `/fish/create?aquariumId=${encodeURIComponent(aquarium.id)}`,
-          );
+          navigate(`/fish/create?aquariumId=${encodeURIComponent(aquarium.id)}`);
         }}
         onRename={handleRenameFish}
         onRelease={handleReleaseFish}

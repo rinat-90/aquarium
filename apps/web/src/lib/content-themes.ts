@@ -30,10 +30,14 @@ export async function fetchPublishedThemes(): Promise<readonly AquariumTheme[]> 
     // A published theme without renderer support should not appear yet.
     if (!builtIn || item.type !== 'THEME' || item.definition?.id !== item.slug) continue;
     const appearance = item.definition.appearance;
-    if (!appearance || !['ocean','coral','deep-sea','fantasy'].includes(appearance.background)
-      || !['sand','white-sand','pebbles','dark-gravel'].includes(appearance.substrate)
-      || !['sunny','soft','night'].includes(appearance.lighting)
-      || !['none','some','lots'].includes(appearance.bubbles)) continue;
+    if (
+      !appearance ||
+      !['ocean', 'coral', 'deep-sea', 'fantasy'].includes(appearance.background) ||
+      !['sand', 'white-sand', 'pebbles', 'dark-gravel'].includes(appearance.substrate) ||
+      !['sunny', 'soft', 'night'].includes(appearance.lighting) ||
+      !['none', 'some', 'lots'].includes(appearance.bubbles)
+    )
+      continue;
     themes.push({
       ...builtIn,
       name: item.name,

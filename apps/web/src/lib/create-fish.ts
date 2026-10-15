@@ -1,4 +1,3 @@
-
 import { fishApi } from './aquarium-api';
 import type { FishCreation } from '../components/FishDrawing/FishDrawingCanvas';
 
@@ -33,15 +32,9 @@ export async function createFish(
               ? 'guppy'
               : 'classic',
 
-      bodyColor:
-        creation.type === 'drawn'
-          ? '#4F9CF9'
-          : creation.bodyColor,
+      bodyColor: creation.type === 'drawn' ? '#4F9CF9' : creation.bodyColor,
 
-      finColor:
-        creation.type === 'drawn'
-          ? '#3B82F6'
-          : creation.finColor,
+      finColor: creation.type === 'drawn' ? '#3B82F6' : creation.finColor,
 
       size: creation.size,
       aquariumId,
@@ -56,19 +49,13 @@ export async function createFish(
 
     createdId = created.id;
 
-    const image =
-      creation.type === 'drawn'
-        ? creation.image
-        : creation.paintImage;
+    const image = creation.type === 'drawn' ? creation.image : creation.paintImage;
 
     if (!image) {
       return created;
     }
 
-    return await fishApi.uploadTexture(
-      created.id,
-      await imageToBlob(image),
-    );
+    return await fishApi.uploadTexture(created.id, await imageToBlob(image));
   } catch (error) {
     if (createdId) {
       try {

@@ -12,12 +12,14 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid rgba(178, 229, 255, .35);
+  border: 1px solid rgba(178, 229, 255, 0.35);
   border-radius: 24px;
-  box-shadow: 0 20px 70px rgba(0, 12, 37, .38);
+  box-shadow: 0 20px 70px rgba(0, 12, 37, 0.38);
 }
 .aquarium-workspace .aquarium-appearance-header,
-.aquarium-workspace .aquarium-appearance-footer { flex-shrink: 0; }
+.aquarium-workspace .aquarium-appearance-footer {
+  flex-shrink: 0;
+}
 .aquarium-workspace .aquarium-appearance-scroll {
   min-height: 0;
   flex: 1 1 auto;
@@ -25,10 +27,17 @@
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
-.aquarium-workspace-sheet-toggle { display: none; }
-.aquarium-workspace .aquarium-catalog-card { min-height: 136px; }
+.aquarium-workspace-sheet-toggle {
+  display: none;
+}
+.aquarium-workspace .aquarium-catalog-card {
+  min-height: 136px;
+}
 .aquarium-workspace .aquarium-catalog-card:focus-visible,
-.aquarium-workspace button:focus-visible { outline: 3px solid #9ceaff; outline-offset: 2px; }
+.aquarium-workspace button:focus-visible {
+  outline: 3px solid #9ceaff;
+  outline-offset: 2px;
+}
 @media (max-width: 767px) {
   .aquarium-workspace {
     top: auto;
@@ -41,7 +50,7 @@
     border-radius: 24px 24px 0 0;
     border-bottom: 0;
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    transition: height .22s ease;
+    transition: height 0.22s ease;
   }
   .aquarium-workspace .aquarium-appearance-header {
     position: relative;
@@ -70,12 +79,21 @@
     width: 34px;
     height: 5px;
     border-radius: 10px;
-    background: rgba(165, 221, 244, .65);
+    background: rgba(165, 221, 244, 0.65);
   }
-  .aquarium-workspace .aquarium-catalog-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .aquarium-workspace .aquarium-catalog-art { min-height: 76px; }
-  .aquarium-workspace .aquarium-catalog-emoji { font-size: 40px; }
-  .aquarium-workspace.is-collapsed { height: 56px; min-height: 56px; }
+  .aquarium-workspace .aquarium-catalog-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .aquarium-workspace .aquarium-catalog-art {
+    min-height: 76px;
+  }
+  .aquarium-workspace .aquarium-catalog-emoji {
+    font-size: 40px;
+  }
+  .aquarium-workspace.is-collapsed {
+    height: 56px;
+    min-height: 56px;
+  }
   .aquarium-workspace.is-collapsed .aquarium-appearance-header {
     height: 56px;
     padding: 0;
@@ -83,12 +101,20 @@
   }
   .aquarium-workspace.is-collapsed .aquarium-appearance-header > div,
   .aquarium-workspace.is-collapsed .aquarium-appearance-scroll,
-  .aquarium-workspace.is-collapsed .aquarium-appearance-footer { display: none; }
-  .aquarium-workspace.is-collapsed .aquarium-workspace-sheet-toggle { height: 56px; }
+  .aquarium-workspace.is-collapsed .aquarium-appearance-footer {
+    display: none;
+  }
+  .aquarium-workspace.is-collapsed .aquarium-workspace-sheet-toggle {
+    height: 56px;
+  }
 }
 @media (max-width: 360px) {
-  .aquarium-workspace .aquarium-catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .aquarium-workspace .aquarium-catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .aquarium-workspace { transition: none; }
+  .aquarium-workspace {
+    transition: none;
+  }
 }

@@ -1,41 +1,27 @@
-import { loadPublishedScenery, subscribeToPublishedScenery } from '../../features/aquarium-customization/publishedScenery';
 import {
-  useEffect,
-  useRef,
-} from 'react';
+  loadPublishedScenery,
+  subscribeToPublishedScenery,
+} from '../../features/aquarium-customization/publishedScenery';
+import { useEffect, useRef } from 'react';
 
 import * as THREE from 'three';
 import './AquariumQuickActions.css';
 
-import {
-  Aquarium,
-} from '@aquarium/aquarium-engine';
+import { Aquarium } from '@aquarium/aquarium-engine';
 
+import { createThreeFish, type ThreeFish } from './ThreeFish';
 
-import {
-  createThreeFish,
-  type ThreeFish,
-} from './ThreeFish';
+import { createUnderwaterEffects } from './createUnderwaterEffects';
 
-import {
-  createUnderwaterEffects,
-} from './createUnderwaterEffects';
+import { createWaterEffects } from './createWaterEffects';
 
-import {
-  createWaterEffects,
-} from './createWaterEffects';
+import { createThreeModelFish, type ThreeModelFish } from './ThreeModelFish.ts';
 
-import {createThreeModelFish, type ThreeModelFish} from "./ThreeModelFish.ts";
+import { createSandCaustics } from './createSandCaustics';
 
-import {
-  createSandCaustics,
-} from './createSandCaustics';
+import type { CreatedFish } from '../../types/fish.ts';
 
-import type {CreatedFish} from "../../types/fish.ts";
-
-import {
-  createGraphicsQualityController,
-} from './createGraphicsQualityController';
+import { createGraphicsQualityController } from './createGraphicsQualityController';
 
 import { createAquariumEnvironment } from './environment/createAquariumEnvironment';
 import type { AquariumEnvironmentController } from './environment/createAquariumEnvironment';
@@ -52,9 +38,7 @@ type ThreeAquariumViewProps = {
   /** Increment to drop a handful of pellets from the water surface. */
   feedSequence?: number;
 
-  onFishSelect?: (
-    fish: CreatedFish,
-  ) => void;
+  onFishSelect?: (fish: CreatedFish) => void;
   /** Disable fish selection and click-to-feed on display-only screens. */
   interactive?: boolean;
   /** Show renderer performance statistics. */
@@ -73,19 +57,19 @@ type RenderedFish = {
 };
 
 export function ThreeAquariumView({
-                                    createdFish,
-                                    appearance,
-                                    onAppearanceChange,
-                                    feedSequence = 0,
-                                    onFishSelect,
-                                    interactive = true,
-                                    showDebugStats = import.meta.env.DEV,
-                                    embedded = false,
-                                    decorationEditing = false,
-                                    onDecorationMove,
-                                    selectedDecorationId = null,
-                                    onDecorationSelect,
-                                  }: ThreeAquariumViewProps) {
+  createdFish,
+  appearance,
+  onAppearanceChange,
+  feedSequence = 0,
+  onFishSelect,
+  interactive = true,
+  showDebugStats = import.meta.env.DEV,
+  embedded = false,
+  decorationEditing = false,
+  onDecorationMove,
+  selectedDecorationId = null,
+  onDecorationSelect,
+}: ThreeAquariumViewProps) {
   // The catalog is shared by the editor, phone renderer and TV renderer.
   // A loaded catalog updates existing meshes without recreating the scene.
   useEffect(() => {
@@ -113,39 +97,20 @@ export function ThreeAquariumView({
   }, [selectedDecorationId]);
 
   useEffect(() => {
-    environmentRef.current?.setAppearance(
-      appearance ?? DEFAULT_AQUARIUM_CUSTOMIZATION,
-    );
+    environmentRef.current?.setAppearance(appearance ?? DEFAULT_AQUARIUM_CUSTOMIZATION);
   }, [appearance]);
 
-  const containerRef =
-    useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const sceneRef =
-    useRef<THREE.Scene | null>(
-      null,
-    );
+  const sceneRef = useRef<THREE.Scene | null>(null);
 
-  const aquariumRef =
-    useRef<Aquarium | null>(
-      null,
-    );
+  const aquariumRef = useRef<Aquarium | null>(null);
 
-  const threeFishRef =
-    useRef(
-      new Map<
-        string,
-        RenderedFish
-      >(),
-    );
+  const threeFishRef = useRef(new Map<string, RenderedFish>());
 
-  const loadingFishRef =
-    useRef(
-      new Set<string>(),
-    );
+  const loadingFishRef = useRef(new Set<string>());
 
-  const createdFishRef =
-    useRef(createdFish);
+  const createdFishRef = useRef(createdFish);
 
   // Stable bridge from the toolbar prop into the existing Three.js scene.
   const feedFromToolbarRef = useRef<(() => void) | null>(null);
@@ -158,14 +123,7 @@ export function ThreeAquariumView({
     }
   }, [feedSequence]);
 
-  const foodMeshesRef =
-    useRef(
-      new Map<
-        string,
-        THREE.Mesh
-      >(),
-    );
-
+  const foodMeshesRef = useRef(new Map<string, THREE.Mesh>());
 
   const removeCreatedFish = (id: string) => {
     const rendered = threeFishRef.current.get(id);
@@ -180,39 +138,23 @@ export function ThreeAquariumView({
     aquariumRef.current?.removeFish(id);
   };
 
-
-  const addCreatedFish = async (
-    created: CreatedFish,
-  ) => {
+  const addCreatedFish = async (created: CreatedFish) => {
     /*
      * Capture the exact scene + aquarium
      * this load belongs to.
      */
-    const scene =
-      sceneRef.current;
+    const scene = sceneRef.current;
 
-    const aquarium =
-      aquariumRef.current;
-    if (
-      !scene ||
-      !aquarium
-    ) {
+    const aquarium = aquariumRef.current;
+    if (!scene || !aquarium) {
       return;
     }
 
-    if (
-      threeFishRef.current.has(
-        created.id,
-      )
-    ) {
+    if (threeFishRef.current.has(created.id)) {
       return;
     }
 
-    if (
-      loadingFishRef.current.has(
-        created.id,
-      )
-    ) {
+    if (loadingFishRef.current.has(created.id)) {
       return;
     }
 
@@ -221,9 +163,7 @@ export function ThreeAquariumView({
       return;
     }
 
-    loadingFishRef.current.add(
-      created.id,
-    );
+    loadingFishRef.current.add(created.id);
 
     /*
      * Add the fish to this exact
@@ -238,11 +178,7 @@ export function ThreeAquariumView({
             : 'basic'
         : 'basic';
 
-    const fish = aquarium.createFish(
-      created.id,
-      created.size,
-      species,
-    );
+    const fish = aquarium.createFish(created.id, created.size, species);
 
     try {
       /*
@@ -251,16 +187,10 @@ export function ThreeAquariumView({
        * React may destroy/recreate the
        * aquarium while this is waiting.
        */
-      let view:
-        | ThreeFish
-        | ThreeModelFish;
+      let view: ThreeFish | ThreeModelFish;
 
       if (created.type === 'drawn') {
-        view = await createThreeFish(
-          created.image,
-          1.3 * created.size,
-          created.headDirection,
-        );
+        view = await createThreeFish(created.image, 1.3 * created.size, created.headDirection);
       } else {
         view = createThreeModelFish(
           created.bodyColor,
@@ -282,11 +212,9 @@ export function ThreeAquariumView({
         return;
       }
 
-      const currentScene =
-        sceneRef.current;
+      const currentScene = sceneRef.current;
 
-      const currentAquarium =
-        aquariumRef.current;
+      const currentAquarium = aquariumRef.current;
 
       /*
        * If React recreated the aquarium
@@ -306,9 +234,7 @@ export function ThreeAquariumView({
       ) {
         view.destroy();
 
-        aquarium.removeFish(
-          created.id,
-        );
+        aquarium.removeFish(created.id);
 
         return;
       }
@@ -317,55 +243,33 @@ export function ThreeAquariumView({
        * Another async load may already
        * have finished for this fish.
        */
-      if (
-        threeFishRef.current.has(
-          created.id,
-        )
-      ) {
+      if (threeFishRef.current.has(created.id)) {
         view.destroy();
         return;
       }
 
-      view.group.position.set(
-        fish.position.x,
-        fish.position.y,
-        fish.position.z,
-      );
+      view.group.position.set(fish.position.x, fish.position.y, fish.position.z);
 
       /*
        * Store the app fish ID on the
        * Three.js group so raycasting can
        * identify which fish was clicked.
        */
-      view.group.userData.fishId =
-        created.id;
+      view.group.userData.fishId = created.id;
 
-      view.group.traverse(
-        (object) => {
-          object.userData.fishId =
-            created.id;
-        },
-      );
+      view.group.traverse((object) => {
+        object.userData.fishId = created.id;
+      });
 
-      scene.add(
-        view.group,
-      );
+      scene.add(view.group);
 
-      threeFishRef.current.set(
-        created.id,
-        {
-          view,
-        },
-      );
+      threeFishRef.current.set(created.id, {
+        view,
+      });
     } catch (error) {
-      aquarium.removeFish(
-        created.id,
-      );
+      aquarium.removeFish(created.id);
 
-      console.error(
-        'Failed to create 3D fish:',
-        error,
-      );
+      console.error('Failed to create 3D fish:', error);
     } finally {
       /*
        * Only clear loading state if this
@@ -374,13 +278,8 @@ export function ThreeAquariumView({
        * Otherwise a newer aquarium may
        * already be loading the same fish.
        */
-      if (
-        aquariumRef.current ===
-        aquarium
-      ) {
-        loadingFishRef.current.delete(
-          created.id,
-        );
+      if (aquariumRef.current === aquarium) {
+        loadingFishRef.current.delete(created.id);
       }
     }
   };
@@ -414,8 +313,7 @@ export function ThreeAquariumView({
   }, [createdFish]);
 
   useEffect(() => {
-    const container =
-      containerRef.current;
+    const container = containerRef.current;
 
     if (!container) {
       return;
@@ -433,24 +331,20 @@ export function ThreeAquariumView({
     /*
      * Simulation
      */
-    const aquarium =
-      new Aquarium({
-        width: tankWidth,
-        height: tankHeight,
-        depth: tankDepth,
-      });
+    const aquarium = new Aquarium({
+      width: tankWidth,
+      height: tankHeight,
+      depth: tankDepth,
+    });
 
-    aquariumRef.current =
-      aquarium;
+    aquariumRef.current = aquarium;
 
     /*
      * Scene
      */
-    const scene =
-      new THREE.Scene();
+    const scene = new THREE.Scene();
 
-    sceneRef.current =
-      scene;
+    sceneRef.current = scene;
 
     /*
      * The illustrated aquarium is rendered
@@ -460,18 +354,11 @@ export function ThreeAquariumView({
     scene.background = null;
 
     /*
- * Underwater environment
- */
-    const underwaterEffects =
-      createUnderwaterEffects(
-        scene,
-        tankWidth,
-        tankHeight,
-        tankDepth,
-      );
+     * Underwater environment
+     */
+    const underwaterEffects = createUnderwaterEffects(scene, tankWidth, tankHeight, tankDepth);
 
-    const graphicsQuality =
-      createGraphicsQualityController('low');
+    const graphicsQuality = createGraphicsQualityController('low');
 
     /*
      * Dynamic water lighting.
@@ -480,90 +367,56 @@ export function ThreeAquariumView({
      * screen-aligned caustics over the illustrated
      * aquarium background.
      */
-    const waterEffects =
-      createWaterEffects(
-        scene,
-        tankWidth,
-        tankHeight,
-        tankDepth,
-        graphicsQuality.getQuality(),
-      );
+    const waterEffects = createWaterEffects(
+      scene,
+      tankWidth,
+      tankHeight,
+      tankDepth,
+      graphicsQuality.getQuality(),
+    );
 
     /*
      * Camera
      */
-    const camera =
-      new THREE.PerspectiveCamera(
-        45,
+    const camera = new THREE.PerspectiveCamera(
+      45,
 
-        container.clientWidth /
-        container.clientHeight,
+      container.clientWidth / container.clientHeight,
 
-        0.1,
-        100,
-      );
-
-    camera.position.set(
-      0,
-      2,
-      12,
+      0.1,
+      100,
     );
 
-    camera.lookAt(
-      0,
-      0,
-      0,
-    );
+    camera.position.set(0, 2, 12);
 
-    waterEffects.setCamera(
-      camera,
-    );
+    camera.lookAt(0, 0, 0);
 
-    const sandCaustics =
-      createSandCaustics(
-        scene,
-        camera,
-      );
+    waterEffects.setCamera(camera);
+
+    const sandCaustics = createSandCaustics(scene, camera);
 
     /*
      * Renderer
      */
-    const renderer =
-      new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true,
-      });
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+    });
 
-    renderer.setClearColor(
-      0x000000,
-      0,
-    );
+    renderer.setClearColor(0x000000, 0);
 
     const highPixelRatio = Math.min(window.devicePixelRatio || 1, 1.25);
-    const lowPixelRatio = Math.min(
-      window.devicePixelRatio || 1,
-      0.45,
-    );
+    const lowPixelRatio = Math.min(window.devicePixelRatio || 1, 0.45);
 
-    renderer.setPixelRatio(
-      graphicsQuality.getQuality() === 'low'
-        ? lowPixelRatio
-        : highPixelRatio,
-    );
+    renderer.setPixelRatio(graphicsQuality.getQuality() === 'low' ? lowPixelRatio : highPixelRatio);
 
-    renderer.setSize(
-      container.clientWidth,
-      container.clientHeight,
-    );
+    renderer.setSize(container.clientWidth, container.clientHeight);
 
-    renderer.outputColorSpace =
-      THREE.SRGBColorSpace;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-    renderer.toneMapping =
-      THREE.ACESFilmicToneMapping;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
-    renderer.toneMappingExposure =
-      1.05;
+    renderer.toneMappingExposure = 1.05;
 
     // The 2D substrate is rendered inside the main Three.js scene,
     // behind the fish. No separate canvas is needed.
@@ -574,9 +427,7 @@ export function ThreeAquariumView({
     renderer.domElement.style.zIndex = '1';
     renderer.domElement.style.touchAction = 'none';
 
-    container.appendChild(
-      renderer.domElement,
-    );
+    container.appendChild(renderer.domElement);
 
     /*
      * Lighting
@@ -587,75 +438,42 @@ export function ThreeAquariumView({
      * darker lower half without putting
      * a visible spotlight in the scene.
      */
-    const waterLight =
-      new THREE.HemisphereLight(
-        0xc9f7ff,
-        0x174957,
-        1.35,
-      );
+    const waterLight = new THREE.HemisphereLight(0xc9f7ff, 0x174957, 1.35);
 
-    scene.add(
-      waterLight,
-    );
+    scene.add(waterLight);
 
     /*
- * Soft ambient fill.
- *
- * Fish can turn through the full X/Z plane,
- * so some orientations receive very little
- * directional light. Keep enough ambient
- * underwater light that their chosen colors
- * never become almost black.
- */
-    const ambientLight =
-      new THREE.AmbientLight(
-        0xbfefff,
-        1.15,
-      );
+     * Soft ambient fill.
+     *
+     * Fish can turn through the full X/Z plane,
+     * so some orientations receive very little
+     * directional light. Keep enough ambient
+     * underwater light that their chosen colors
+     * never become almost black.
+     */
+    const ambientLight = new THREE.AmbientLight(0xbfefff, 1.15);
 
-    scene.add(
-      ambientLight,
-    );
+    scene.add(ambientLight);
 
     /*
      * Soft daylight from above/front.
      */
-    const sunlight =
-      new THREE.DirectionalLight(
-        0xe8fbff,
-        1.65,
-      );
+    const sunlight = new THREE.DirectionalLight(0xe8fbff, 1.65);
 
-    sunlight.position.set(
-      -3.5,
-      7.5,
-      5,
-    );
+    sunlight.position.set(-3.5, 7.5, 5);
 
-    scene.add(
-      sunlight,
-    );
+    scene.add(sunlight);
 
     /*
      * Very small fill so the front of
      * rocks and plants does not become
      * completely flat or black.
      */
-    const frontFill =
-      new THREE.DirectionalLight(
-        0x8edce8,
-        0.32,
-      );
+    const frontFill = new THREE.DirectionalLight(0x8edce8, 0.32);
 
-    frontFill.position.set(
-      3,
-      1,
-      8,
-    );
+    frontFill.position.set(3, 1, 8);
 
-    scene.add(
-      frontFill,
-    );
+    scene.add(frontFill);
 
     // One controller owns the appearance and lifecycle of scene effects.
     const environment = createAquariumEnvironment({
@@ -678,18 +496,12 @@ export function ThreeAquariumView({
     /*
      * Shared food rendering resources.
      */
-    const foodGeometry =
-      new THREE.SphereGeometry(
-        0.09,
-        10,
-        10,
-      );
+    const foodGeometry = new THREE.SphereGeometry(0.09, 10, 10);
 
-    const foodMaterial =
-      new THREE.MeshStandardMaterial({
-        color: 0x7c3f00,
-        roughness: 0.9,
-      });
+    const foodMaterial = new THREE.MeshStandardMaterial({
+      color: 0x7c3f00,
+      roughness: 0.9,
+    });
 
     /*
      * Feeding
@@ -697,8 +509,7 @@ export function ThreeAquariumView({
      * Convert pointer coordinates into
      * a ray going through the aquarium.
      */
-    const raycaster =
-      new THREE.Raycaster();
+    const raycaster = new THREE.Raycaster();
 
     const pointer = new THREE.Vector2();
 
@@ -726,9 +537,7 @@ export function ThreeAquariumView({
       return normalizedX;
     };
 
-    const handleDecorationPointerDown = (
-      event: PointerEvent,
-    ): boolean => {
+    const handleDecorationPointerDown = (event: PointerEvent): boolean => {
       if (!decorationEditingRef.current) return false;
       if (activeDragPointerId !== null) return true;
       if (event.button !== 0 && event.pointerType === 'mouse') return true;
@@ -738,9 +547,7 @@ export function ThreeAquariumView({
 
       if (normalizedX === null) return true;
 
-      const id = environmentRef.current?.getDecorationAtPoint(
-        raycaster,
-      );
+      const id = environmentRef.current?.getDecorationAtPoint(raycaster);
 
       onDecorationSelectRef.current?.(id ?? null);
       environmentRef.current?.setSelectedDecoration(id ?? null);
@@ -773,10 +580,7 @@ export function ThreeAquariumView({
 
       if (normalizedX === null) return;
 
-      environmentRef.current?.moveDecoration(
-        draggedDecorationId,
-        normalizedX,
-      );
+      environmentRef.current?.moveDecoration(draggedDecorationId, normalizedX);
 
       // Persist the final position on pointer-up rather than
       // updating React state on every pointer movement.
@@ -784,20 +588,14 @@ export function ThreeAquariumView({
     };
 
     const finishDecorationDrag = (event: PointerEvent, commit: boolean) => {
-      if (
-        draggedDecorationId === null ||
-        activeDragPointerId !== event.pointerId
-      ) {
+      if (draggedDecorationId === null || activeDragPointerId !== event.pointerId) {
         return;
       }
 
       const normalizedX = updatePointerRay(event);
 
       if (commit && normalizedX !== null) {
-        onDecorationMoveRef.current?.(
-          draggedDecorationId,
-          normalizedX,
-        );
+        onDecorationMoveRef.current?.(draggedDecorationId, normalizedX);
       }
 
       environmentRef.current?.setDraggingDecoration(null);
@@ -808,7 +606,6 @@ export function ThreeAquariumView({
         renderer.domElement.releasePointerCapture(event.pointerId);
       }
     };
-
 
     const handleDecorationPointerUp = (event: PointerEvent) => {
       finishDecorationDrag(event, true);
@@ -828,18 +625,9 @@ export function ThreeAquariumView({
      * position so the fish must move
      * through real depth to reach it.
      */
-    const feedingPlane =
-      new THREE.Plane(
-        new THREE.Vector3(
-          0,
-          0,
-          1,
-        ),
-        0,
-      );
+    const feedingPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
-    const intersection =
-      new THREE.Vector3();
+    const intersection = new THREE.Vector3();
 
     // Both toolbar feeding and click-to-feed use the same engine and meshes.
     const spawnFood = (x: number, y: number, z: number) => {
@@ -869,10 +657,7 @@ export function ThreeAquariumView({
       }
     };
 
-    const handlePointerDown = (
-      event: PointerEvent,
-    ) => {
-
+    const handlePointerDown = (event: PointerEvent) => {
       if ((event.target as Element).closest?.('.aquarium-quick-actions')) {
         return;
       }
@@ -880,43 +665,17 @@ export function ThreeAquariumView({
         return;
       }
 
-      const rect =
-        renderer.domElement
-          .getBoundingClientRect();
+      const rect = renderer.domElement.getBoundingClientRect();
 
-      if (
-        rect.width === 0 ||
-        rect.height === 0
-      ) {
+      if (rect.width === 0 || rect.height === 0) {
         return;
       }
 
-      pointer.x =
-        (
-          (
-            event.clientX -
-            rect.left
-          ) /
-          rect.width
-        ) *
-        2 -
-        1;
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
 
-      pointer.y =
-        -(
-          (
-            event.clientY -
-            rect.top
-          ) /
-          rect.height
-        ) *
-        2 +
-        1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-      raycaster.setFromCamera(
-        pointer,
-        camera,
-      );
+      raycaster.setFromCamera(pointer, camera);
 
       /*
        * First check whether the user
@@ -925,41 +684,20 @@ export function ThreeAquariumView({
        * Feeding only happens when no fish
        * was selected.
        */
-      const fishObjects =
-        Array.from(
-          threeFishRef.current.values(),
-        ).map(
-          ({ view }) =>
-            view.group,
-        );
+      const fishObjects = Array.from(threeFishRef.current.values()).map(({ view }) => view.group);
 
-      const fishHits =
-        raycaster.intersectObjects(
-          fishObjects,
-          true,
-        );
+      const fishHits = raycaster.intersectObjects(fishObjects, true);
 
       if (fishHits.length > 0) {
-        const clickedObject =
-          fishHits[0].object;
+        const clickedObject = fishHits[0].object;
 
-        const fishId =
-          clickedObject.userData
-            .fishId as
-            | string
-            | undefined;
+        const fishId = clickedObject.userData.fishId as string | undefined;
 
         if (fishId) {
-          const created =
-            createdFishRef.current.find(
-              (fish) =>
-                fish.id === fishId,
-            );
+          const created = createdFishRef.current.find((fish) => fish.id === fishId);
 
           if (created) {
-            onFishSelect?.(
-              created,
-            );
+            onFishSelect?.(created);
 
             /*
              * Important:
@@ -976,47 +714,21 @@ export function ThreeAquariumView({
        * No fish was clicked.
        * Treat the click as feeding.
        */
-      const hit =
-        raycaster.ray.intersectPlane(
-          feedingPlane,
-          intersection,
-        );
+      const hit = raycaster.ray.intersectPlane(feedingPlane, intersection);
 
       if (!hit) {
         return;
       }
 
-      const x =
-        THREE.MathUtils.clamp(
-          intersection.x,
-          -tankWidth / 2 +
-          0.5,
-          tankWidth / 2 -
-          0.5,
-        );
+      const x = THREE.MathUtils.clamp(intersection.x, -tankWidth / 2 + 0.5, tankWidth / 2 - 0.5);
 
-      const y =
-        THREE.MathUtils.clamp(
-          intersection.y,
-          -tankHeight / 2 +
-          0.5,
-          tankHeight / 2 -
-          0.5,
-        );
+      const y = THREE.MathUtils.clamp(intersection.y, -tankHeight / 2 + 0.5, tankHeight / 2 - 0.5);
 
       /*
        * Random depth gives each pellet
        * a genuine 3D position.
        */
-      const z =
-        (
-          Math.random() -
-          0.5
-        ) *
-        (
-          tankDepth -
-          1
-        );
+      const z = (Math.random() - 0.5) * (tankDepth - 1);
 
       spawnFood(x, y, z);
     };
@@ -1024,29 +736,13 @@ export function ThreeAquariumView({
     if (interactive) {
       // Listen on the tank container so decorative DOM layers cannot
       // accidentally block interaction with the WebGL canvas.
-      container.addEventListener(
-        'pointerdown',
-        handlePointerDown,
-        true,
-      );
+      container.addEventListener('pointerdown', handlePointerDown, true);
 
-      container.addEventListener(
-        'pointermove',
-        handleDecorationPointerMove,
-        true,
-      );
+      container.addEventListener('pointermove', handleDecorationPointerMove, true);
 
-      container.addEventListener(
-        'pointerup',
-        handleDecorationPointerUp,
-        true,
-      );
+      container.addEventListener('pointerup', handleDecorationPointerUp, true);
 
-      container.addEventListener(
-        'pointercancel',
-        handleDecorationPointerCancel,
-        true,
-      );
+      container.addEventListener('pointercancel', handleDecorationPointerCancel, true);
     }
 
     /*
@@ -1058,25 +754,17 @@ export function ThreeAquariumView({
      */
     loadingFishRef.current.clear();
 
-    for (
-      const created of
-      createdFishRef.current
-      ) {
-      void addCreatedFish(
-        created,
-      );
+    for (const created of createdFishRef.current) {
+      void addCreatedFish(created);
     }
 
     /*
      * Animation
      */
-    const clock =
-      new THREE.Clock();
+    const clock = new THREE.Clock();
 
     // Development-only overlay: no React re-renders and no production DOM.
-    const fpsOverlay = showDebugStats
-      ? document.createElement('div')
-      : null;
+    const fpsOverlay = showDebugStats ? document.createElement('div') : null;
 
     if (fpsOverlay) {
       Object.assign(fpsOverlay.style, {
@@ -1108,16 +796,12 @@ export function ThreeAquariumView({
         return;
       }
 
-      animationFrame =
-        requestAnimationFrame(
-          animate,
-        );
+      animationFrame = requestAnimationFrame(animate);
 
       const rawDeltaTime = clock.getDelta();
       const deltaTime = Math.min(rawDeltaTime, 0.05);
 
-      const elapsed =
-        clock.elapsedTime;
+      const elapsed = clock.elapsedTime;
 
       // Use the real frame interval for performance measurements.
       const quality = graphicsQuality.update(rawDeltaTime);
@@ -1150,9 +834,7 @@ export function ThreeAquariumView({
       if (quality !== currentQuality) {
         currentQuality = quality;
         environment.setQuality(quality);
-        renderer.setPixelRatio(
-          quality === 'low' ? lowPixelRatio : highPixelRatio,
-        );
+        renderer.setPixelRatio(quality === 'low' ? lowPixelRatio : highPixelRatio);
       }
 
       environment.update(deltaTime, elapsed);
@@ -1160,43 +842,27 @@ export function ThreeAquariumView({
       /*
        * Update the real 3D simulation.
        */
-      aquarium.update(
-        deltaTime,
-      );
+      aquarium.update(deltaTime);
 
       /*
        * Synchronize food.
        */
       existingFoodIds.clear();
 
-      for (
-        const food of
-        aquarium.getFood()
-        ) {
-        existingFoodIds.add(
-          food.id,
-        );
+      for (const food of aquarium.getFood()) {
+        existingFoodIds.add(food.id);
 
-        const pellet =
-          foodMeshesRef.current.get(
-            food.id,
-          );
+        const pellet = foodMeshesRef.current.get(food.id);
 
         if (!pellet) {
           continue;
         }
 
-        pellet.position.set(
-          food.position.x,
-          food.position.y,
-          food.position.z,
-        );
+        pellet.position.set(food.position.x, food.position.y, food.position.z);
 
-        pellet.rotation.x +=
-          deltaTime * 0.8;
+        pellet.rotation.x += deltaTime * 0.8;
 
-        pellet.rotation.y +=
-          deltaTime * 1.1;
+        pellet.rotation.y += deltaTime * 1.1;
       }
 
       /*
@@ -1204,89 +870,46 @@ export function ThreeAquariumView({
        * simulation after it is eaten.
        * Remove its Three.js object too.
        */
-      for (
-        const [
-          id,
-          pellet,
-        ] of
-        foodMeshesRef.current
-        ) {
-        if (
-          existingFoodIds.has(
-            id,
-          )
-        ) {
+      for (const [id, pellet] of foodMeshesRef.current) {
+        if (existingFoodIds.has(id)) {
           continue;
         }
 
-        scene.remove(
-          pellet,
-        );
+        scene.remove(pellet);
 
-        foodMeshesRef.current.delete(
-          id,
-        );
+        foodMeshesRef.current.delete(id);
       }
 
       /*
        * Synchronize rendered fish with
        * the real 3D simulation.
        */
-      for (
-        const fish of
-        aquarium.getFish()
-        ) {
-        const rendered =
-          threeFishRef.current.get(
-            fish.id,
-          );
+      for (const fish of aquarium.getFish()) {
+        const rendered = threeFishRef.current.get(fish.id);
 
         if (!rendered) {
           continue;
         }
 
-        const {
-          view,
-        } = rendered;
+        const { view } = rendered;
 
-        view.group.position.set(
-          fish.position.x,
-          fish.position.y,
-          fish.position.z,
+        view.group.position.set(fish.position.x, fish.position.y, fish.position.z);
+
+        const velocityMagnitude = Math.sqrt(
+          fish.velocity.x * fish.velocity.x +
+            fish.velocity.y * fish.velocity.y +
+            fish.velocity.z * fish.velocity.z,
         );
 
-        const velocityMagnitude =
-          Math.sqrt(
-            fish.velocity.x *
-            fish.velocity.x +
-            fish.velocity.y *
-            fish.velocity.y +
-            fish.velocity.z *
-            fish.velocity.z,
-          );
-
-        const speedRatio =
-          fish.speed > 0
-            ? velocityMagnitude /
-            fish.speed
-            : 1;
+        const speedRatio = fish.speed > 0 ? velocityMagnitude / fish.speed : 1;
 
         /*
          * Vertical movement tilts the
          * complete fish slightly.
          */
-        const verticalTilt =
-          Math.max(
-            -0.25,
-            Math.min(
-              0.25,
-              fish.velocity.y *
-              0.18,
-            ),
-          );
+        const verticalTilt = Math.max(-0.25, Math.min(0.25, fish.velocity.y * 0.18));
 
-        view.group.rotation.z =
-          verticalTilt;
+        view.group.rotation.z = verticalTilt;
 
         /*
          * ThreeFish handles Z movement
@@ -1294,14 +917,9 @@ export function ThreeAquariumView({
          * original drawing readable.
          */
         view.update(
-          elapsed *
-          (
-            3.5 +
-            speedRatio * 2
-          ),
+          elapsed * (3.5 + speedRatio * 2),
 
-          0.55 +
-          speedRatio * 0.45,
+          0.55 + speedRatio * 0.45,
 
           fish.direction,
           fish.velocity.z,
@@ -1309,10 +927,7 @@ export function ThreeAquariumView({
         );
       }
 
-      renderer.render(
-        scene,
-        camera,
-      );
+      renderer.render(scene, camera);
     };
 
     animate();
@@ -1321,36 +936,24 @@ export function ThreeAquariumView({
      * Resize
      */
     const handleResize = () => {
-      const width =
-        container.clientWidth;
+      const width = container.clientWidth;
 
-      const height =
-        container.clientHeight;
+      const height = container.clientHeight;
 
-      if (
-        width === 0 ||
-        height === 0
-      ) {
+      if (width === 0 || height === 0) {
         return;
       }
 
-      camera.aspect =
-        width / height;
+      camera.aspect = width / height;
 
       camera.updateProjectionMatrix();
 
       environment.resize(camera);
 
-      renderer.setSize(
-        width,
-        height,
-      );
+      renderer.setSize(width, height);
     };
 
-    window.addEventListener(
-      'resize',
-      handleResize,
-    );
+    window.addEventListener('resize', handleResize);
 
     /*
      * Cleanup
@@ -1359,46 +962,20 @@ export function ThreeAquariumView({
       cancelled = true;
       feedFromToolbarRef.current = null;
 
-      cancelAnimationFrame(
-        animationFrame,
-      );
+      cancelAnimationFrame(animationFrame);
 
-      window.removeEventListener(
-        'resize',
-        handleResize,
-      );
+      window.removeEventListener('resize', handleResize);
 
-      container.removeEventListener(
-        'pointerdown',
-        handlePointerDown,
-        true,
-      );
-      container.removeEventListener(
-        'pointermove',
-        handleDecorationPointerMove,
-        true,
-      );
-      container.removeEventListener(
-        'pointerup',
-        handleDecorationPointerUp,
-        true,
-      );
-      container.removeEventListener(
-        'pointercancel',
-        handleDecorationPointerCancel,
-        true,
-      );
+      container.removeEventListener('pointerdown', handlePointerDown, true);
+      container.removeEventListener('pointermove', handleDecorationPointerMove, true);
+      container.removeEventListener('pointerup', handleDecorationPointerUp, true);
+      container.removeEventListener('pointercancel', handleDecorationPointerCancel, true);
 
-      sceneRef.current =
-        null;
+      sceneRef.current = null;
 
-      aquariumRef.current =
-        null;
+      aquariumRef.current = null;
 
-      for (
-        const rendered of
-        threeFishRef.current.values()
-        ) {
+      for (const rendered of threeFishRef.current.values()) {
         rendered.view.destroy();
       }
 
@@ -1416,13 +993,8 @@ export function ThreeAquariumView({
        * material, so remove meshes first
        * and dispose shared resources once.
        */
-      for (
-        const pellet of
-        foodMeshesRef.current.values()
-        ) {
-        scene.remove(
-          pellet,
-        );
+      for (const pellet of foodMeshesRef.current.values()) {
+        scene.remove(pellet);
       }
 
       foodMeshesRef.current.clear();
@@ -1482,32 +1054,82 @@ export function ThreeAquariumView({
           onPointerDown={(event) => event.stopPropagation()}
         >
           <span className="aquarium-quick-actions__label">✨ Edit decoration</span>
-          <button type="button" aria-label="Make smaller" title="Smaller"
+          <button
+            type="button"
+            aria-label="Make smaller"
+            title="Smaller"
             disabled={selectedDecoration.scale <= 0.3}
-            onClick={() => updateSelectedDecoration({
-              scale: Math.max(0.3, Number((selectedDecoration.scale - 0.1).toFixed(2))),
-            })}>−</button>
-          <button type="button" aria-label="Make bigger" title="Bigger"
+            onClick={() =>
+              updateSelectedDecoration({
+                scale: Math.max(0.3, Number((selectedDecoration.scale - 0.1).toFixed(2))),
+              })
+            }
+          >
+            −
+          </button>
+          <button
+            type="button"
+            aria-label="Make bigger"
+            title="Bigger"
             disabled={selectedDecoration.scale >= 2}
-            onClick={() => updateSelectedDecoration({
-              scale: Math.min(2, Number((selectedDecoration.scale + 0.1).toFixed(2))),
-            })}>+</button>
+            onClick={() =>
+              updateSelectedDecoration({
+                scale: Math.min(2, Number((selectedDecoration.scale + 0.1).toFixed(2))),
+              })
+            }
+          >
+            +
+          </button>
           <span className="aquarium-quick-actions__divider" aria-hidden="true" />
-          <button type="button" aria-label="Rotate left" title="Rotate left"
-            onClick={() => updateSelectedDecoration({
-              rotation: Math.max(-Math.PI, Number((selectedDecoration.rotation - Math.PI / 12).toFixed(3))),
-            })}>↶</button>
-          <button type="button" aria-label="Rotate right" title="Rotate right"
-            onClick={() => updateSelectedDecoration({
-              rotation: Math.min(Math.PI, Number((selectedDecoration.rotation + Math.PI / 12).toFixed(3))),
-            })}>↷</button>
+          <button
+            type="button"
+            aria-label="Rotate left"
+            title="Rotate left"
+            onClick={() =>
+              updateSelectedDecoration({
+                rotation: Math.max(
+                  -Math.PI,
+                  Number((selectedDecoration.rotation - Math.PI / 12).toFixed(3)),
+                ),
+              })
+            }
+          >
+            ↶
+          </button>
+          <button
+            type="button"
+            aria-label="Rotate right"
+            title="Rotate right"
+            onClick={() =>
+              updateSelectedDecoration({
+                rotation: Math.min(
+                  Math.PI,
+                  Number((selectedDecoration.rotation + Math.PI / 12).toFixed(3)),
+                ),
+              })
+            }
+          >
+            ↷
+          </button>
           <span className="aquarium-quick-actions__divider" aria-hidden="true" />
-          <button type="button" className="aquarium-quick-actions__delete"
-            aria-label="Remove decoration" title="Remove decoration"
-            onClick={removeSelectedDecoration}>🗑️</button>
-          <button type="button" className="aquarium-quick-actions__close"
-            aria-label="Deselect decoration" title="Done editing"
-            onClick={() => onDecorationSelect?.(null)}>×</button>
+          <button
+            type="button"
+            className="aquarium-quick-actions__delete"
+            aria-label="Remove decoration"
+            title="Remove decoration"
+            onClick={removeSelectedDecoration}
+          >
+            🗑️
+          </button>
+          <button
+            type="button"
+            className="aquarium-quick-actions__close"
+            aria-label="Deselect decoration"
+            title="Done editing"
+            onClick={() => onDecorationSelect?.(null)}
+          >
+            ×
+          </button>
         </div>
       )}
     </div>

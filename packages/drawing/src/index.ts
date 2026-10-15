@@ -7,10 +7,7 @@ export function cropDrawing(
   source: HTMLCanvasElement,
   options: CropDrawingOptions = {},
 ): string | null {
-  const {
-    padding = 16,
-    alphaThreshold = 5,
-  } = options;
+  const { padding = 16, alphaThreshold = 5 } = options;
 
   const context = source.getContext('2d');
 
@@ -20,12 +17,7 @@ export function cropDrawing(
 
   const { width, height } = source;
 
-  const imageData = context.getImageData(
-    0,
-    0,
-    width,
-    height,
-  );
+  const imageData = context.getImageData(0, 0, width, height);
 
   const pixels = imageData.data;
 
@@ -59,30 +51,20 @@ export function cropDrawing(
   minX = Math.max(0, minX - padding);
   minY = Math.max(0, minY - padding);
 
-  maxX = Math.min(
-    width - 1,
-    maxX + padding,
-  );
+  maxX = Math.min(width - 1, maxX + padding);
 
-  maxY = Math.min(
-    height - 1,
-    maxY + padding,
-  );
+  maxY = Math.min(height - 1, maxY + padding);
 
-  const croppedWidth =
-    maxX - minX + 1;
+  const croppedWidth = maxX - minX + 1;
 
-  const croppedHeight =
-    maxY - minY + 1;
+  const croppedHeight = maxY - minY + 1;
 
-  const croppedCanvas =
-    document.createElement('canvas');
+  const croppedCanvas = document.createElement('canvas');
 
   croppedCanvas.width = croppedWidth;
   croppedCanvas.height = croppedHeight;
 
-  const croppedContext =
-    croppedCanvas.getContext('2d');
+  const croppedContext = croppedCanvas.getContext('2d');
 
   if (!croppedContext) {
     return null;
@@ -100,7 +82,5 @@ export function cropDrawing(
     croppedHeight,
   );
 
-  return croppedCanvas.toDataURL(
-    'image/png',
-  );
+  return croppedCanvas.toDataURL('image/png');
 }

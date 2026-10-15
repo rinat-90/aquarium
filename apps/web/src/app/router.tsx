@@ -2,27 +2,69 @@ import { lazy, Suspense, type ReactNode } from 'react';
 
 import { createBrowserRouter, Navigate } from 'react-router';
 
-const AuthScreen = lazy(() => import('../components/Auth/AuthScreen').then((module) => ({ default: module.AuthScreen })));
+const AuthScreen = lazy(() =>
+  import('../components/Auth/AuthScreen').then((module) => ({ default: module.AuthScreen })),
+);
 import { AppLayout } from '../layout/AppLayout';
 
-const AquariumsPage = lazy(() => import('../pages/AquariumsPage/AquariumsPage').then((module) => ({ default: module.AquariumsPage })));
-const AquariumPage = lazy(() => import('../pages/AquariumPage/AquariumPage').then((module) => ({ default: module.AquariumPage })));
-const EditAquariumPage = lazy(() => import('../pages/EditAquariumPage/EditAquariumPage').then((module) => ({ default: module.EditAquariumPage })));
-const TvAquariumPage = lazy(() => import('../pages/TvAquariumPage/TvAquariumPage').then((module) => ({ default: module.TvAquariumPage })));
-const TvPairPage = lazy(() => import('../pages/TvPairPage/TvPairPage').then((module) => ({ default: module.TvPairPage })));
-const CreateFishPage = lazy(() => import('../pages/CreateFishPage/CreateFishPage').then((module) => ({ default: module.CreateFishPage })));
-const ScanFishPage = lazy(() => import('../pages/ScanFishPage/ScanFishPage').then((module) => ({ default: module.ScanFishPage })));
-const DrawFishPage = lazy(() => import('../pages/DrawFishPage/DrawFishPage').then((module) => ({ default: module.DrawFishPage })));
-const CustomizeFishPage = lazy(() => import('../pages/CustomizeFishPage/CustomizeFishPage').then((module) => ({ default: module.CustomizeFishPage })));
-const ProfilePage = lazy(() => import('../pages/ProfilePage/ProfilePage').then((module) => ({ default: module.ProfilePage })));
-const TvManagerPage = lazy(() => import('../pages/TvManagerPage/TvManagerPage').then((module) => ({ default: module.TvManagerPage })));
+const AquariumsPage = lazy(() =>
+  import('../pages/AquariumsPage/AquariumsPage').then((module) => ({
+    default: module.AquariumsPage,
+  })),
+);
+const AquariumPage = lazy(() =>
+  import('../pages/AquariumPage/AquariumPage').then((module) => ({ default: module.AquariumPage })),
+);
+const EditAquariumPage = lazy(() =>
+  import('../pages/EditAquariumPage/EditAquariumPage').then((module) => ({
+    default: module.EditAquariumPage,
+  })),
+);
+const TvAquariumPage = lazy(() =>
+  import('../pages/TvAquariumPage/TvAquariumPage').then((module) => ({
+    default: module.TvAquariumPage,
+  })),
+);
+const TvPairPage = lazy(() =>
+  import('../pages/TvPairPage/TvPairPage').then((module) => ({ default: module.TvPairPage })),
+);
+const CreateFishPage = lazy(() =>
+  import('../pages/CreateFishPage/CreateFishPage').then((module) => ({
+    default: module.CreateFishPage,
+  })),
+);
+const ScanFishPage = lazy(() =>
+  import('../pages/ScanFishPage/ScanFishPage').then((module) => ({ default: module.ScanFishPage })),
+);
+const DrawFishPage = lazy(() =>
+  import('../pages/DrawFishPage/DrawFishPage').then((module) => ({ default: module.DrawFishPage })),
+);
+const CustomizeFishPage = lazy(() =>
+  import('../pages/CustomizeFishPage/CustomizeFishPage').then((module) => ({
+    default: module.CustomizeFishPage,
+  })),
+);
+const ProfilePage = lazy(() =>
+  import('../pages/ProfilePage/ProfilePage').then((module) => ({ default: module.ProfilePage })),
+);
+const TvManagerPage = lazy(() =>
+  import('../pages/TvManagerPage/TvManagerPage').then((module) => ({
+    default: module.TvManagerPage,
+  })),
+);
 
 import { ProtectedRoute } from './ProtectedRoute';
 
 // A page-specific boundary keeps a failed or slow chunk from blanking the app.
 function lazyPage(page: ReactNode) {
   return (
-    <Suspense fallback={<div role="status" style={{ padding: '2rem', color: '#d9f3ff' }}>Loading…</div>}>
+    <Suspense
+      fallback={
+        <div role="status" style={{ padding: '2rem', color: '#d9f3ff' }}>
+          Loading…
+        </div>
+      }
+    >
       {page}
     </Suspense>
   );

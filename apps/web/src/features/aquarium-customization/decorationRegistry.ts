@@ -1,7 +1,4 @@
-
-import type {
-  AquariumDecorationAssetId,
-} from './types';
+import type { AquariumDecorationAssetId } from './types';
 
 export type DecorationAssetDefinition = {
   id: AquariumDecorationAssetId;
@@ -13,10 +10,7 @@ export type DecorationAssetDefinition = {
   maxScale: number;
 };
 
-export const DECORATION_REGISTRY: Record<
-  AquariumDecorationAssetId,
-  DecorationAssetDefinition
-> = {
+export const DECORATION_REGISTRY: Record<AquariumDecorationAssetId, DecorationAssetDefinition> = {
   rocks: {
     id: 'rocks',
     name: 'Ocean Rocks',

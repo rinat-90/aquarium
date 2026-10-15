@@ -36,9 +36,7 @@ export function ProfilePage() {
         });
 
         if (result.error) {
-          throw new Error(
-            result.error.message ?? 'Failed to load profile',
-          );
+          throw new Error(result.error.message ?? 'Failed to load profile');
         }
 
         const sessionUser = result.data?.user;
@@ -58,11 +56,7 @@ export function ProfilePage() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'Failed to load profile',
-          );
+          setError(err instanceof Error ? err.message : 'Failed to load profile');
         }
       } finally {
         if (!cancelled) {
@@ -78,12 +72,7 @@ export function ProfilePage() {
         if (cancelled) return;
 
         setAquariumCount(aquariums.length);
-        setFishCount(
-          aquariums.reduce(
-            (total, aquarium) => total + aquarium.fish.length,
-            0,
-          ),
-        );
+        setFishCount(aquariums.reduce((total, aquarium) => total + aquarium.fish.length, 0));
       } catch {
         if (!cancelled) {
           setStatsError('Could not load aquarium statistics.');
@@ -104,13 +93,7 @@ export function ProfilePage() {
 
     const trimmedName = name.trim();
 
-    if (
-      !user ||
-      !trimmedName ||
-      trimmedName.length > 100 ||
-      trimmedName === user.name ||
-      saving
-    ) {
+    if (!user || !trimmedName || trimmedName.length > 100 || trimmedName === user.name || saving) {
       return;
     }
 
@@ -124,25 +107,15 @@ export function ProfilePage() {
       });
 
       if (result.error) {
-        throw new Error(
-          result.error.message ?? 'Failed to update profile',
-        );
+        throw new Error(result.error.message ?? 'Failed to update profile');
       }
 
-      setUser((previous) =>
-        previous
-          ? { ...previous, name: trimmedName }
-          : previous,
-      );
+      setUser((previous) => (previous ? { ...previous, name: trimmedName } : previous));
 
       setName(trimmedName);
       setSuccess(true);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to update profile',
-      );
+      setError(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
       setSaving(false);
     }
@@ -152,9 +125,9 @@ export function ProfilePage() {
 
   const memberSince = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString(undefined, {
-      month: 'long',
-      year: 'numeric',
-    })
+        month: 'long',
+        year: 'numeric',
+      })
     : '—';
 
   async function handleSignOut() {
@@ -167,18 +140,12 @@ export function ProfilePage() {
       const result = await authClient.signOut({});
 
       if (result.error) {
-        throw new Error(
-          result.error.message ?? 'Failed to sign out',
-        );
+        throw new Error(result.error.message ?? 'Failed to sign out');
       }
 
       navigate('/login', { replace: true });
     } catch (err) {
-      setSignOutError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to sign out',
-      );
+      setSignOutError(err instanceof Error ? err.message : 'Failed to sign out');
     } finally {
       setSigningOut(false);
     }
@@ -227,11 +194,7 @@ export function ProfilePage() {
 
             <label htmlFor="profile-email">Email Address</label>
 
-            <input
-              id="profile-email"
-              value={user?.email ?? ''}
-              readOnly
-            />
+            <input id="profile-email" value={user?.email ?? ''} readOnly />
 
             {error && (
               <p className="profile-error" role="alert">
@@ -247,12 +210,7 @@ export function ProfilePage() {
 
             <button
               type="submit"
-              disabled={
-                saving ||
-                !user ||
-                !name.trim() ||
-                name.trim() === user.name
-              }
+              disabled={saving || !user || !name.trim() || name.trim() === user.name}
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
@@ -284,11 +242,7 @@ export function ProfilePage() {
       </div>
 
       <section className="profile-mobile-signout">
-        <button
-          type="button"
-          onClick={() => void handleSignOut()}
-          disabled={signingOut}
-        >
+        <button type="button" onClick={() => void handleSignOut()} disabled={signingOut}>
           <span aria-hidden="true">↪</span>
           {signingOut ? 'Signing out...' : 'Sign Out'}
         </button>

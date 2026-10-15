@@ -1,4 +1,3 @@
-
 import type { DrawingCrop } from './cropDrawing';
 
 export async function createFishSilhouette(
@@ -39,10 +38,7 @@ export async function createFishSilhouette(
   }
 
   // Connect small gaps in the fish outline.
-  const radius = Math.max(
-    2,
-    Math.min(6, Math.round(Math.min(width, height) * 0.004)),
-  );
+  const radius = Math.max(2, Math.min(6, Math.round(Math.min(width, height) * 0.004)));
 
   const dilated = new Uint8Array(total);
 
@@ -55,12 +51,7 @@ export async function createFishSilhouette(
           const nx = x + dx;
           const ny = y + dy;
 
-          if (
-            nx >= 0 &&
-            ny >= 0 &&
-            nx < width &&
-            ny < height
-          ) {
+          if (nx >= 0 && ny >= 0 && nx < width && ny < height) {
             dilated[ny * width + nx] = 1;
           }
         }
@@ -76,12 +67,7 @@ export async function createFishSilhouette(
   let tail = 0;
 
   const visit = (index: number) => {
-    if (
-      index < 0 ||
-      index >= total ||
-      dilated[index] ||
-      outside[index]
-    ) {
+    if (index < 0 || index >= total || dilated[index] || outside[index]) {
       return;
     }
 
@@ -139,12 +125,7 @@ export async function createFishSilhouette(
       ];
 
       for (const next of neighbors) {
-        if (
-          next < 0 ||
-          seen[next] ||
-          outside[next] ||
-          dilated[next]
-        ) {
+        if (next < 0 || seen[next] || outside[next] || dilated[next]) {
           continue;
         }
 
@@ -161,9 +142,7 @@ export async function createFishSilhouette(
   const mainBody = regions[0];
 
   if (!mainBody || mainBody.length < total * 0.003) {
-    throw new Error(
-      'Could not detect a sufficiently closed fish outline.',
-    );
+    throw new Error('Could not detect a sufficiently closed fish outline.');
   }
 
   // Select the fish body.
@@ -174,10 +153,7 @@ export async function createFishSilhouette(
   }
 
   // Include enclosed fins and tail regions near the body.
-  const proximity = Math.max(
-    6,
-    Math.round(Math.min(width, height) * 0.035),
-  );
+  const proximity = Math.max(6, Math.round(Math.min(width, height) * 0.035));
 
   const nearby = new Uint8Array(total);
 
@@ -190,12 +166,7 @@ export async function createFishSilhouette(
         const nx = x + dx;
         const ny = y + dy;
 
-        if (
-          nx >= 0 &&
-          ny >= 0 &&
-          nx < width &&
-          ny < height
-        ) {
+        if (nx >= 0 && ny >= 0 && nx < width && ny < height) {
           nearby[ny * width + nx] = 1;
         }
       }
@@ -205,9 +176,7 @@ export async function createFishSilhouette(
   for (let i = 1; i < regions.length; i++) {
     const region = regions[i];
 
-    const touchesBody = region.some(
-      (index) => nearby[index] === 1,
-    );
+    const touchesBody = region.some((index) => nearby[index] === 1);
 
     if (!touchesBody) continue;
 
@@ -219,10 +188,7 @@ export async function createFishSilhouette(
   // Build a mask containing the body and connected strokes.
   const mask = new Uint8Array(total);
 
-  const edgeMargin = Math.max(
-    8,
-    Math.round(Math.min(width, height) * 0.025),
-  );
+  const edgeMargin = Math.max(8, Math.round(Math.min(width, height) * 0.025));
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -236,12 +202,7 @@ export async function createFishSilhouette(
       if (!ink[index]) continue;
 
       // Ignore paper borders near the crop edges.
-      if (
-        x < edgeMargin ||
-        y < edgeMargin ||
-        x >= width - edgeMargin ||
-        y >= height - edgeMargin
-      ) {
+      if (x < edgeMargin || y < edgeMargin || x >= width - edgeMargin || y >= height - edgeMargin) {
         continue;
       }
 
@@ -254,12 +215,7 @@ export async function createFishSilhouette(
           const nx = x + dx;
           const ny = y + dy;
 
-          if (
-            nx < 0 ||
-            ny < 0 ||
-            nx >= width ||
-            ny >= height
-          ) {
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
             continue;
           }
 
@@ -301,12 +257,7 @@ export async function createFishSilhouette(
           const nx = x + dx;
           const ny = y + dy;
 
-          if (
-            nx < 0 ||
-            ny < 0 ||
-            nx >= width ||
-            ny >= height
-          ) {
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
             continue;
           }
 
@@ -323,10 +274,7 @@ export async function createFishSilhouette(
     components.push(component);
   }
 
-  const minComponentSize = Math.max(
-    12,
-    Math.round(total * 0.0001),
-  );
+  const minComponentSize = Math.max(12, Math.round(total * 0.0001));
 
   for (const component of components) {
     if (component.length >= minComponentSize) continue;
@@ -337,10 +285,7 @@ export async function createFishSilhouette(
   }
 
   // NEW: Close small gaps before filling the tail.
-  const closingRadius = Math.max(
-    2,
-    Math.min(5, Math.round(Math.min(width, height) * 0.008)),
-  );
+  const closingRadius = Math.max(2, Math.min(5, Math.round(Math.min(width, height) * 0.008)));
 
   const expandedMask = new Uint8Array(total);
 
@@ -353,12 +298,7 @@ export async function createFishSilhouette(
           const nx = x + dx;
           const ny = y + dy;
 
-          if (
-            nx >= 0 &&
-            ny >= 0 &&
-            nx < width &&
-            ny < height
-          ) {
+          if (nx >= 0 && ny >= 0 && nx < width && ny < height) {
             expandedMask[ny * width + nx] = 1;
           }
         }
@@ -415,9 +355,7 @@ export async function createFishSilhouette(
 
   if (originalPhotoUrl && crop) {
     if (crop.width !== width || crop.height !== height) {
-      throw new Error(
-        'Original photo and fish crop dimensions differ.',
-      );
+      throw new Error('Original photo and fish crop dimensions differ.');
     }
 
     const original = new Image();
@@ -436,20 +374,9 @@ export async function createFishSilhouette(
       throw new Error('Canvas is not supported');
     }
 
-    originalCtx.drawImage(
-      original,
-      0,
-      0,
-      crop.sourceWidth,
-      crop.sourceHeight,
-    );
+    originalCtx.drawImage(original, 0, 0, crop.sourceWidth, crop.sourceHeight);
 
-    colorPixels = originalCtx.getImageData(
-      crop.x,
-      crop.y,
-      crop.width,
-      crop.height,
-    ).data;
+    colorPixels = originalCtx.getImageData(crop.x, crop.y, crop.width, crop.height).data;
   }
 
   // Render the fish with original drawing colors.
@@ -475,39 +402,28 @@ export async function createFishSilhouette(
       const chromaB = b - brightness;
 
       // Detect dark pencil marks independently of color.
-      const darkness = Math.max(
-        0,
-        Math.min(1, (205 - brightness) / 110),
-      );
+      const darkness = Math.max(0, Math.min(1, (205 - brightness) / 110));
 
       // Preserve colored-pencil saturation.
       const saturationBoost = 2.2;
 
-      const clamp = (value: number) =>
-        Math.max(0, Math.min(255, Math.round(value)));
+      const clamp = (value: number) => Math.max(0, Math.min(255, Math.round(value)));
 
       // White base, with restored color and dark pencil strokes.
       const base = 255 - darkness * 145;
 
-      result.data[offset] = clamp(
-        base + chromaR * saturationBoost,
-      );
+      result.data[offset] = clamp(base + chromaR * saturationBoost);
 
-      result.data[offset + 1] = clamp(
-        base + chromaG * saturationBoost,
-      );
+      result.data[offset + 1] = clamp(base + chromaG * saturationBoost);
 
-      result.data[offset + 2] = clamp(
-        base + chromaB * saturationBoost,
-      );
+      result.data[offset + 2] = clamp(base + chromaB * saturationBoost);
     } else {
       const alpha = pixels[offset + 3] / 255;
       const inkStrength = Math.min(1, alpha * 1.5);
 
       for (let channel = 0; channel < 3; channel++) {
         result.data[offset + channel] = Math.round(
-          255 * (1 - inkStrength) +
-          pixels[offset + channel] * inkStrength,
+          255 * (1 - inkStrength) + pixels[offset + channel] * inkStrength,
         );
       }
     }

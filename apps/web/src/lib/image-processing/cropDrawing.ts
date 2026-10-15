@@ -1,4 +1,3 @@
-
 export type DrawingCrop = {
   image: string;
   x: number;
@@ -9,10 +8,7 @@ export type DrawingCrop = {
   sourceHeight: number;
 };
 
-export async function cropDrawingWithBounds(
-  imageUrl: string,
-  padding = 12,
-): Promise<DrawingCrop> {
+export async function cropDrawingWithBounds(imageUrl: string, padding = 12): Promise<DrawingCrop> {
   const image = new Image();
   image.src = imageUrl;
 
@@ -62,12 +58,7 @@ export async function cropDrawingWithBounds(
           const nx = x + dx;
           const ny = y + dy;
 
-          if (
-            nx < 0 ||
-            ny < 0 ||
-            nx >= width ||
-            ny >= height
-          ) {
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
             continue;
           }
 
@@ -114,17 +105,7 @@ export async function cropDrawingWithBounds(
     throw new Error('Canvas is not supported');
   }
 
-  croppedCtx.drawImage(
-    canvas,
-    cropX,
-    cropY,
-    cropWidth,
-    cropHeight,
-    0,
-    0,
-    cropWidth,
-    cropHeight,
-  );
+  croppedCtx.drawImage(canvas, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 
   return {
     image: croppedCanvas.toDataURL('image/png'),
@@ -138,10 +119,7 @@ export async function cropDrawingWithBounds(
 }
 
 // Backward-compatible function for existing callers.
-export async function cropDrawing(
-  imageUrl: string,
-  padding = 12,
-): Promise<string> {
+export async function cropDrawing(imageUrl: string, padding = 12): Promise<string> {
   const result = await cropDrawingWithBounds(imageUrl, padding);
   return result.image;
 }

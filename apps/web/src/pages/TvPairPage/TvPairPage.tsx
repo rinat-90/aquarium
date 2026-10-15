@@ -1,15 +1,7 @@
-
-import {
-  useEffect,
-  useState,
-  type FormEvent,
-} from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
 
-import {
-  aquariumApi,
-  type ApiAquarium,
-} from '../../lib/aquarium-api';
+import { aquariumApi, type ApiAquarium } from '../../lib/aquarium-api';
 import { tvPairingApi } from '../../lib/tv-pairing-api';
 import { authClient } from '../../lib/auth-client';
 
@@ -33,7 +25,7 @@ export function TvPairPage() {
       setError(null);
 
       try {
-        const session = await authClient.getSession({query: {}});
+        const session = await authClient.getSession({ query: {} });
 
         if (cancelled) return;
 
@@ -53,11 +45,7 @@ export function TvPairPage() {
       } catch (err) {
         if (cancelled) return;
 
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Could not load aquariums.',
-        );
+        setError(err instanceof Error ? err.message : 'Could not load aquariums.');
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -84,11 +72,7 @@ export function TvPairPage() {
       await tvPairingApi.approve(code, aquariumId);
       setApproved(true);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Could not approve TV.',
-      );
+      setError(err instanceof Error ? err.message : 'Could not approve TV.');
     } finally {
       setSubmitting(false);
     }
@@ -121,15 +105,9 @@ export function TvPairPage() {
 
         {approved ? (
           <>
-            <p>
-              TV approved! Your aquarium should appear
-              on the TV shortly.
-            </p>
+            <p>TV approved! Your aquarium should appear on the TV shortly.</p>
 
-            <Link
-              to="/aquariums"
-              style={{ color: '#9de8ff' }}
-            >
+            <Link to="/aquariums" style={{ color: '#9de8ff' }}>
               Back to aquariums
             </Link>
           </>
@@ -137,30 +115,20 @@ export function TvPairPage() {
           <p>Checking your account...</p>
         ) : needsLogin ? (
           <>
-            <p>
-              Please sign in to connect your aquarium
-              to this TV.
-            </p>
+            <p>Please sign in to connect your aquarium to this TV.</p>
 
-            <Link
-              to={loginUrl}
-              style={{ color: '#9de8ff' }}
-            >
+            <Link to={loginUrl} style={{ color: '#9de8ff' }}>
               Sign in
             </Link>
           </>
         ) : (
           <form onSubmit={approve}>
-            <p>
-              Select which aquarium this TV can display.
-            </p>
+            <p>Select which aquarium this TV can display.</p>
 
             <select
               aria-label="Aquarium"
               value={aquariumId}
-              onChange={(event) =>
-                setAquariumId(event.target.value)
-              }
+              onChange={(event) => setAquariumId(event.target.value)}
               disabled={aquariums.length === 0}
               style={{
                 width: '100%',
@@ -169,36 +137,24 @@ export function TvPairPage() {
                 marginBottom: 16,
               }}
             >
-              {aquariums.length === 0 && (
-                <option value="">No aquariums available</option>
-              )}
+              {aquariums.length === 0 && <option value="">No aquariums available</option>}
 
               {aquariums.map((aquarium) => (
-                <option
-                  key={aquarium.id}
-                  value={aquarium.id}
-                >
+                <option key={aquarium.id} value={aquarium.id}>
                   {aquarium.name}
                 </option>
               ))}
             </select>
 
             {error && (
-              <p
-                role="alert"
-                style={{ color: '#ffd1d1' }}
-              >
+              <p role="alert" style={{ color: '#ffd1d1' }}>
                 {error}
               </p>
             )}
 
             <button
               type="submit"
-              disabled={
-                !aquariumId ||
-                submitting ||
-                aquariums.length === 0
-              }
+              disabled={!aquariumId || submitting || aquariums.length === 0}
               style={{
                 width: '100%',
                 padding: 14,
@@ -207,18 +163,13 @@ export function TvPairPage() {
                 cursor: 'pointer',
               }}
             >
-              {submitting
-                ? 'Connecting...'
-                : 'Connect TV'}
+              {submitting ? 'Connecting...' : 'Connect TV'}
             </button>
 
             {aquariums.length === 0 && (
               <p>
                 No aquariums found.{' '}
-                <Link
-                  to="/aquariums"
-                  style={{ color: '#9de8ff' }}
-                >
+                <Link to="/aquariums" style={{ color: '#9de8ff' }}>
                   Create one
                 </Link>{' '}
                 first.

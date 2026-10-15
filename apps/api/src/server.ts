@@ -1,14 +1,10 @@
-
 import 'dotenv/config';
 
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import Fastify from 'fastify';
 
-import {
-  initializeSocket,
-  closeSocket,
-} from './realtime/socket.js';
+import { initializeSocket, closeSocket } from './realtime/socket.js';
 
 import {
   hasZodFastifySchemaValidationErrors,
@@ -34,18 +30,12 @@ const app = Fastify({
 const allowedOrigins = [
   process.env.WEB_URL ?? 'http://localhost:5173',
   ...(process.env.NODE_ENV !== 'production'
-    ? [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'http://192.168.86.23:5173',
-    ]
+    ? ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://192.168.86.23:5173']
     : []),
 ]
   .flatMap((value) => value.split(','))
   .map((value) => value.trim())
-  .filter((value, index, array) =>
-    value.length > 0 && array.indexOf(value) === index,
-  );
+  .filter((value, index, array) => value.length > 0 && array.indexOf(value) === index);
 
 // Zod request validation and response serialization.
 app.setValidatorCompiler(validatorCompiler);
@@ -73,25 +63,16 @@ app.setErrorHandler((error, request, reply) => {
       ? error.statusCode
       : 500;
 
-  const message =
-    error instanceof Error
-      ? error.message
-      : 'Unexpected error';
+  const message = error instanceof Error ? error.message : 'Unexpected error';
 
   if (statusCode >= 500) {
     request.log.error(error);
   } else {
-    request.log.warn(
-      { err: error },
-      'Request failed',
-    );
+    request.log.warn({ err: error }, 'Request failed');
   }
 
   return reply.code(statusCode).send({
-    error:
-      statusCode >= 500
-        ? 'Internal server error'
-        : message,
+    error: statusCode >= 500 ? 'Internal server error' : message,
   });
 });
 
@@ -104,18 +85,8 @@ async function start() {
     await app.register(cors, {
       origin: allowedOrigins,
       credentials: true,
-      methods: [
-        'GET',
-        'POST',
-        'PUT',
-        'PATCH',
-        'DELETE',
-        'OPTIONS',
-      ],
-      allowedHeaders: [
-        'Content-Type',
-        'Authorization',
-      ],
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
     });
 
     // Multipart uploads for fish PNG textures.
@@ -133,30 +104,19 @@ async function start() {
       url: '/api/auth/*',
 
       handler: async (request, reply) => {
-        const baseURL =
-          process.env.BETTER_AUTH_URL ??
-          'http://localhost:3001';
+        const baseURL = process.env.BETTER_AUTH_URL ?? 'http://localhost:3001';
 
         const url = new URL(request.url, baseURL);
 
         const headers = new Headers();
 
-        for (const [key, value] of Object.entries(
-          request.headers,
-        )) {
+        for (const [key, value] of Object.entries(request.headers)) {
           if (value !== undefined) {
-            headers.set(
-              key,
-              Array.isArray(value)
-                ? value.join(', ')
-                : value,
-            );
+            headers.set(key, Array.isArray(value) ? value.join(', ') : value);
           }
         }
 
-        const hasBody =
-          request.method !== 'GET' &&
-          request.method !== 'HEAD';
+        const hasBody = request.method !== 'GET' && request.method !== 'HEAD';
 
         const body = hasBody
           ? typeof request.body === 'string'
@@ -190,9 +150,7 @@ async function start() {
           reply.header('set-cookie', cookies);
         }
 
-        return reply.send(
-          Buffer.from(await response.arrayBuffer()),
-        );
+        return reply.send(Buffer.from(await response.arrayBuffer()));
       },
     });
 
@@ -220,10 +178,7 @@ async function start() {
       host: process.env.HOST ?? '0.0.0.0',
     });
 
-    app.log.info(
-      { allowedOrigins },
-      'Aquarium API is running',
-    );
+    app.log.info({ allowedOrigins }, 'Aquarium API is running');
   } catch (error) {
     app.log.error(error);
     process.exitCode = 1;

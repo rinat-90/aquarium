@@ -1,4 +1,3 @@
-
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { authClient } from '../../lib/auth-client';
@@ -10,8 +9,7 @@ export function AuthScreen() {
   const redirectParam = new URLSearchParams(location.search).get('redirect');
 
   const redirectTo =
-    redirectParam?.startsWith('/tv/pair/') &&
-    !redirectParam.includes('\\')
+    redirectParam?.startsWith('/tv/pair/') && !redirectParam.includes('\\')
       ? redirectParam
       : '/aquariums';
 
@@ -42,14 +40,14 @@ export function AuthScreen() {
     try {
       const result = isSignUp
         ? await authClient.signUp.email({
-          name,
-          email,
-          password,
-        })
+            name,
+            email,
+            password,
+          })
         : await authClient.signIn.email({
-          email,
-          password,
-        });
+            email,
+            password,
+          });
 
       if (result.error) {
         setError(result.error.message ?? 'Authentication failed');
@@ -92,9 +90,7 @@ export function AuthScreen() {
               {isSignUp ? '✨ Start your adventure' : '👋 Welcome back'}
             </span>
 
-            <h2>
-              {isSignUp ? 'Create your ocean' : 'Dive back in!'}
-            </h2>
+            <h2>{isSignUp ? 'Create your ocean' : 'Dive back in!'}</h2>
 
             <p>
               {isSignUp
@@ -142,9 +138,7 @@ export function AuthScreen() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="Enter your password"
-                  autoComplete={
-                    isSignUp ? 'new-password' : 'current-password'
-                  }
+                  autoComplete={isSignUp ? 'new-password' : 'current-password'}
                   minLength={8}
                   required
                 />
@@ -153,9 +147,7 @@ export function AuthScreen() {
                   type="button"
                   className="auth-password-toggle"
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={
-                    showPassword ? 'Hide password' : 'Show password'
-                  }
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? 'Hide' : 'Show'}
                 </button>
@@ -168,16 +160,8 @@ export function AuthScreen() {
               </div>
             )}
 
-            <button
-              className="auth-submit"
-              type="submit"
-              disabled={loading}
-            >
-              {loading
-                ? 'Please wait...'
-                : isSignUp
-                  ? 'Create My Aquarium →'
-                  : 'Dive In →'}
+            <button className="auth-submit" type="submit" disabled={loading}>
+              {loading ? 'Please wait...' : isSignUp ? 'Create My Aquarium →' : 'Dive In →'}
             </button>
           </form>
 
@@ -196,9 +180,7 @@ export function AuthScreen() {
           </p>
         </section>
 
-        <footer className="auth-footer">
-          Made for little artists and big imaginations ✨
-        </footer>
+        <footer className="auth-footer">Made for little artists and big imaginations ✨</footer>
       </div>
 
       <div className="auth-seabed" aria-hidden="true">

@@ -1,11 +1,7 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
-import {
-  aquariumApi,
-  type ApiAquarium,
-} from '../../lib/aquarium-api';
+import { aquariumApi, type ApiAquarium } from '../../lib/aquarium-api';
 
 import './CreateFishPage.css';
 
@@ -16,9 +12,7 @@ export function CreateFishPage() {
   const aquariumId = searchParams.get('aquariumId');
 
   const [aquariums, setAquariums] = useState<ApiAquarium[]>([]);
-  const [selectedAquariumId, setSelectedAquariumId] = useState(
-    aquariumId ?? '',
-  );
+  const [selectedAquariumId, setSelectedAquariumId] = useState(aquariumId ?? '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,11 +31,7 @@ export function CreateFishPage() {
         setAquariums(items);
       } catch (err) {
         if (!cancelled) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'Failed to load aquariums',
-          );
+          setError(err instanceof Error ? err.message : 'Failed to load aquariums');
         }
       } finally {
         if (!cancelled) {
@@ -65,28 +55,20 @@ export function CreateFishPage() {
     }
   }, [aquariumId]);
 
-  const validAquariumId = aquariums.some(
-    (aquarium) => aquarium.id === selectedAquariumId,
-  )
+  const validAquariumId = aquariums.some((aquarium) => aquarium.id === selectedAquariumId)
     ? selectedAquariumId
     : '';
 
   const canCreate = !loading && !!validAquariumId;
 
   const backToAquarium = () => {
-    navigate(
-      aquariumId
-        ? `/aquariums/${encodeURIComponent(aquariumId)}`
-        : '/aquariums',
-    );
+    navigate(aquariumId ? `/aquariums/${encodeURIComponent(aquariumId)}` : '/aquariums');
   };
 
   const handleDrawFish = () => {
     if (!canCreate) return;
 
-    navigate(
-      `/fish/create/draw?aquariumId=${encodeURIComponent(validAquariumId)}`,
-    );
+    navigate(`/fish/create/draw?aquariumId=${encodeURIComponent(validAquariumId)}`);
   };
 
   const handleScanFish = () => {
@@ -97,20 +79,14 @@ export function CreateFishPage() {
   const handleCustomizeFish = () => {
     if (!canCreate) return;
 
-    navigate(
-      `/fish/create/3d?aquariumId=${encodeURIComponent(validAquariumId)}`,
-    );
+    navigate(`/fish/create/3d?aquariumId=${encodeURIComponent(validAquariumId)}`);
   };
 
   return (
     <div className="create-fish-page">
       <header className="create-fish-header">
         {aquariumId && (
-          <button
-            type="button"
-            className="create-fish-back"
-            onClick={backToAquarium}
-          >
+          <button type="button" className="create-fish-back" onClick={backToAquarium}>
             ← Back
           </button>
         )}
@@ -122,9 +98,7 @@ export function CreateFishPage() {
       </header>
 
       <section className="create-fish-destination">
-        <label htmlFor="create-fish-aquarium">
-          Choose Aquarium
-        </label>
+        <label htmlFor="create-fish-aquarium">Choose Aquarium</label>
 
         <p>Where should your new fish live?</p>
 
@@ -138,30 +112,19 @@ export function CreateFishPage() {
               setSelectedAquariumId(event.target.value);
             }}
           >
-            <option value="">
-              Select an aquarium
-            </option>
+            <option value="">Select an aquarium</option>
 
             {aquariums.map((aquarium) => (
-              <option
-                key={aquarium.id}
-                value={aquarium.id}
-              >
+              <option key={aquarium.id} value={aquarium.id}>
                 {aquarium.name}
               </option>
             ))}
           </select>
         ) : !error ? (
           <div className="create-fish-empty">
-            <p>
-              You don't have any aquariums yet.
-              Create one before adding fish.
-            </p>
+            <p>You don't have any aquariums yet. Create one before adding fish.</p>
 
-            <button
-              type="button"
-              onClick={() => navigate('/aquariums')}
-            >
+            <button type="button" onClick={() => navigate('/aquariums')}>
               Go to My Aquariums →
             </button>
           </div>
@@ -196,14 +159,9 @@ export function CreateFishPage() {
           <div className="create-fish-card__content">
             <h2>Draw Your Fish</h2>
 
-            <p>
-              Draw your own fish, give it a name, and watch it swim in your
-              aquarium.
-            </p>
+            <p>Draw your own fish, give it a name, and watch it swim in your aquarium.</p>
 
-            <span className="create-fish-card__action">
-              Start Drawing →
-            </span>
+            <span className="create-fish-card__action">Start Drawing →</span>
           </div>
         </button>
 
@@ -214,8 +172,13 @@ export function CreateFishPage() {
           onClick={handleScanFish}
         >
           <div className="create-fish-card__art create-fish-card__art--scan" aria-hidden="true">
-            <div className="create-fish-scan__paper"><span>🐠</span></div>
-            <div className="create-fish-scan__phone"><span>📷</span><i /></div>
+            <div className="create-fish-scan__paper">
+              <span>🐠</span>
+            </div>
+            <div className="create-fish-scan__phone">
+              <span>📷</span>
+              <i />
+            </div>
             <span className="create-fish-scan__sparkle">✦</span>
           </div>
           <div className="create-fish-card__content">
@@ -236,7 +199,11 @@ export function CreateFishPage() {
             <span className="create-fish-art__hero-fish">🐠</span>
             <span className="create-fish-art__sparkle create-fish-art__sparkle--two">✧</span>
             <div className="create-fish-art__palette">
-              <i /><i /><i /><i /><i />
+              <i />
+              <i />
+              <i />
+              <i />
+              <i />
               <span>＋</span>
             </div>
           </div>
@@ -244,14 +211,9 @@ export function CreateFishPage() {
           <div className="create-fish-card__content">
             <h2>Customize 3D Fish</h2>
 
-            <p>
-              Choose a fish, change its colors and appearance, and make it
-              your own.
-            </p>
+            <p>Choose a fish, change its colors and appearance, and make it your own.</p>
 
-            <span className="create-fish-card__action">
-              Customize Fish →
-            </span>
+            <span className="create-fish-card__action">Customize Fish →</span>
           </div>
         </button>
       </div>

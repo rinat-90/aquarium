@@ -5,14 +5,8 @@ const ThreeAquariumView = lazy(() =>
     default: module.ThreeAquariumView,
   })),
 );
-import {
-  TvPairingScreen,
-  type TvDisplayCredentials,
-} from './TvPairingScreen';
-import {
-  tvPairingApi,
-  TvApiError,
-} from '../../lib/tv-pairing-api';
+import { TvPairingScreen, type TvDisplayCredentials } from './TvPairingScreen';
+import { tvPairingApi, TvApiError } from '../../lib/tv-pairing-api';
 import { createTvSocket } from '../../lib/tv-socket';
 import type { CreatedFish } from '../../types/fish';
 import type { ApiFish } from '../../lib/aquarium-api';
@@ -28,9 +22,7 @@ const MAX_TIMEOUT_MS = 2_147_483_647;
 function restore(): TvDisplayCredentials | null {
   try {
     // Migrate an existing pairing from session storage once.
-    const value =
-      localStorage.getItem(STORAGE_KEY) ??
-      sessionStorage.getItem(STORAGE_KEY);
+    const value = localStorage.getItem(STORAGE_KEY) ?? sessionStorage.getItem(STORAGE_KEY);
 
     if (value && !localStorage.getItem(STORAGE_KEY)) {
       localStorage.setItem(STORAGE_KEY, value);
@@ -103,10 +95,7 @@ async function blobToDataUrl(blob: Blob): Promise<string> {
   });
 }
 
-async function mapDisplayFish(
-  item: ApiFish,
-  token: string,
-): Promise<CreatedFish | null> {
+async function mapDisplayFish(item: ApiFish, token: string): Promise<CreatedFish | null> {
   let texture: string | undefined;
 
   if (item.paintKey) {
@@ -143,11 +132,7 @@ async function mapDisplayFish(
     id: item.id,
     type: '3d',
     model:
-      item.species === 'angelfish'
-        ? 'angelfish'
-        : item.species === 'guppy'
-          ? 'guppy'
-          : 'basic',
+      item.species === 'angelfish' ? 'angelfish' : item.species === 'guppy' ? 'guppy' : 'basic',
     bodyColor: item.bodyColor,
     finColor: item.finColor,
     paintImage: texture,
@@ -158,8 +143,7 @@ async function mapDisplayFish(
 }
 
 export function TvAquariumPage() {
-  const [credentials, setCredentials] =
-    useState<TvDisplayCredentials | null>(restore);
+  const [credentials, setCredentials] = useState<TvDisplayCredentials | null>(restore);
 
   const [fish, setFish] = useState<CreatedFish[]>([]);
   const [appearance, setAppearance] = useState<AquariumCustomization>(
@@ -307,10 +291,7 @@ export function TvAquariumPage() {
               aquariumId: result.aquariumId,
             };
 
-            localStorage.setItem(
-              STORAGE_KEY,
-              JSON.stringify(updated),
-            );
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
             return updated;
           });
@@ -322,17 +303,12 @@ export function TvAquariumPage() {
           !active ||
           broadcastPaused ||
           id !== requestId ||
-          (
-            requestedAquariumId !== currentAquariumId &&
-            result.aquariumId !== currentAquariumId
-          )
+          (requestedAquariumId !== currentAquariumId && result.aquariumId !== currentAquariumId)
         ) {
           return;
         }
 
-        const mapped = await Promise.all(
-          result.fish.map((item) => mapDisplayFish(item, token)),
-        );
+        const mapped = await Promise.all(result.fish.map((item) => mapDisplayFish(item, token)));
 
         // Another switch may have happened while textures loaded.
         if (
@@ -344,9 +320,7 @@ export function TvAquariumPage() {
           return;
         }
 
-        const mappedFish = mapped.filter(
-          (item): item is CreatedFish => item !== null,
-        );
+        const mappedFish = mapped.filter((item): item is CreatedFish => item !== null);
 
         setFish(mappedFish);
         setError(null);
@@ -358,25 +332,16 @@ export function TvAquariumPage() {
       } catch (err) {
         if (!active || broadcastPaused || id !== requestId) return;
 
-        const message =
-          err instanceof Error
-            ? err.message
-            : 'Unable to load aquarium';
+        const message = err instanceof Error ? err.message : 'Unable to load aquarium';
 
         console.error('[TV] Fish API failed:', message);
 
-        if (
-          err instanceof TvApiError &&
-          err.status === 409
-        ) {
+        if (err instanceof TvApiError && err.status === 409) {
           setBroadcastPaused(true);
           return;
         }
 
-        if (
-          err instanceof TvApiError &&
-          (err.status === 401 || err.status === 403)
-        ) {
+        if (err instanceof TvApiError && (err.status === 401 || err.status === 403)) {
           reset(`Display session rejected (${err.status})`);
           return;
         }
@@ -408,9 +373,7 @@ export function TvAquariumPage() {
           }
           void reload();
         } else {
-          console.warn(
-            '[TV] Socket join rejected, keeping display session',
-          );
+          console.warn('[TV] Socket join rejected, keeping display session');
         }
       });
     };
@@ -435,10 +398,7 @@ export function TvAquariumPage() {
       setAppearance({ ...DEFAULT_AQUARIUM_CUSTOMIZATION, ...event.appearance });
     };
 
-    const handleFeed = (event: {
-      aquariumId: string;
-      eventId: string;
-    }) => {
+    const handleFeed = (event: { aquariumId: string; eventId: string }) => {
       if (!active || broadcastPaused || event.aquariumId !== currentAquariumId) return;
 
       setFeedSequence((current) => current + 1);
@@ -484,26 +444,23 @@ export function TvAquariumPage() {
       reset('Display session expired on server');
     });
 
-    socket.on(
-      'tv:aquarium-switched',
-      (event: { aquariumId: string }) => {
-        if (!active || !event.aquariumId) return;
+    socket.on('tv:aquarium-switched', (event: { aquariumId: string }) => {
+      if (!active || !event.aquariumId) return;
 
-        console.log('[TV] Switching aquarium:', event.aquariumId);
+      console.log('[TV] Switching aquarium:', event.aquariumId);
 
-        currentAquariumId = event.aquariumId;
-        previewActive = false;
-        previewVersion++;
+      currentAquariumId = event.aquariumId;
+      previewActive = false;
+      previewVersion++;
 
-        setFish([]);
-        setFeedSequence(0);
-        setLoading(true);
+      setFish([]);
+      setFeedSequence(0);
+      setLoading(true);
 
-        if (!broadcastPaused) {
-          join();
-        }
-      },
-    );
+      if (!broadcastPaused) {
+        join();
+      }
+    });
 
     socket.connect();
 
@@ -578,7 +535,13 @@ export function TvAquariumPage() {
       }}
     >
       {!paused && (
-        <Suspense fallback={<div role="status" style={{ color: '#fff', padding: 24 }}>Loading aquarium…</div>}>
+        <Suspense
+          fallback={
+            <div role="status" style={{ color: '#fff', padding: 24 }}>
+              Loading aquarium…
+            </div>
+          }
+        >
           <ThreeAquariumView
             createdFish={fish}
             appearance={appearance}

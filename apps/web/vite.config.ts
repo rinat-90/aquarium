@@ -1,9 +1,7 @@
-
 import { defineConfig, type ProxyOptions } from 'vite';
 import react from '@vitejs/plugin-react';
 
-const API_TARGET =
-  process.env.API_PROXY_TARGET ?? 'http://localhost:3001';
+const API_TARGET = process.env.API_PROXY_TARGET ?? 'http://localhost:3001';
 
 const createProxy = (): Record<string, string | ProxyOptions> => ({
   '/api': {
@@ -55,10 +53,7 @@ export default defineConfig({
   },
 
   preview: {
-    allowedHosts: [
-      'aquariumweb-production.up.railway.app',
-      '.trycloudflare.com',
-    ],
+    allowedHosts: ['aquariumweb-production.up.railway.app', '.trycloudflare.com'],
 
     proxy: createProxy(),
   },

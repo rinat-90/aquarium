@@ -1,4 +1,3 @@
-
 import { fishApi, type ApiFish } from '../lib/aquarium-api';
 import type { CreatedFish } from '../types/fish';
 
@@ -39,11 +38,7 @@ export async function mapApiFish(item: ApiFish): Promise<CreatedFish> {
     id: item.id,
     type: '3d',
     model:
-      item.species === 'angelfish'
-        ? 'angelfish'
-        : item.species === 'guppy'
-          ? 'guppy'
-          : 'basic',
+      item.species === 'angelfish' ? 'angelfish' : item.species === 'guppy' ? 'guppy' : 'basic',
     bodyColor: item.bodyColor,
     finColor: item.finColor,
     paintImage: texture,

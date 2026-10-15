@@ -9,16 +9,36 @@
   min-height: 100dvh;
 }
 .aquarium-remote__broadcast-controls {
-  display: flex; justify-content: center; padding: 12px 16px 28px;
+  display: flex;
+  justify-content: center;
+  padding: 12px 16px 28px;
 }
 .aquarium-remote__end-broadcast--ocean {
-  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-  width: min(100%, 280px); min-height: 46px; margin: 0; padding: 11px 20px;
-  border: 1px solid rgba(255, 132, 146, .68); border-radius: 14px;
-  background: rgba(75, 25, 46, .64); color: #ffc1c9;
-  font: inherit; font-weight: 650; cursor: pointer;
-  box-shadow: 0 6px 20px rgba(1, 19, 35, .15);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: min(100%, 280px);
+  min-height: 46px;
+  margin: 0;
+  padding: 11px 20px;
+  border: 1px solid rgba(255, 132, 146, 0.68);
+  border-radius: 14px;
+  background: rgba(75, 25, 46, 0.64);
+  color: #ffc1c9;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(1, 19, 35, 0.15);
 }
-.aquarium-remote__end-broadcast--ocean:hover { background: rgba(105, 34, 53, .78); }
-.aquarium-remote__end-broadcast--ocean:focus-visible { outline: 2px solid #b5f0ff; outline-offset: 3px; }
-.aquarium-remote__end-broadcast--ocean:disabled { opacity: .6; cursor: wait; }
+.aquarium-remote__end-broadcast--ocean:hover {
+  background: rgba(105, 34, 53, 0.78);
+}
+.aquarium-remote__end-broadcast--ocean:focus-visible {
+  outline: 2px solid #b5f0ff;
+  outline-offset: 3px;
+}
+.aquarium-remote__end-broadcast--ocean:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

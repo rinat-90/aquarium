@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { useNavigate } from 'react-router';
@@ -24,11 +23,7 @@ type ScanPaperFishProps = {
   variant?: 'default' | 'studio';
 };
 
-export function ScanPaperFish({
-                                aquariumId,
-                                onSaved,
-                                variant = 'default',
-                              }: ScanPaperFishProps) {
+export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: ScanPaperFishProps) {
   const navigate = useNavigate();
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -39,8 +34,7 @@ export function ScanPaperFish({
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
-  const [orientation, setOrientation] =
-    useState<FishOrientation>('right');
+  const [orientation, setOrientation] = useState<FishOrientation>('right');
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isFlipping, setIsFlipping] = useState(false);
@@ -78,24 +72,16 @@ export function ScanPaperFish({
       // Get the cropped drawing and its coordinates.
       const crop = await cropDrawingWithBounds(result);
 
-      const silhouetteResult = await createFishSilhouette(
-        crop.image,
-        url,
-        crop,
-      );
+      const silhouetteResult = await createFishSilhouette(crop.image, url, crop);
 
-      const detectedOrientation =
-        await detectFishOrientation(silhouetteResult);
+      const detectedOrientation = await detectFishOrientation(silhouetteResult);
 
       setOrientation(detectedOrientation);
       setProcessedImage(silhouetteResult);
     } catch (err) {
       console.error('[ScanPaperFish] Processing failed:', err);
 
-      const message =
-        err instanceof Error
-          ? `${err.name}: ${err.message}`
-          : String(err);
+      const message = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
 
       setError(`Processing failed: ${message}`);
     } finally {
@@ -104,9 +90,7 @@ export function ScanPaperFish({
   };
 
   // Native camera / photo picker fallback.
-  const handlePhotoSelected = (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handlePhotoSelected = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
 
@@ -130,12 +114,7 @@ export function ScanPaperFish({
   };
 
   const handleAddToAquarium = async () => {
-    if (
-      !processedImage ||
-      savingRef.current ||
-      isProcessing ||
-      isFlipping
-    ) {
+    if (!processedImage || savingRef.current || isProcessing || isFlipping) {
       return;
     }
 
@@ -146,21 +125,13 @@ export function ScanPaperFish({
     try {
       const items = await fishApi.list();
 
-      const aquariumFish = items.filter(
-        (item) => item.aquariumId === aquariumId,
-      );
+      const aquariumFish = items.filter((item) => item.aquariumId === aquariumId);
 
-      const usedCapacity = aquariumFish.reduce(
-        (total, item) => total + item.size * item.size,
-        0,
-      );
+      const usedCapacity = aquariumFish.reduce((total, item) => total + item.size * item.size, 0);
 
       const size = 1;
 
-      if (
-        usedCapacity + size * size >
-        AQUARIUM_CAPACITY + 0.0001
-      ) {
+      if (usedCapacity + size * size > AQUARIUM_CAPACITY + 0.0001) {
         throw new Error('Not enough space in this aquarium.');
       }
 
@@ -178,16 +149,10 @@ export function ScanPaperFish({
       if (onSaved) {
         onSaved();
       } else {
-        navigate(
-          `/aquariums/${encodeURIComponent(aquariumId)}`,
-        );
+        navigate(`/aquariums/${encodeURIComponent(aquariumId)}`);
       }
     } catch (err) {
-      setSaveError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to add fish to aquarium.',
-      );
+      setSaveError(err instanceof Error ? err.message : 'Failed to add fish to aquarium.');
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -195,11 +160,7 @@ export function ScanPaperFish({
   };
 
   const handleFlip = async () => {
-    if (
-      !processedImage ||
-      isFlipping ||
-      savingRef.current
-    ) {
+    if (!processedImage || isFlipping || savingRef.current) {
       return;
     }
 
@@ -211,27 +172,23 @@ export function ScanPaperFish({
 
       setProcessedImage(flipped);
 
-      setOrientation((current) =>
-        current === 'left' ? 'right' : 'left',
-      );
+      setOrientation((current) => (current === 'left' ? 'right' : 'left'));
     } catch (err) {
-      setSaveError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to flip fish.',
-      );
+      setSaveError(err instanceof Error ? err.message : 'Failed to flip fish.');
     } finally {
       setIsFlipping(false);
     }
   };
 
   return (
-    <div className={variant === 'studio' ? 'scan-paper-fish scan-paper-fish--studio' : 'scan-paper-fish'} style={{ padding: variant === 'studio' ? 0 : 20 }}>
+    <div
+      className={
+        variant === 'studio' ? 'scan-paper-fish scan-paper-fish--studio' : 'scan-paper-fish'
+      }
+      style={{ padding: variant === 'studio' ? 0 : 20 }}
+    >
       {cameraOpen && (
-        <GuidedFishCamera
-          onCapture={handleGuidedCapture}
-          onClose={() => setCameraOpen(false)}
-        />
+        <GuidedFishCamera onCapture={handleGuidedCapture} onClose={() => setCameraOpen(false)} />
       )}
 
       {variant === 'studio' ? (
@@ -240,7 +197,10 @@ export function ScanPaperFish({
             <div className="scan-studio__intro-text">
               <span className="scan-studio__eyebrow">YOUR ART COMES ALIVE</span>
               <h2>Bring your paper fish to life!</h2>
-              <p>Draw a fish on white paper, then upload a clear photo. We'll remove the paper and get your fish ready to swim.</p>
+              <p>
+                Draw a fish on white paper, then upload a clear photo. We'll remove the paper and
+                get your fish ready to swim.
+              </p>
             </div>
             <div className="scan-studio__illustration" aria-hidden="true">
               <span className="scan-studio__paper">🐠</span>
@@ -257,40 +217,86 @@ export function ScanPaperFish({
             aria-label="Choose a fish drawing photo"
           />
           <div className="scan-studio__guided-primary">
-            <div className="scan-studio__guided-icon" aria-hidden="true">📷</div>
+            <div className="scan-studio__guided-icon" aria-hidden="true">
+              📷
+            </div>
             <h3>Scan your drawing with the camera</h3>
             <p>Point your camera at your paper fish and follow the guide.</p>
-            <button className="scan-studio__primary" type="button" onClick={() => setCameraOpen(true)} disabled={isProcessing || saving}>
+            <button
+              className="scan-studio__primary"
+              type="button"
+              onClick={() => setCameraOpen(true)}
+              disabled={isProcessing || saving}
+            >
               {imageUrl ? 'Scan Another Drawing' : 'Scan with Guide'} →
             </button>
           </div>
           <div
             className={`scan-studio__dropzone${isDragging ? ' scan-studio__dropzone--active' : ''}`}
-            onDragOver={(event) => { event.preventDefault(); if (!isProcessing && !saving) setIsDragging(true); }}
+            onDragOver={(event) => {
+              event.preventDefault();
+              if (!isProcessing && !saving) setIsDragging(true);
+            }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
           >
-            <div className="scan-studio__upload-icon" aria-hidden="true">📷</div>
+            <div className="scan-studio__upload-icon" aria-hidden="true">
+              📷
+            </div>
             <h3>{imageUrl ? 'Try another drawing?' : 'Upload your fish drawing'}</h3>
-            <p className="scan-studio__upload-description">Choose a photo from your device, or take one with your camera.</p>
-            <button className="scan-studio__primary" type="button" onClick={() => inputRef.current?.click()} disabled={isProcessing || saving}>
+            <p className="scan-studio__upload-description">
+              Choose a photo from your device, or take one with your camera.
+            </p>
+            <button
+              className="scan-studio__primary"
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={isProcessing || saving}
+            >
               {imageUrl ? 'Choose Another Photo' : 'Choose a Photo'} →
             </button>
             <small>JPG, PNG, or WebP · White paper works best</small>
           </div>
           <div className="scan-studio__camera-option">
             <span>Have a webcam?</span>
-            <button type="button" onClick={() => setCameraOpen(true)} disabled={isProcessing || saving}>📷 Scan with Guide</button>
+            <button
+              type="button"
+              onClick={() => setCameraOpen(true)}
+              disabled={isProcessing || saving}
+            >
+              📷 Scan with Guide
+            </button>
           </div>
         </div>
       ) : (
         <>
           <h2>Scan Paper Fish</h2>
-          <p>Take a picture of your fish drawing on white paper. Keep the entire fish inside the guide.</p>
-          <input ref={inputRef} type="file" accept="image/*" onChange={handlePhotoSelected} style={{ display: 'none' }} />
+          <p>
+            Take a picture of your fish drawing on white paper. Keep the entire fish inside the
+            guide.
+          </p>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoSelected}
+            style={{ display: 'none' }}
+          />
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 16 }}>
-            <button type="button" onClick={() => setCameraOpen(true)} disabled={isProcessing || saving}>📷 {imageUrl ? 'Retake with Guide' : 'Scan with Guide'}</button>
-            <button type="button" onClick={() => inputRef.current?.click()} disabled={isProcessing || saving}>Upload Photo</button>
+            <button
+              type="button"
+              onClick={() => setCameraOpen(true)}
+              disabled={isProcessing || saving}
+            >
+              📷 {imageUrl ? 'Retake with Guide' : 'Scan with Guide'}
+            </button>
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={isProcessing || saving}
+            >
+              Upload Photo
+            </button>
           </div>
         </>
       )}
@@ -351,8 +357,7 @@ export function ScanPaperFish({
                 linear-gradient(-45deg, transparent 75%, #ffffff80 75%)
               `,
               backgroundSize: '20px 20px',
-              backgroundPosition:
-                '0 0, 0 10px, 10px -10px, -10px 0',
+              backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0',
             }}
           >
             <img
@@ -423,15 +428,11 @@ export function ScanPaperFish({
                 cursor: saving ? 'wait' : 'pointer',
               }}
             >
-              {saving
-                ? 'Adding Fish...'
-                : '🐠 Add to Aquarium'}
+              {saving ? 'Adding Fish...' : '🐠 Add to Aquarium'}
             </button>
           </div>
 
-          <p>
-            Background removed! Your fish is almost ready to swim.
-          </p>
+          <p>Background removed! Your fish is almost ready to swim.</p>
         </section>
       )}
     </div>

@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+coverage/
+.next/
+.expo/
+.turbo/
+.cache/
+*.tsbuildinfo
+pnpm-lock.yaml
+**/generated/
+**/.prisma/
+**/prisma/migrations/
+**/public/
+*.min.js
+*.min.css
