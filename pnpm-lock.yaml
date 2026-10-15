@@ -60,6 +60,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^5.0.4
         version: 5.0.4(vitest@5.0.4)
+      socket.io-client:
+        specifier: ^4.8.4
+        version: 4.8.4
       tsx:
         specifier: ^4.0.0
         version: 4.23.15

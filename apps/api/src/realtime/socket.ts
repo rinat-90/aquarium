@@ -176,6 +176,7 @@ export function initializeSocket(httpServer: HttpServer, webOrigin: string | str
           !session ||
           session.revokedAt ||
           session.expiresAt <= new Date() ||
+          session.pausedAt !== null ||
           session.aquariumId !== aquariumId
         ) {
           return acknowledge?.({ ok: false });
@@ -191,6 +192,7 @@ export function initializeSocket(httpServer: HttpServer, webOrigin: string | str
           where: {
             id: sessionId,
             revokedAt: null,
+            pausedAt: null,
             expiresAt: { gt: new Date() },
           },
           select: {

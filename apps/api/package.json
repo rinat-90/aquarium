@@ -27,6 +27,7 @@
     "@aquarium/aquarium-engine": "workspace:*",
     "@types/node": "^24.0.0",
     "@vitest/coverage-v8": "^5.0.4",
+    "socket.io-client": "^4.8.4",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",
     "vitest": "^5.0.4"
