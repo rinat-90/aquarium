@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 
 const API_TARGET = process.env.API_PROXY_TARGET ?? 'http://localhost:3001';
 
-const createProxy = (): Record<string, string | ProxyOptions> => ({
+export const createProxy = (): Record<string, string | ProxyOptions> => ({
   '/api': {
     target: API_TARGET,
     changeOrigin: true,

@@ -5,7 +5,8 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "typecheck": "turbo typecheck",
-    "test": "turbo test"
+    "test": "pnpm --filter @aquarium/web test && pnpm --filter @aquarium/api test",
+    "test:coverage": "pnpm --filter @aquarium/web test:coverage && pnpm --filter @aquarium/api test:coverage"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

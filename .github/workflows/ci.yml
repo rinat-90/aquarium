@@ -28,7 +28,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 24
           cache: pnpm
 
       - name: Install dependencies
@@ -45,6 +45,9 @@ jobs:
 
       - name: Typecheck API
         run: pnpm --filter @aquarium/api typecheck
+
+      - name: Run unit tests
+        run: pnpm test
 
       - name: Build web
         run: pnpm --filter @aquarium/web build

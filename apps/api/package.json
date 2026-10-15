@@ -7,7 +7,10 @@
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "typecheck": "tsc --noEmit",
-    "build": "pnpm --filter @aquarium/database db:generate"
+    "build": "pnpm --filter @aquarium/database db:generate",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@aquarium/database": "workspace:*",
@@ -23,7 +26,9 @@
   "devDependencies": {
     "@aquarium/aquarium-engine": "workspace:*",
     "@types/node": "^24.0.0",
+    "@vitest/coverage-v8": "^5.0.4",
     "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^5.0.4"
   }
 }
