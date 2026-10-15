@@ -1,10 +1,50 @@
 /* Account actions are visible on both desktop and mobile. */
-.profile-change-email { margin: 12px 0 16px; }
-.profile-secondary-action { background: transparent; border: 1px solid #6aa6c4; color: inherit; border-radius: 10px; padding: 10px 16px; cursor: pointer; }
-.profile-email-editor { display: grid; gap: 10px; margin-top: 12px; }
-.profile-email-editor input { box-sizing: border-box; width: 100%; }
-.profile-email-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-.profile-account-signout { display: block; margin: 24px 0 36px; padding: 24px; border: 1px solid rgba(138, 189, 213, .28); border-radius: 16px; background: rgba(4, 30, 51, .25); }
-.profile-account-signout button { cursor: pointer; padding: 12px 20px; border-radius: 10px; border: 1px solid #e4a1a1; background: rgba(156, 34, 53, .14); color: #ffced0; font-weight: 600; }
-.profile-account-signout button:disabled { opacity: .6; cursor: wait; }
-.profile-account-signout .profile-error { margin-top: 12px; }
+.profile-change-email {
+  margin: 12px 0 16px;
+}
+.profile-secondary-action {
+  background: transparent;
+  border: 1px solid #6aa6c4;
+  color: inherit;
+  border-radius: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+.profile-email-editor {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.profile-email-editor input {
+  box-sizing: border-box;
+  width: 100%;
+}
+.profile-email-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.profile-account-signout {
+  display: block;
+  margin: 24px 0 36px;
+  padding: 24px;
+  border: 1px solid rgba(138, 189, 213, 0.28);
+  border-radius: 16px;
+  background: rgba(4, 30, 51, 0.25);
+}
+.profile-account-signout button {
+  cursor: pointer;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: 1px solid #e4a1a1;
+  background: rgba(156, 34, 53, 0.14);
+  color: #ffced0;
+  font-weight: 600;
+}
+.profile-account-signout button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.profile-account-signout .profile-error {
+  margin-top: 12px;
+}

@@ -33,7 +33,9 @@ export function VerifyEmailPage() {
     <main className="auth-page">
       <div className="auth-container">
         <header className="auth-brand">
-          <div className="auth-logo" aria-hidden="true">🐠</div>
+          <div className="auth-logo" aria-hidden="true">
+            🐠
+          </div>
           <h1>Family Aquarium</h1>
           <p>A little ocean full of imagination</p>
         </header>
@@ -41,17 +43,49 @@ export function VerifyEmailPage() {
           <div className="auth-card-heading">
             <span className="auth-greeting">✉️ One more step</span>
             <h2>Check your email</h2>
-            <p>We've sent a verification link to your inbox. Open it to start exploring your ocean.</p>
+            <p>
+              We've sent a verification link to your inbox. Open it to start exploring your ocean.
+            </p>
           </div>
-          {email && <p style={{ overflowWrap: 'anywhere', textAlign: 'center', fontWeight: 600, marginBottom: 24 }}>{email}</p>}
-          <p style={{ textAlign: 'center', lineHeight: 1.6, marginBottom: 24 }}>Didn't receive it? Check your spam folder, or request another link.</p>
-          {message && <div className="auth-success" role="status" style={{ marginBottom: 16 }}>{message}</div>}
-          {error && <div className="auth-error" role="alert" style={{ marginBottom: 16 }}>{error}</div>}
-          <button className="auth-submit" type="button" disabled={!email || sending} onClick={() => void resend()}>
+          {email && (
+            <p
+              style={{
+                overflowWrap: 'anywhere',
+                textAlign: 'center',
+                fontWeight: 600,
+                marginBottom: 24,
+              }}
+            >
+              {email}
+            </p>
+          )}
+          <p style={{ textAlign: 'center', lineHeight: 1.6, marginBottom: 24 }}>
+            Didn't receive it? Check your spam folder, or request another link.
+          </p>
+          {message && (
+            <div className="auth-success" role="status" style={{ marginBottom: 16 }}>
+              {message}
+            </div>
+          )}
+          {error && (
+            <div className="auth-error" role="alert" style={{ marginBottom: 16 }}>
+              {error}
+            </div>
+          )}
+          <button
+            className="auth-submit"
+            type="button"
+            disabled={!email || sending}
+            onClick={() => void resend()}
+          >
             {sending ? 'Sending...' : 'Resend verification email'}
           </button>
-          <p className="auth-switch"><Link to="/login">Back to sign in</Link></p>
-          <p className="auth-switch"><Link to="/aquariums">I've verified my email →</Link></p>
+          <p className="auth-switch">
+            <Link to="/login">Back to sign in</Link>
+          </p>
+          <p className="auth-switch">
+            <Link to="/aquariums">I've verified my email →</Link>
+          </p>
         </section>
         <footer className="auth-footer">Made for little artists and big imaginations ✨</footer>
       </div>

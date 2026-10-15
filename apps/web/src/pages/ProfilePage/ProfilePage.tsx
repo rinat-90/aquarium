@@ -26,7 +26,6 @@ export function ProfilePage() {
   const [verificationMessage, setVerificationMessage] = useState('');
   const [verificationError, setVerificationError] = useState('');
 
-
   const [user, setUser] = useState<ProfileUser | null>(null);
   const [name, setName] = useState('');
   const [aquariumCount, setAquariumCount] = useState<number | null>(null);
@@ -99,7 +98,9 @@ export function ProfilePage() {
 
     // Verification links may return to an already-open profile tab.
     // Re-read the account when the tab becomes active again.
-    const refreshOnFocus = () => { void loadProfile(); };
+    const refreshOnFocus = () => {
+      void loadProfile();
+    };
     const refreshOnVisibility = () => {
       if (document.visibilityState === 'visible') void loadProfile();
     };
@@ -276,43 +277,91 @@ export function ProfilePage() {
 
             <div className="profile-change-email">
               {!editingEmail ? (
-                <button type="button" className="profile-secondary-action" onClick={() => {
-                  setEditingEmail(true);
-                  setChangeEmailError('');
-                  setChangeEmailMessage('');
-                }} disabled={!user}>
+                <button
+                  type="button"
+                  className="profile-secondary-action"
+                  onClick={() => {
+                    setEditingEmail(true);
+                    setChangeEmailError('');
+                    setChangeEmailMessage('');
+                  }}
+                  disabled={!user}
+                >
                   Change Email
                 </button>
               ) : (
                 <div className="profile-email-editor">
                   <label htmlFor="profile-new-email">New email address</label>
-                  <input form="profile-change-email-form" id="profile-new-email" type="email" autoComplete="email" value={newEmail}
-                    onChange={(event) => setNewEmail(event.target.value)} placeholder="new@example.com" required />
+                  <input
+                    form="profile-change-email-form"
+                    id="profile-new-email"
+                    type="email"
+                    autoComplete="email"
+                    value={newEmail}
+                    onChange={(event) => setNewEmail(event.target.value)}
+                    placeholder="new@example.com"
+                    required
+                  />
                   <div className="profile-email-actions">
-                    <button type="button" className="profile-secondary-action" onClick={() => {
-                      setEditingEmail(false); setNewEmail(''); setChangeEmailError('');
-                    }} disabled={changingEmail}>Cancel</button>
-                    <button type="submit" form="profile-change-email-form" disabled={changingEmail || !newEmail.trim()}>
+                    <button
+                      type="button"
+                      className="profile-secondary-action"
+                      onClick={() => {
+                        setEditingEmail(false);
+                        setNewEmail('');
+                        setChangeEmailError('');
+                      }}
+                      disabled={changingEmail}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      form="profile-change-email-form"
+                      disabled={changingEmail || !newEmail.trim()}
+                    >
                       {changingEmail ? 'Sending...' : 'Continue'}
                     </button>
                   </div>
                 </div>
               )}
-              {changeEmailMessage && <p className="profile-success" role="status">{changeEmailMessage}</p>}
-              {changeEmailError && <p className="profile-error" role="alert">{changeEmailError}</p>}
+              {changeEmailMessage && (
+                <p className="profile-success" role="status">
+                  {changeEmailMessage}
+                </p>
+              )}
+              {changeEmailError && (
+                <p className="profile-error" role="alert">
+                  {changeEmailError}
+                </p>
+              )}
             </div>
 
             <div className="profile-email-verification" style={{ marginTop: 12, marginBottom: 20 }}>
               {user?.emailVerified ? (
-                <p className="profile-success" role="status">✓ Email verified</p>
+                <p className="profile-success" role="status">
+                  ✓ Email verified
+                </p>
               ) : user ? (
                 <>
                   <p>Your email address hasn't been verified yet.</p>
-                  <button type="button" onClick={() => void handleResendVerification()} disabled={sendingVerification}>
+                  <button
+                    type="button"
+                    onClick={() => void handleResendVerification()}
+                    disabled={sendingVerification}
+                  >
                     {sendingVerification ? 'Sending...' : 'Resend Verification Email'}
                   </button>
-                  {verificationMessage && <p className="profile-success" role="status">{verificationMessage}</p>}
-                  {verificationError && <p className="profile-error" role="alert">{verificationError}</p>}
+                  {verificationMessage && (
+                    <p className="profile-success" role="status">
+                      {verificationMessage}
+                    </p>
+                  )}
+                  {verificationError && (
+                    <p className="profile-error" role="alert">
+                      {verificationError}
+                    </p>
+                  )}
                 </>
               ) : null}
             </div>

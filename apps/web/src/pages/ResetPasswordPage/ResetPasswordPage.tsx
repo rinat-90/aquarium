@@ -114,13 +114,19 @@ export function ResetPasswordPage() {
                   disabled={loading}
                 />
               </div>
-              {error && <div className="auth-error" role="alert">{error}</div>}
+              {error && (
+                <div className="auth-error" role="alert">
+                  {error}
+                </div>
+              )}
               <button className="auth-submit" type="submit" disabled={loading}>
                 {loading ? 'Updating password...' : 'Reset Password'}
               </button>
             </form>
           )}
-          <p className="auth-switch"><Link to="/login">Back to login</Link></p>
+          <p className="auth-switch">
+            <Link to="/login">Back to login</Link>
+          </p>
         </section>
       </div>
     </main>

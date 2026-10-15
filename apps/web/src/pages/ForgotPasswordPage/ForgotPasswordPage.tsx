@@ -51,8 +51,8 @@ export function ForgotPasswordPage() {
 
           {sent ? (
             <div className="auth-success" role="status">
-              If an account exists for that email address, you'll receive
-              a password reset link shortly. Please check your inbox.
+              If an account exists for that email address, you'll receive a password reset link
+              shortly. Please check your inbox.
             </div>
           ) : (
             <form className="auth-form" onSubmit={handleSubmit}>
@@ -70,7 +70,11 @@ export function ForgotPasswordPage() {
                 />
               </div>
 
-              {error && <div className="auth-error" role="alert">{error}</div>}
+              {error && (
+                <div className="auth-error" role="alert">
+                  {error}
+                </div>
+              )}
 
               <button className="auth-submit" type="submit" disabled={loading}>
                 {loading ? 'Sending...' : 'Send Reset Link'}
@@ -78,7 +82,9 @@ export function ForgotPasswordPage() {
             </form>
           )}
 
-          <p className="auth-switch"><Link to="/login">Back to login</Link></p>
+          <p className="auth-switch">
+            <Link to="/login">Back to login</Link>
+          </p>
         </section>
       </div>
     </main>

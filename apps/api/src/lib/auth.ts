@@ -10,13 +10,13 @@ const trustedOrigins = [
 
   ...(!isProduction
     ? [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'http://192.168.86.23:5173',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://192.168.86.23:5173',
 
-      // HTTPS tunnel for testing the guided fish scanner.
-      process.env.WEB_HTTPS ?? '',
-    ]
+        // HTTPS tunnel for testing the guided fish scanner.
+        process.env.WEB_HTTPS ?? '',
+      ]
     : []),
 ]
   .flatMap((value) => value.split(','))
@@ -41,18 +41,12 @@ export const auth = betterAuth({
     resetPasswordTokenExpiresIn: 60 * 60,
 
     sendResetPassword: async ({ user, token }) => {
-      const webUrl = (
-        process.env.WEB_APP_URL ?? 'http://localhost:5173'
-      ).replace(/\/$/, '');
+      const webUrl = (process.env.WEB_APP_URL ?? 'http://localhost:5173').replace(/\/$/, '');
 
       const resetUrl = new URL('/reset-password', webUrl);
       resetUrl.searchParams.set('token', token);
 
-      await sendPasswordResetEmail(
-        user.email,
-        user.name,
-        resetUrl.toString(),
-      );
+      await sendPasswordResetEmail(user.email, user.name, resetUrl.toString());
     },
   },
 
@@ -89,9 +83,7 @@ export const auth = betterAuth({
   advanced: {
     defaultCookieAttributes: {
       sameSite: 'lax',
-      secure:
-        isProduction ||
-        process.env.BETTER_AUTH_URL?.startsWith('https://') === true,
+      secure: isProduction || process.env.BETTER_AUTH_URL?.startsWith('https://') === true,
       httpOnly: true,
     },
   },

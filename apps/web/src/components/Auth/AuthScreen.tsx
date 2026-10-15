@@ -29,7 +29,16 @@ export function AuthScreen() {
   }
 
   if (session) {
-    return <Navigate to={session.user.emailVerified ? redirectTo : `/verify-email?email=${encodeURIComponent(session.user.email)}`} replace />;
+    return (
+      <Navigate
+        to={
+          session.user.emailVerified
+            ? redirectTo
+            : `/verify-email?email=${encodeURIComponent(session.user.email)}`
+        }
+        replace
+      />
+    );
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -159,12 +168,12 @@ export function AuthScreen() {
             </div>
 
             {!isSignUp && (
-            <p className="auth-switch">
-              <Link to="/forgot-password">Forgot password?</Link>
-            </p>
-          )}
+              <p className="auth-switch">
+                <Link to="/forgot-password">Forgot password?</Link>
+              </p>
+            )}
 
-          {error && (
+            {error && (
               <div className="auth-error" role="alert">
                 {error}
               </div>

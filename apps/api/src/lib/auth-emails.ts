@@ -1,4 +1,3 @@
-
 import { sendEmail } from './mailer.js';
 
 function escapeHtml(value: string) {
@@ -15,11 +14,7 @@ function escapeHtml(value: string) {
   });
 }
 
-export async function sendPasswordResetEmail(
-  email: string,
-  name: string,
-  resetUrl: string,
-) {
+export async function sendPasswordResetEmail(email: string, name: string, resetUrl: string) {
   const safeName = escapeHtml(name);
   const safeUrl = escapeHtml(resetUrl);
 
@@ -100,12 +95,7 @@ export async function sendPasswordResetEmail(
   });
 }
 
-
-export async function sendVerificationEmail(
-  email: string,
-  name: string,
-  verificationUrl: string,
-) {
+export async function sendVerificationEmail(email: string, name: string, verificationUrl: string) {
   const safeName = escapeHtml(name);
   const safeUrl = escapeHtml(verificationUrl);
 
@@ -154,7 +144,6 @@ export async function sendVerificationEmail(
   });
 }
 
-
 export async function sendEmailChangeConfirmation(
   currentEmail: string,
   name: string,
@@ -194,11 +183,14 @@ export async function sendEmailChangeConfirmation(
   });
 }
 
-
 /** Sent only after a new account's first successful email verification. */
 export async function sendWelcomeEmail(email: string, name: string) {
   const safeName = escapeHtml(name);
-  const webUrl = (process.env.WEB_APP_URL ?? process.env.WEB_URL ?? 'http://localhost:5173').replace(/\/$/, '');
+  const webUrl = (
+    process.env.WEB_APP_URL ??
+    process.env.WEB_URL ??
+    'http://localhost:5173'
+  ).replace(/\/$/, '');
   const aquariumUrl = `${webUrl}/aquariums`;
   const safeAquariumUrl = escapeHtml(aquariumUrl);
 

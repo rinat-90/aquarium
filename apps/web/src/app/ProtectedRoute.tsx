@@ -17,7 +17,9 @@ export function ProtectedRoute() {
   }
 
   if (!session.user.emailVerified) {
-    return <Navigate to={`/verify-email?email=${encodeURIComponent(session.user.email)}`} replace />;
+    return (
+      <Navigate to={`/verify-email?email=${encodeURIComponent(session.user.email)}`} replace />
+    );
   }
 
   return <Outlet />;
