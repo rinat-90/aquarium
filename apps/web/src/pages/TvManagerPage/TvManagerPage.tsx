@@ -1,9 +1,11 @@
 
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import {useNavigate} from "react-router";
 import { tvPairingApi } from '../../lib/tv-pairing-api';
 import { aquariumApi } from '../../lib/aquarium-api';
-import { TvQrScanner } from './TvQrScanner';
+const TvQrScanner = lazy(() =>
+  import('./TvQrScanner').then((module) => ({ default: module.TvQrScanner })),
+);
 import './TvManagerPage.css';
 
 type TvSession = Awaited<
@@ -360,13 +362,15 @@ export function TvManagerPage() {
       )}
 
       {scannerOpen && (
-        <TvQrScanner
-          onClose={() => setScannerOpen(false)}
-          onScanned={(path) => {
-            setScannerOpen(false);
-            navigate(path);
-          }}
-        />
+        <Suspense fallback={<p role="status">Loading QR scanner…</p>}>
+          <TvQrScanner
+            onClose={() => setScannerOpen(false)}
+            onScanned={(path) => {
+              setScannerOpen(false);
+              navigate(path);
+            }}
+          />
+        </Suspense>
       )}
     </main>
   );

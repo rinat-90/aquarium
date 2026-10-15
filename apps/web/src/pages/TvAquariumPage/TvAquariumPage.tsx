@@ -1,5 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
-import { ThreeAquariumView } from '../../components/Aquarium3D/ThreeAquariumView';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+
+const ThreeAquariumView = lazy(() =>
+  import('../../components/Aquarium3D/ThreeAquariumView').then((module) => ({
+    default: module.ThreeAquariumView,
+  })),
+);
 import {
   TvPairingScreen,
   type TvDisplayCredentials,
@@ -573,13 +578,15 @@ export function TvAquariumPage() {
       }}
     >
       {!paused && (
-        <ThreeAquariumView
-          createdFish={fish}
-          appearance={appearance}
-          feedSequence={feedSequence}
-          interactive={false}
-          showDebugStats={false}
-        />
+        <Suspense fallback={<div role="status" style={{ color: '#fff', padding: 24 }}>Loading aquarium…</div>}>
+          <ThreeAquariumView
+            createdFish={fish}
+            appearance={appearance}
+            feedSequence={feedSequence}
+            interactive={false}
+            showDebugStats={false}
+          />
+        </Suspense>
       )}
 
       {paused && (
