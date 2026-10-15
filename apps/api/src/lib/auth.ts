@@ -74,7 +74,13 @@ export const auth = betterAuth({
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url }) => {
-      await sendVerificationEmail(user.email, user.name, url);
+      const webUrl = (process.env.WEB_APP_URL ?? 'http://localhost:5173').replace(/\/$/, '');
+
+      const verificationUrl = new URL(url);
+
+      verificationUrl.searchParams.set('callbackURL', `${webUrl}/aquariums`);
+
+      await sendVerificationEmail(user.email, user.name, verificationUrl.toString());
     },
   },
 
