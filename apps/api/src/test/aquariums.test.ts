@@ -14,6 +14,8 @@ const mocks = vi.hoisted(() => ({
   fishCount: vi.fn(),
   fishUpdateMany: vi.fn(),
   aquariumDeleteMany: vi.fn(),
+  aquariumUpdate: vi.fn(),
+  fishDeleteMany: vi.fn(),
   raw: vi.fn(),
 }));
 
@@ -58,11 +60,17 @@ beforeEach(() => {
         findFirst: mocks.findFirst,
         updateMany: mocks.updateMany,
         deleteMany: mocks.aquariumDeleteMany,
+        update: mocks.aquariumUpdate,
       },
-      fish: { count: mocks.fishCount, updateMany: mocks.fishUpdateMany },
+      fish: {
+        count: mocks.fishCount,
+        updateMany: mocks.fishUpdateMany,
+        deleteMany: mocks.fishDeleteMany,
+      },
     }),
   );
   mocks.raw.mockResolvedValue([{ id: user.id }]);
+  mocks.fishDeleteMany.mockResolvedValue({ count: 2 });
 });
 
 afterEach(() => vi.restoreAllMocks());
@@ -267,5 +275,168 @@ describe('aquarium HTTP routes', () => {
     } finally {
       await app.close();
     }
+  });
+});
+
+describe('additional aquarium authorization and deletion paths', () => {
+  async function request(
+    method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
+    url: string,
+    payload?: object,
+  ) {
+    const app = makeApp();
+    try {
+      return await app.inject({ method, url, ...(payload ? { payload } : {}) });
+    } finally {
+      await app.close();
+    }
+  }
+
+  it.each([
+    ['GET', '/aquariums/tank-1'],
+    ['POST', '/aquariums'],
+    ['PATCH', '/aquariums/tank-1'],
+    ['DELETE', '/aquariums/tank-1'],
+    ['PATCH', '/aquariums/tank-1/default'],
+    ['DELETE', '/aquariums/tank-1/fish'],
+  ] as const)('requires authentication for %s %s', async (method, url) => {
+    mocks.getUser.mockResolvedValue(null);
+    const payload =
+      method === 'POST' || (method === 'PATCH' && !url.endsWith('/default'))
+        ? { name: 'Test' }
+        : undefined;
+    const response = await request(method, url, payload);
+    expect(response.statusCode).toBe(401);
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects malformed aquarium deletion requests before opening a transaction', async () => {
+    const response = await request('DELETE', '/aquariums/tank-1', { destinationAquariumId: '' });
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error).toBe('Invalid deletion request');
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when deleting an aquarium that is not owned', async () => {
+    mocks.findMany.mockResolvedValue([second]);
+    const response = await request('DELETE', '/aquariums/tank-1');
+    expect(response.statusCode).toBe(404);
+    expect(mocks.aquariumDeleteMany).not.toHaveBeenCalled();
+    expect(mocks.notify).not.toHaveBeenCalled();
+  });
+
+  it('deletes an empty non-default aquarium without a destination', async () => {
+    mocks.findMany.mockResolvedValue([aquarium, second]);
+    mocks.fishCount.mockResolvedValue(0);
+    const response = await request('DELETE', '/aquariums/tank-2');
+    expect(response.statusCode).toBe(204);
+    expect(mocks.aquariumDeleteMany).toHaveBeenCalledWith({
+      where: { id: second.id, ownerId: user.id },
+    });
+    expect(mocks.fishUpdateMany).not.toHaveBeenCalled();
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+    expect(mocks.notify).toHaveBeenCalledExactlyOnceWith(second.id);
+  });
+
+  it('chooses the oldest remaining aquarium as default when deleting an empty default', async () => {
+    mocks.findMany.mockResolvedValue([aquarium, second]);
+    mocks.fishCount.mockResolvedValue(0);
+    const response = await request('DELETE', '/aquariums/tank-1');
+    expect(response.statusCode).toBe(204);
+    expect(mocks.updateMany).toHaveBeenCalledWith({
+      where: { id: second.id, ownerId: user.id },
+      data: { isDefault: true },
+    });
+    expect(mocks.notify).toHaveBeenCalledExactlyOnceWith(aquarium.id);
+  });
+});
+
+describe('PATCH aquarium default', () => {
+  async function request() {
+    const app = makeApp();
+    try {
+      return await app.inject({ method: 'PATCH', url: '/aquariums/tank-2/default' });
+    } finally {
+      await app.close();
+    }
+  }
+
+  it('returns 404 without changing defaults for an aquarium outside the owner account', async () => {
+    mocks.findFirst.mockResolvedValue(null);
+    const response = await request();
+    expect(response.statusCode).toBe(404);
+    expect(mocks.findFirst).toHaveBeenCalledWith({
+      where: { id: second.id, ownerId: user.id },
+    });
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+    expect(mocks.notify).not.toHaveBeenCalled();
+  });
+
+  it('returns an already-default aquarium without modifying default flags', async () => {
+    mocks.findFirst.mockResolvedValue({ ...second, isDefault: true });
+    const response = await request();
+    expect(response.statusCode).toBe(200);
+    expect(response.json().isDefault).toBe(true);
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+    expect(mocks.aquariumUpdate).not.toHaveBeenCalled();
+    expect(mocks.notify).toHaveBeenCalledWith(second.id);
+  });
+
+  it('clears the old default then marks the requested owned aquarium as default', async () => {
+    mocks.findFirst.mockResolvedValue(second);
+    mocks.aquariumUpdate.mockResolvedValue({ ...second, isDefault: true });
+    const response = await request();
+    expect(response.statusCode).toBe(200);
+    expect(response.json().isDefault).toBe(true);
+    expect(mocks.updateMany).toHaveBeenCalledWith({
+      where: { ownerId: user.id, isDefault: true },
+      data: { isDefault: false },
+    });
+    expect(mocks.aquariumUpdate).toHaveBeenCalledWith({
+      where: { id: second.id },
+      data: { isDefault: true },
+    });
+    expect(mocks.notify).toHaveBeenCalledWith(second.id);
+  });
+
+  it('returns 500 and does not notify when the transaction fails', async () => {
+    mocks.transaction.mockRejectedValue(new Error('database failure'));
+    const response = await request();
+    expect(response.statusCode).toBe(500);
+    expect(response.json()).toEqual({ error: 'Failed to set default aquarium' });
+    expect(mocks.notify).not.toHaveBeenCalled();
+  });
+});
+
+describe('DELETE aquarium fish', () => {
+  async function request() {
+    const app = makeApp();
+    try {
+      return await app.inject({ method: 'DELETE', url: '/aquariums/tank-1/fish' });
+    } finally {
+      await app.close();
+    }
+  }
+
+  it('returns 404 and does not delete fish when the aquarium is not owned', async () => {
+    mocks.findFirst.mockResolvedValue(null);
+    const response = await request();
+    expect(response.statusCode).toBe(404);
+    expect(mocks.findFirst).toHaveBeenCalledWith({
+      where: { id: aquarium.id, ownerId: user.id },
+      select: { id: true },
+    });
+    expect(mocks.fishDeleteMany).not.toHaveBeenCalled();
+    expect(mocks.notify).not.toHaveBeenCalled();
+  });
+
+  it('deletes only fish belonging to the owned aquarium and notifies its viewers', async () => {
+    mocks.findFirst.mockResolvedValue({ id: aquarium.id });
+    const response = await request();
+    expect(response.statusCode).toBe(204);
+    expect(mocks.fishDeleteMany).toHaveBeenCalledWith({
+      where: { aquariumId: aquarium.id, ownerId: user.id },
+    });
+    expect(mocks.notify).toHaveBeenCalledExactlyOnceWith(aquarium.id);
   });
 });
