@@ -5,6 +5,9 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 
 vi.mock('../realtime/socket.js', () => ({ notifyAquariumChanged: vi.fn() }));
 
+// No real email delivery during integration tests.
+vi.mock('../lib/mailer.js', () => ({ sendEmail: vi.fn(async () => undefined) }));
+
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl || new URL(databaseUrl).pathname !== '/aquarium_test') {
   throw new Error('Auth integration tests require the aquarium_test database');
@@ -51,7 +54,15 @@ async function register() {
   const account = newAccount();
   const response = await authRequest('sign-up/email', account);
   expect(response.status).toBe(200);
-  return { account, response, cookie: sessionCookie(response) };
+  // Email verification is covered end-to-end in auth-email.integration.test.ts.
+  // Other suites only need a verified parent with a genuine Better Auth session.
+  await prisma.user.update({ where: { email: account.email }, data: { emailVerified: true } });
+  const login = await authRequest('sign-in/email', {
+    email: account.email,
+    password: account.password,
+  });
+  expect(login.status).toBe(200);
+  return { account, response, cookie: sessionCookie(login) };
 }
 
 beforeAll(async () => {
@@ -106,11 +117,19 @@ describe('Better Auth with real PostgreSQL', () => {
     expect(response.headers.getSetCookie().some((c) => c.includes('session_token='))).toBe(false);
   });
 
-  it('rejects duplicate email registration', async () => {
+  it('does not create a duplicate account for an existing email', async () => {
     const { account } = await register();
+
     const response = await authRequest('sign-up/email', account);
-    expect(response.status).toBeGreaterThanOrEqual(400);
-    expect(await prisma.user.count({ where: { email: account.email } })).toBe(1);
+
+    // Better Auth may return 200 to avoid email enumeration.
+    expect([200, 400, 409, 422]).toContain(response.status);
+
+    expect(
+      await prisma.user.count({
+        where: { email: account.email },
+      }),
+    ).toBe(1);
   });
 
   it('retrieves the correct session from a real cookie', async () => {

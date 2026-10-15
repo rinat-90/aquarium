@@ -2,7 +2,10 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { createServer, type Server as HttpServer } from 'node:http';
 import { once } from 'node:events';
 import { io as connectClient, type Socket as ClientSocket } from 'socket.io-client';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+
+// No real email delivery during integration tests.
+vi.mock('../lib/mailer.js', () => ({ sendEmail: vi.fn(async () => undefined) }));
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl || new URL(databaseUrl).pathname !== '/aquarium_test') {
@@ -37,7 +40,17 @@ async function createParent() {
     }),
   );
   expect(response.status).toBe(200);
-  const cookie = response.headers
+  // Create a verified test fixture; email-link behavior has separate coverage.
+  await prisma.user.update({ where: { email }, data: { emailVerified: true } });
+  const login = await auth.handler(
+    new Request(new URL('/api/auth/sign-in/email', authBase), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: new URL(authBase).origin },
+      body: JSON.stringify({ email, password: 'SocketTestPassword123!' }),
+    }),
+  );
+  expect(login.status).toBe(200);
+  const cookie = login.headers
     .getSetCookie()
     .map((value) => value.split(';', 1)[0])
     .find((value) => value.includes('session_token='));

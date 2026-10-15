@@ -10,6 +10,9 @@ const socketMocks = vi.hoisted(() => ({
 }));
 vi.mock('../realtime/socket.js', () => socketMocks);
 
+// No real email delivery during integration tests.
+vi.mock('../lib/mailer.js', () => ({ sendEmail: vi.fn(async () => undefined) }));
+
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl || new URL(databaseUrl).pathname !== '/aquarium_test') {
   throw new Error('TV pairing integration tests require the aquarium_test database');
@@ -38,7 +41,17 @@ async function register() {
     }),
   );
   expect(response.status).toBe(200);
-  const cookie = response.headers
+  // Create a verified test fixture; email-link behavior has separate coverage.
+  await prisma.user.update({ where: { email }, data: { emailVerified: true } });
+  const login = await auth.handler(
+    new Request(new URL('/api/auth/sign-in/email', baseURL), {
+      method: 'POST',
+      headers: { origin: new URL(baseURL).origin, 'content-type': 'application/json' },
+      body: JSON.stringify({ email, password: 'SecureTestPassword123!' }),
+    }),
+  );
+  expect(login.status).toBe(200);
+  const cookie = login.headers
     .getSetCookie()
     .map((value) => value.split(';', 1)[0])
     .find((value) => value.includes('session_token='));
