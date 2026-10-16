@@ -63,7 +63,7 @@ export function TvQrScanner({ onClose, onScanned }: Props) {
                 /^\/tv\/pair\/[^/]+\/?$/.test(url.pathname);
 
               if (!isValidPairingUrl) {
-                setError('Scan a Family Aquarium TV QR code.');
+                setError('Scan a Finny TV QR code.');
                 return;
               }
 

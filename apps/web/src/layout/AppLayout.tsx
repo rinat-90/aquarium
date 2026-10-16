@@ -74,29 +74,14 @@ export function AppLayout() {
   // Create Fish retains its standalone heading on desktop only.
   const isCreateFish = pathname === '/fish/create';
   const showHeader = !isCreateFish;
-  const mobileSubtitle =
-    pathname === '/fish/create'
-      ? 'Create a Fish'
-      : pathname === '/tv/manage'
-        ? 'TV Broadcast'
-        : pathname === '/profile'
-          ? 'Profile'
-          : 'Aquariums';
 
   return (
     <div
       className={`aquariums-layout${showHeader ? ' aquariums-layout--with-header' : ''}${isCreateFish ? ' aquariums-layout--create-fish' : ''}`}
     >
       <header className="aquariums-topbar">
-        <Link className="aquariums-topbar__brand" to="/aquariums" aria-label="Family Aquarium home">
-          <span className="aquariums-topbar__brand-icon" aria-hidden="true">
-            🐠
-          </span>
-          <span className="aquariums-topbar__brand-name">
-            <strong>Family</strong>
-            <small className="aquariums-topbar__subtitle-desktop">Aquarium</small>
-            <small className="aquariums-topbar__subtitle-mobile">{mobileSubtitle}</small>
-          </span>
+        <Link className="aquariums-topbar__brand" to="/aquariums" aria-label="Finny home">
+          <img className="aquariums-topbar__brand-logo" src="/finny-header.png" alt="Finny" />
         </Link>
         <Link className="aquariums-account" to="/profile" aria-label={`Profile: ${displayName}`}>
           <span className="aquariums-account__avatar" aria-hidden="true">

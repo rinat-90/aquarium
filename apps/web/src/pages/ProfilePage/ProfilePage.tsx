@@ -254,7 +254,7 @@ export function ProfilePage() {
       <div className="profile-grid">
         <section className="profile-card">
           <h2>Account Information</h2>
-          <p>Update how your name appears in Family Aquarium.</p>
+          <p>Update how your name appears in Finny.</p>
 
           <form onSubmit={(event) => void handleSave(event)}>
             <label htmlFor="profile-name">Display Name</label>

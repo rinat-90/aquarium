@@ -92,9 +92,8 @@ export function AuthScreen() {
 
       <div className="auth-container">
         <header className="auth-brand">
-          <div className="auth-logo">🐠</div>
-          <h1>Family Aquarium</h1>
-          <p>A little ocean full of imagination</p>
+          <img className="finny-auth-wordmark" src="/finny-header.png" alt="Finny" />
+          <p>Draw it. Watch it swim.</p>
         </header>
 
         <section className="auth-card">

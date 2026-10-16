@@ -143,7 +143,7 @@ export function TvManagerPage() {
               <p>Display your aquarium on the big screen.</p>
 
               <ol>
-                <li>Open Family Aquarium on your TV.</li>
+                <li>Open Finny on your TV.</li>
                 <li>Scan the QR code displayed on the TV.</li>
                 <li>Select the aquarium you want to display.</li>
               </ol>
