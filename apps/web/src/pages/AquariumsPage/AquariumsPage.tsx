@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 
 import { aquariumApi, type ApiAquarium } from '../../lib/aquarium-api';
+import { onboardingApi } from '../../lib/onboarding-api';
 import { tvPairingApi } from '../../lib/tv-pairing-api';
 import { saveAquariumAppearance } from '../../lib/save-aquarium-appearance';
 import { AQUARIUM_THEMES } from '../../features/aquarium-customization/themeRegistry';
@@ -21,19 +22,22 @@ export function AquariumsPage() {
   const [aquariums, setAquariums] = useState<ApiAquarium[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
+  const [onboardingError, setOnboardingError] = useState<string | null>(null);
+  const [completingOnboarding, setCompletingOnboarding] = useState(false);
 
   const [broadcastAquariumIds, setBroadcastAquariumIds] = useState<Set<string>>(new Set());
 
   const [createOpen, setCreateOpen] = useState(false);
   const [newAquariumName, setNewAquariumName] = useState('');
   const [creating, setCreating] = useState(false);
-  const [createMode, setCreateMode] = useState<'empty' | 'starter'>('empty');
+  const [createMode, setCreateMode] = useState<'empty' | 'starter'>('starter');
   const [starterThemeId, setStarterThemeId] = useState(AQUARIUM_THEMES[0].id);
   const [createError, setCreateError] = useState<string | null>(null);
 
   function openCreateModal() {
     setNewAquariumName('');
-    setCreateMode('empty');
+    setCreateMode(aquariums.length === 0 ? 'starter' : 'empty');
     setStarterThemeId(AQUARIUM_THEMES[0].id);
     setCreateError(null);
     setCreateOpen(true);
@@ -90,10 +94,11 @@ export function AquariumsPage() {
       setError(null);
 
       try {
-        const items = await aquariumApi.list();
+        const [items, status] = await Promise.all([aquariumApi.list(), onboardingApi.get()]);
 
         if (!cancelled) {
           setAquariums(items);
+          setOnboardingCompleted(status.onboardingCompleted);
         }
       } catch (err) {
         if (!cancelled) {
@@ -186,6 +191,58 @@ export function AquariumsPage() {
     };
   }, []);
 
+  // Completing the first fish is a durable onboarding milestone. The fish is
+  // already persisted by the existing creator; when the user returns to this
+  // dashboard, persist completion once (without blocking the aquarium list).
+  useEffect(() => {
+    if (loading || onboardingCompleted !== false) return;
+    if (!aquariums.some((aquarium) => aquarium.fish.length > 0)) return;
+
+    let cancelled = false;
+    void onboardingApi
+      .complete()
+      .then(() => {
+        if (!cancelled) setOnboardingCompleted(true);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) console.error('Could not complete Finny onboarding:', err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [aquariums, loading, onboardingCompleted]);
+
+  async function skipOnboarding() {
+    if (completingOnboarding) return;
+    setCompletingOnboarding(true);
+    setOnboardingError(null);
+    try {
+      await onboardingApi.complete();
+      setOnboardingCompleted(true);
+    } catch (err) {
+      setOnboardingError(err instanceof Error ? err.message : 'Could not save your preference');
+    } finally {
+      setCompletingOnboarding(false);
+    }
+  }
+
+  // The API provisions a blank default aquarium for every new account.
+  // Treat it as the first aquarium instead of asking the user to create a duplicate.
+  // Only show the introduction while the server says onboarding is incomplete.
+  const starterAquarium =
+    aquariums.length === 1 &&
+    aquariums[0].isDefault &&
+    aquariums[0].themeId === null &&
+    Object.keys(aquariums[0].appearance ?? {}).length === 0 &&
+    aquariums[0].fish.length === 0
+      ? aquariums[0]
+      : null;
+  const showWelcome =
+    !loading &&
+    !error &&
+    onboardingCompleted === false &&
+    (aquariums.length === 0 || starterAquarium !== null);
+
   return (
     <>
       <header className="aquariums-header">
@@ -203,6 +260,7 @@ export function AquariumsPage() {
 
         <button
           className="aquariums-mobile-add-button"
+          hidden={showWelcome}
           type="button"
           onClick={openCreateModal}
           aria-label="Create a new aquarium"
@@ -223,7 +281,12 @@ export function AquariumsPage() {
           </svg>
         </button>
 
-        <button className="aquariums-create-button" type="button" onClick={openCreateModal}>
+        <button
+          className="aquariums-create-button"
+          type="button"
+          onClick={openCreateModal}
+          hidden={showWelcome}
+        >
           <span>＋</span>
           New Aquarium
         </button>
@@ -235,18 +298,80 @@ export function AquariumsPage() {
         </div>
       )}
 
+      {showWelcome && (
+        <section className="finny-welcome" aria-labelledby="finny-welcome-title">
+          <div className="finny-welcome__intro">
+            <img src="/finny-icon.png" alt="" className="finny-welcome__mascot" />
+            <div>
+              <span className="finny-welcome__eyebrow">YOUR UNDERWATER ADVENTURE STARTS HERE</span>
+              <h2 id="finny-welcome-title">Welcome to Finny!</h2>
+              <p>Draw it. Watch it swim. Let's bring your underwater world to life!</p>
+            </div>
+          </div>
+          <ol className="finny-welcome__steps">
+            <li>
+              <span aria-hidden="true">🌊</span>
+              <strong>Pick your world</strong>
+              <small>Choose a colorful aquarium theme.</small>
+            </li>
+            <li>
+              <span aria-hidden="true">🎨</span>
+              <strong>Make a fish</strong>
+              <small>Draw, scan, or customize your fish.</small>
+            </li>
+            <li>
+              <span aria-hidden="true">🐠</span>
+              <strong>Watch it swim</strong>
+              <small>See your fish come to life. TV is optional!</small>
+            </li>
+          </ol>
+          <div className="finny-welcome__actions">
+            <button
+              className="finny-welcome__start"
+              type="button"
+              onClick={() =>
+                starterAquarium
+                  ? navigate(`/fish/create?aquariumId=${encodeURIComponent(starterAquarium.id)}`)
+                  : openCreateModal()
+              }
+            >
+              {starterAquarium ? 'Create my first fish' : 'Create my first aquarium'}{' '}
+              <span aria-hidden="true">→</span>
+            </button>
+            {starterAquarium && (
+              <button
+                className="finny-welcome__secondary finny-welcome__customize"
+                type="button"
+                onClick={() =>
+                  navigate(`/aquariums/edit/${encodeURIComponent(starterAquarium.id)}`)
+                }
+              >
+                Customize my aquarium
+              </button>
+            )}
+            <button
+              className="finny-welcome__secondary finny-welcome__skip"
+              type="button"
+              disabled={completingOnboarding}
+              onClick={() => void skipOnboarding()}
+            >
+              {completingOnboarding ? 'Saving...' : 'Skip intro'}
+            </button>
+          </div>
+          {onboardingError && (
+            <p className="aquariums-error" role="alert">
+              {onboardingError}
+            </p>
+          )}
+        </section>
+      )}
+
       {loading ? (
         <p className="aquariums-message">Loading your aquariums...</p>
-      ) : (
+      ) : aquariums.length > 0 && !showWelcome ? (
         <div className="aquariums-grid">
           {aquariums.map((aquarium) => {
             const isBroadcasting = broadcastAquariumIds.has(aquarium.id);
-
-            console.log('Aquarium card:', {
-              name: aquarium.name,
-              id: aquarium.id,
-              isBroadcasting,
-            });
 
             return (
               <AquariumCard key={aquarium.id} aquarium={aquarium} isBroadcasting={isBroadcasting} />
@@ -260,7 +385,7 @@ export function AquariumsPage() {
             <small>Choose a theme, add fish, and make it your own.</small>
           </button>
         </div>
-      )}
+      ) : null}
 
       <Modal
         open={createOpen}

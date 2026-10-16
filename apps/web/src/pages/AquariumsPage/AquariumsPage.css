@@ -1072,3 +1072,183 @@
     outline-offset: 3px;
   }
 }
+
+/* First aquarium: welcoming, child-friendly entry point. */
+.finny-welcome {
+  position: relative;
+  overflow: hidden;
+  max-width: 960px;
+  margin: 0 auto 32px;
+  padding: clamp(20px, 4vw, 40px);
+  border: 1px solid #318eb5;
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 100% 0%, #156a91 0%, transparent 45%),
+    linear-gradient(145deg, #0c3858, #08253d);
+  box-shadow: 0 18px 45px rgb(0 0 0 / 18%);
+}
+.finny-welcome__intro {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.finny-welcome__mascot {
+  width: clamp(88px, 18vw, 140px);
+  height: clamp(88px, 18vw, 140px);
+  object-fit: contain;
+  flex: none;
+}
+.finny-welcome__eyebrow {
+  color: #7fe0f5;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+.finny-welcome h2 {
+  color: #fff;
+  font-size: clamp(27px, 4vw, 42px);
+  line-height: 1.1;
+  margin: 10px 0;
+}
+.finny-welcome__intro p {
+  color: #d2eaf6;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.finny-welcome__steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0;
+  margin: 26px 0;
+  list-style: none;
+}
+.finny-welcome__steps li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 17px;
+  border: 1px solid rgb(135 218 248 / 22%);
+  border-radius: 16px;
+  background: rgb(4 29 51 / 50%);
+}
+.finny-welcome__steps li > span {
+  font-size: 28px;
+}
+.finny-welcome__steps strong {
+  color: #fff;
+  font-size: 15px;
+}
+.finny-welcome__steps small {
+  color: #c1dbe8;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.finny-welcome__start {
+  min-height: 48px;
+  padding: 12px 22px;
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #4ecaff, #238de6);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.finny-welcome__start:hover {
+  filter: brightness(1.1);
+}
+.finny-welcome__start:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .finny-welcome__intro {
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .finny-welcome__mascot {
+    width: 76px;
+    height: 76px;
+  }
+  .finny-welcome__steps {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .finny-welcome__steps li {
+    padding: 12px;
+  }
+  .finny-welcome__start {
+    width: 100%;
+  }
+}
+
+.finny-welcome__secondary:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* Finny first-time welcome actions */
+.aquariums-create-button[hidden],
+.aquariums-mobile-add-button[hidden] {
+  display: none !important;
+}
+.finny-welcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.finny-welcome__secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 11px 19px;
+  border: 1px solid rgb(130 218 250 / 46%);
+  border-radius: 13px;
+  background: rgb(12 65 96 / 72%);
+  color: #e8f8ff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+.finny-welcome__secondary:hover:not(:disabled) {
+  background: rgb(28 103 145 / 90%);
+  border-color: #8fe5ff;
+  transform: translateY(-1px);
+}
+.finny-welcome__secondary:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+.finny-welcome__skip {
+  margin-left: auto;
+  background: transparent;
+  border-color: transparent;
+  color: #b7d9e9;
+  font-weight: 600;
+}
+.finny-welcome__skip:hover:not(:disabled) {
+  background: rgb(255 255 255 / 8%);
+  border-color: rgb(255 255 255 / 20%);
+}
+@media (max-width: 600px) {
+  .finny-welcome__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .finny-welcome__actions > button {
+    width: 100%;
+  }
+  .finny-welcome__skip {
+    margin-left: 0;
+  }
+}

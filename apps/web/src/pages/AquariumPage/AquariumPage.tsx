@@ -674,6 +674,31 @@ export function AquariumPage() {
         </>
       )}
 
+      {!aquariumLoading &&
+        !fishLoading &&
+        aquarium &&
+        fish.length === 0 &&
+        !drawing &&
+        !appearanceOpen &&
+        !settingsOpen &&
+        !mobileViewerOpen && (
+          <section className="finny-first-fish" aria-labelledby="finny-first-fish-title">
+            <span className="finny-first-fish__icon" aria-hidden="true">
+              🐠
+            </span>
+            <div className="finny-first-fish__copy">
+              <h2 id="finny-first-fish-title">Your aquarium is ready!</h2>
+              <p>Now let's make your first fish and watch it swim.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate(`/fish/create?aquariumId=${encodeURIComponent(aquarium.id)}`)}
+            >
+              Make my first fish →
+            </button>
+          </section>
+        )}
+
       <AquariumAppearanceEditor
         themes={availableThemes}
         open={appearanceOpen}

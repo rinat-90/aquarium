@@ -20,6 +20,7 @@ import { fishRoutes } from './routes/fish.js';
 import { fishTextureRoutes } from './routes/fish-textures.js';
 import { tvPairingRoutes } from './routes/tv-pairing.js';
 import { contentRoutes } from './routes/content.js';
+import { onboardingRoutes } from './routes/onboarding.js';
 
 const app = Fastify({
   logger: true,
@@ -171,6 +172,7 @@ async function start() {
     await app.register(fishTextureRoutes);
     await app.register(tvPairingRoutes);
     await app.register(contentRoutes);
+    await app.register(onboardingRoutes);
 
     // Start API server.
     await app.listen({

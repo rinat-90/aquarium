@@ -93,3 +93,70 @@
     overflow: visible !important;
   }
 }
+
+/* A gentle next step for an aquarium with no fish. */
+.finny-first-fish {
+  position: fixed;
+  z-index: 35;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  width: min(640px, calc(100vw - 32px));
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid #62c9ec;
+  border-radius: 18px;
+  background: #092d49;
+  color: #fff;
+  box-shadow: 0 12px 38px rgb(0 0 0 / 38%);
+}
+.finny-first-fish__icon {
+  font-size: 32px;
+  flex: none;
+}
+.finny-first-fish__copy {
+  flex: 1;
+  min-width: 0;
+}
+.finny-first-fish h2 {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+.finny-first-fish p {
+  margin: 0;
+  color: #c3e2ef;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.finny-first-fish button {
+  flex: none;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 11px;
+  background: #32adf2;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.finny-first-fish button:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 3px;
+}
+@media (max-width: 640px) {
+  .finny-first-fish {
+    bottom: 88px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .finny-first-fish__copy {
+    flex-basis: calc(100% - 50px);
+  }
+  .finny-first-fish button {
+    width: 100%;
+  }
+}
