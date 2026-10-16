@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { Fish3DModel } from './createFish3DModel';
 
-/** Finny mascot v5. Forward is +X; the camera initially sees the +Z side. */
+/** Finny mascot v7. Forward is +X; the camera initially sees the +Z side. */
 export function createFinny3DModel(): Fish3DModel {
   const group = new THREE.Group();
   const geometries: THREE.BufferGeometry[] = [];
@@ -30,13 +30,13 @@ export function createFinny3DModel(): Fish3DModel {
   for (let i = 0; i < positions.count; i++) {
     const x = positions.getX(i);
     const t = THREE.MathUtils.smoothstep(x, -0.85, 0.48);
-    const width = 0.77 + 0.23 * t;
-    const forwardCheek = 0.1 * Math.exp(-Math.pow((x - 0.48) / 0.38, 2));
+    const width = 0.76 + 0.24 * t;
+    const forwardCheek = 0.085 * Math.exp(-Math.pow((x - 0.48) / 0.38, 2));
     positions.setXYZ(
       i,
-      x * 0.94 + forwardCheek,
-      positions.getY(i) * 1.0 * width,
-      positions.getZ(i) * 0.94 * width,
+      x * 0.91 + forwardCheek,
+      positions.getY(i) * 1.03 * width,
+      positions.getZ(i) * 0.98 * width,
     );
   }
   positions.needsUpdate = true;
@@ -76,8 +76,8 @@ export function createFinny3DModel(): Fish3DModel {
         const phi = (Math.PI * 2 * (px + 0.5)) / 1024;
         const sphereX = -Math.cos(phi) * radial;
         const t = smooth(-0.85, 0.48, sphereX);
-        const x = sphereX * 0.94 + 0.1 * Math.exp(-Math.pow((sphereX - 0.48) / 0.38, 2));
-        const bodyY = y * (0.77 + 0.23 * t);
+        const x = sphereX * 0.91 + 0.085 * Math.exp(-Math.pow((sphereX - 0.48) / 0.38, 2));
+        const bodyY = y * 1.03 * (0.76 + 0.24 * t);
         const lighting = smooth(-0.8, 0.9, bodyY);
         result
           .copy(shade)
@@ -169,19 +169,35 @@ export function createFinny3DModel(): Fish3DModel {
         steps: 1,
       }),
     );
+  // Rounded, swept fins: broad organic lobes, not sharp triangles.
   const fanShape = (length: number, spread: number) => {
     const shape = new THREE.Shape();
     shape.moveTo(0, 0);
     shape.bezierCurveTo(
-      -length * 0.3,
-      spread * 0.32,
-      -length * 0.76,
+      -length * 0.28,
+      spread * 0.36,
+      -length * 0.65,
       spread * 0.96,
-      -length,
-      spread * 0.78,
+      -length * 0.91,
+      spread * 0.86,
     );
-    shape.quadraticCurveTo(-length * 1.11, 0, -length, -spread * 0.78);
-    shape.bezierCurveTo(-length * 0.76, -spread * 0.96, -length * 0.3, -spread * 0.32, 0, 0);
+    shape.bezierCurveTo(
+      -length * 1.16,
+      spread * 0.78,
+      -length * 1.18,
+      spread * 0.18,
+      -length * 1.08,
+      0,
+    );
+    shape.bezierCurveTo(
+      -length * 1.18,
+      -spread * 0.18,
+      -length * 1.16,
+      -spread * 0.78,
+      -length * 0.91,
+      -spread * 0.86,
+    );
+    shape.bezierCurveTo(-length * 0.65, -spread * 0.96, -length * 0.28, -spread * 0.36, 0, 0);
     return shape;
   };
   const makeFin = (shape: THREE.Shape, x: number, y: number, z: number) => {
@@ -190,7 +206,7 @@ export function createFinny3DModel(): Fish3DModel {
     group.add(fin);
     return fin;
   };
-  const tail = makeFin(fanShape(0.65, 0.47), -0.99, 0, -0.022);
+  const tail = makeFin(fanShape(0.6, 0.46), -0.99, 0, -0.022);
   const sweptFinShape = (height: number, width: number) => {
     const shape = new THREE.Shape();
     shape.moveTo(0, 0);
@@ -210,38 +226,53 @@ export function createFinny3DModel(): Fish3DModel {
   makeFin(sweptFinShape(0.36, 0.54), -0.12, 0.82, -0.025);
   const anal = makeFin(sweptFinShape(0.25, 0.41), -0.3, -0.71, -0.025);
   anal.scale.y = -1;
-  const leftFin = makeFin(fanShape(0.32, 0.25), -0.06, -0.22, 0.77);
-  const rightFin = makeFin(fanShape(0.32, 0.25), -0.06, -0.22, -0.77);
+  const leftFin = makeFin(fanShape(0.38, 0.29), -0.06, -0.22, 0.77);
+  const rightFin = makeFin(fanShape(0.38, 0.29), -0.06, -0.22, -0.77);
   rightFin.rotation.y = Math.PI;
 
-  // Forward-set eyes: visible in front and 3/4 views, no stalk effect.
-  // The front-facing eye centers are separated along Z but sit on the nose.
+  // Bright, open expression. Lift the irises and pupils so Finny looks
+  // toward the viewer rather than down; keep each layer close to the face.
   for (const side of [-1, 1]) {
-    const z = side * 0.35;
-    ellipsoid(0.235, navy, 0.805, 0.23, z, 0.42, 1.05, 0.83);
-    ellipsoid(0.218, white, 0.836, 0.235, z, 0.43, 1.07, 0.8);
-    ellipsoid(0.145, iris, 0.867, 0.22, z + side * 0.014, 0.46, 1.04, 0.78);
-    ellipsoid(0.105, pupil, 0.89, 0.22, z + side * 0.015, 0.44, 1.0, 0.78);
-    ellipsoid(0.039, shine, 0.917, 0.282, z - side * 0.022, 0.42, 1, 0.64);
-    const brow = ellipsoid(0.055, orangeDetail, 0.818, 0.515, z, 0.9, 0.36, 2.2);
-    brow.rotation.x = side * 0.12;
+    const z = side * 0.305;
+    ellipsoid(0.305, navy, 0.747, 0.265, z, 0.33, 1.1, 0.96);
+    ellipsoid(0.287, white, 0.766, 0.272, z, 0.33, 1.09, 0.93);
+    ellipsoid(0.195, iris, 0.8, 0.315, z + side * 0.012, 0.36, 1.05, 0.88);
+    ellipsoid(0.135, pupil, 0.826, 0.325, z + side * 0.013, 0.35, 1.03, 0.87);
+    ellipsoid(0.052, shine, 0.849, 0.405, z - side * 0.047, 0.32, 1, 0.72);
+
+    // Outer end lifted for a welcoming, playful eyebrow shape.
+    const brow = ellipsoid(0.059, orangeDetail, 0.754, 0.655, z, 0.62, 0.36, 2.0);
+    brow.rotation.x = -side * 0.2;
   }
 
-  // Smile visible from front and three-quarter angles: a gently curved
-  // dark mouth on the nose, with pink lower interior and orange lip.
-  const smileCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0.919, -0.13, -0.24),
-    new THREE.Vector3(0.988, -0.255, -0.13),
-    new THREE.Vector3(1.015, -0.29, 0),
-    new THREE.Vector3(0.988, -0.255, 0.13),
-    new THREE.Vector3(0.919, -0.13, 0.24),
-  ]);
-  const smile = new THREE.Mesh(
-    geo(new THREE.TubeGeometry(smileCurve, 24, 0.025, 8, false)),
-    mouthColor,
+  // Trace the smile against the *actual deformed body surface* rather than
+  // placing a tube out in front of the nose. The arc bends around the snout.
+  // Front-facing body radius is approximately 0.94, with a cheek bump.
+  const mouthPoints: THREE.Vector3[] = [];
+  for (let i = 0; i <= 24; i++) {
+    const u = i / 24;
+    const z = (u - 0.5) * 0.6;
+    const y = -0.13 - 0.145 * Math.sin(u * Math.PI);
+    const width = 0.98;
+    const normalized = Math.min(0.99, (y / (1.03 * width)) ** 2 + (z / (0.98 * width)) ** 2);
+    const sphereX = Math.sqrt(1 - normalized);
+    const x = sphereX * 0.91 + 0.085 * Math.exp(-Math.pow((sphereX - 0.48) / 0.38, 2));
+    mouthPoints.push(new THREE.Vector3(x + 0.014, y, z));
+  }
+  const smileCurve = new THREE.CatmullRomCurve3(mouthPoints);
+  group.add(
+    new THREE.Mesh(geo(new THREE.TubeGeometry(smileCurve, 36, 0.019, 7, false)), mouthColor),
   );
-  group.add(smile);
-  ellipsoid(0.07, tongue, 1.015, -0.31, 0, 0.28, 0.23, 1.35);
+  // A subtle lower-lip accent follows the smile instead of floating off the face.
+  const lipPoints = mouthPoints
+    .slice(5, 20)
+    .map((point) => new THREE.Vector3(point.x + 0.003, point.y - 0.025, point.z));
+  group.add(
+    new THREE.Mesh(
+      geo(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(lipPoints), 20, 0.009, 5, false)),
+      tongue,
+    ),
+  );
 
   let disposed = false;
   let imageVersion = 0;
