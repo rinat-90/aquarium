@@ -8,6 +8,7 @@ import {
 
 import { fishApi, type ApiFish } from '../../lib/aquarium-api';
 import { AQUARIUM_CAPACITY, createFish } from '../../lib/create-fish';
+import { finishFirstFish } from '../../lib/finish-first-fish';
 
 import './CustomizeFishPage.css';
 
@@ -96,7 +97,7 @@ export function CustomizeFishPage() {
     try {
       await createFish(aquariumId, creation, fish.length);
 
-      navigate(`/aquariums/${encodeURIComponent(aquariumId)}`);
+      navigate(await finishFirstFish(aquariumId), { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create fish');
     } finally {

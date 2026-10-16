@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { socket } from '../../lib/socket';
 
 import { aquariumApi, fishApi, type ApiAquarium } from '../../lib/aquarium-api';
@@ -42,6 +42,13 @@ const AQUARIUM_CAPACITY = 8;
 
 export function AquariumPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const firstFishCelebration = searchParams.get('firstFish') === '1';
+  const dismissFirstFishCelebration = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('firstFish');
+    setSearchParams(next, { replace: true });
+  };
   const { id: aquariumId } = useParams<{ id: string }>();
 
   const {
@@ -698,6 +705,51 @@ export function AquariumPage() {
             </button>
           </section>
         )}
+
+      {firstFishCelebration && !fishLoading && fish.length > 0 && (
+        <div
+          className="finny-first-fish-celebration"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="finny-celebration-title"
+        >
+          <section className="finny-first-fish-celebration__card">
+            <span className="finny-first-fish-celebration__mascot" aria-hidden="true">
+              🐠 ✨ 🫧
+            </span>
+            <h2 id="finny-celebration-title">Woohoo! Your first fish is swimming!</h2>
+            <p>You made a new underwater friend. Watch it explore your aquarium!</p>
+            <div className="finny-first-fish-celebration__actions">
+              <button
+                type="button"
+                className="finny-first-fish-celebration__primary"
+                onClick={dismissFirstFishCelebration}
+              >
+                Explore my aquarium
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  dismissFirstFishCelebration();
+                  setAppearanceOpen(true);
+                }}
+              >
+                Customize my aquarium
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  dismissFirstFishCelebration();
+                  if (aquariumId)
+                    navigate(`/fish/create?aquariumId=${encodeURIComponent(aquariumId)}`);
+                }}
+              >
+                Add another fish
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       <AquariumAppearanceEditor
         themes={availableThemes}

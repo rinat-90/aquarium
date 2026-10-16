@@ -160,3 +160,60 @@
     width: 100%;
   }
 }
+
+/* First fish: lightweight celebration over the live aquarium. */
+.finny-first-fish-celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(8, 31, 56, 0.67);
+}
+.finny-first-fish-celebration__card {
+  width: min(100%, 470px);
+  padding: clamp(24px, 5vw, 40px);
+  border-radius: 28px;
+  background: #fff;
+  color: #123a5b;
+  text-align: center;
+  box-shadow: 0 20px 80px rgba(0, 22, 44, 0.25);
+}
+.finny-first-fish-celebration__mascot {
+  display: block;
+  font-size: 52px;
+  margin-bottom: 14px;
+}
+.finny-first-fish-celebration__card h2 {
+  font-size: clamp(24px, 4vw, 32px);
+  line-height: 1.15;
+  margin: 0 0 12px;
+}
+.finny-first-fish-celebration__card p {
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+.finny-first-fish-celebration__actions {
+  display: grid;
+  gap: 10px;
+}
+.finny-first-fish-celebration__actions button {
+  min-height: 46px;
+  border: 2px solid #b9e3f4;
+  border-radius: 14px;
+  background: #edf9ff;
+  color: #145078;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+.finny-first-fish-celebration__actions button:focus-visible {
+  outline: 3px solid #ffad46;
+  outline-offset: 3px;
+}
+.finny-first-fish-celebration__actions .finny-first-fish-celebration__primary {
+  background: #087bd1;
+  border-color: #087bd1;
+  color: white;
+}

@@ -1,6 +1,7 @@
 import { useSearchParams, Link, Navigate, useNavigate } from 'react-router';
 import { ScanPaperFish } from '../../components/ScanPaperFish/ScanPaperFish';
 import './ScanFishPage.css';
+import { finishFirstFish } from '../../lib/finish-first-fish';
 
 export function ScanFishPage() {
   const [params] = useSearchParams();
@@ -29,7 +30,9 @@ export function ScanFishPage() {
         <ScanPaperFish
           variant="studio"
           aquariumId={aquariumId}
-          onSaved={() => navigate(`/aquariums/${encodeURIComponent(aquariumId)}`)}
+          onSaved={() => {
+            void finishFirstFish(aquariumId).then((path) => navigate(path, { replace: true }));
+          }}
         />
       </section>
     </main>
