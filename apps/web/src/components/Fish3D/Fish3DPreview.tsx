@@ -8,7 +8,8 @@ import { createFish3DModel, type Fish3DModel } from './createFish3DModel';
 
 import { createAngelfish3DModel } from './createAngelfish3DModel';
 import { createGuppy3DModel } from './createGuppy3DModel';
-import { animateFinny3DModel, createFinny3DModel } from './createFinny3DModel';
+import { createFinny3DModel } from './createFinny3DModel';
+import { createFinnyAnimationController } from './finnyAnimation';
 
 export type FishSpecies = 'classic' | 'angelfish' | 'guppy' | 'finny';
 
@@ -230,6 +231,11 @@ export function Fish3DPreview({
           : selectedSpecies === 'guppy'
             ? createGuppy3DModel()
             : createFish3DModel();
+
+    const finnyAnimation =
+      selectedSpecies === 'finny' ? createFinnyAnimationController(fish) : null;
+    // Play one short welcome reaction when Finny is selected.
+    finnyAnimation?.celebrate(0.8);
 
     fishRef.current = fish;
 
@@ -562,6 +568,10 @@ export function Fish3DPreview({
       /*
        * ROTATE MODE
        */
+      if (selectedSpecies === 'finny') {
+        finnyAnimation?.celebrate();
+      }
+
       rotating = true;
 
       previousX = event.clientX;
@@ -680,13 +690,7 @@ export function Fish3DPreview({
       const seconds = time * 0.001;
 
       if (selectedSpecies === 'finny') {
-        // The mascot gets its own gentle swimming personality.
-        fish.tail.rotation.y = Math.sin(seconds * 3.2) * 0.24;
-        fish.leftFin.rotation.z = -0.3 + Math.sin(seconds * 4.5) * 0.18;
-        fish.rightFin.rotation.z = -0.3 - Math.sin(seconds * 4.5) * 0.18;
-        fish.group.position.y = Math.sin(seconds * 1.4) * 0.045;
-        fish.group.rotation.z = Math.sin(seconds * 1.6) * 0.025;
-        animateFinny3DModel(fish, seconds);
+        finnyAnimation?.update(seconds);
       } else {
         fish.tail.rotation.y =
           Math.sin(seconds * (selectedSpecies === 'guppy' ? 4.2 : 5)) *
