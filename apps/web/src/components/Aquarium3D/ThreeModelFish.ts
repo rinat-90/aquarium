@@ -4,6 +4,8 @@ import { createFish3DModel } from '../Fish3D/createFish3DModel';
 
 import { createAngelfish3DModel } from '../Fish3D/createAngelfish3DModel';
 import { createGuppy3DModel } from '../Fish3D/createGuppy3DModel';
+import { createFinny3DModel } from '../Fish3D/createFinny3DModel';
+import { createFinnyAnimationController } from '../Fish3D/finnyAnimation';
 
 type FishDirection = 'left' | 'right';
 
@@ -26,17 +28,20 @@ export function createThreeModelFish(
   finColor: string,
   paintImage?: string,
   size = 1,
-  species: 'classic' | 'angelfish' | 'guppy' = 'classic',
+  species: 'classic' | 'angelfish' | 'guppy' | 'finny' = 'classic',
 ): ThreeModelFish {
   const model =
-    species === 'angelfish'
-      ? createAngelfish3DModel()
-      : species === 'guppy'
-        ? createGuppy3DModel()
-        : createFish3DModel();
+    species === 'finny'
+      ? createFinny3DModel()
+      : species === 'angelfish'
+        ? createAngelfish3DModel()
+        : species === 'guppy'
+          ? createGuppy3DModel()
+          : createFish3DModel();
 
   const isAngelfish = species === 'angelfish';
   const isGuppy = species === 'guppy';
+  const finnyAnimation = species === 'finny' ? createFinnyAnimationController(model) : null;
 
   model.setBodyColor(bodyColor);
   model.setFinColor(finColor);
@@ -73,6 +78,9 @@ export function createThreeModelFish(
 
     const activity = THREE.MathUtils.clamp(smoothedSpeed, 0, 1.5);
 
+    // Reuse Finny's preview animation while simulation owns movement and heading.
+    finnyAnimation?.update(time);
+
     // Different swimming rhythms for each species.
     const tailFrequency = isAngelfish ? 1.15 : isGuppy ? 2.5 : 1.9;
     const tailAmplitude = isAngelfish ? 0.16 : isGuppy ? 0.24 : 0.32;
@@ -80,7 +88,7 @@ export function createThreeModelFish(
     const swim = Math.sin(time * tailFrequency);
 
     // Keep the tail moving gently even when idling.
-    model.tail.rotation.y = swim * tailAmplitude * (0.3 + activity * 0.7);
+    if (!finnyAnimation) model.tail.rotation.y = swim * tailAmplitude * (0.3 + activity * 0.7);
 
     // Side fins paddle continuously.
     const finFrequency = isAngelfish ? 1.7 : isGuppy ? 3.2 : 2.6;
@@ -88,9 +96,10 @@ export function createThreeModelFish(
 
     const finMovement = Math.sin(time * finFrequency) * finAmplitude * (0.45 + activity * 0.55);
 
-    model.leftFin.rotation.z = baseLeftFinRotation + finMovement;
-
-    model.rightFin.rotation.z = baseRightFinRotation - finMovement;
+    if (!finnyAnimation) {
+      model.leftFin.rotation.z = baseLeftFinRotation + finMovement;
+      model.rightFin.rotation.z = baseRightFinRotation - finMovement;
+    }
 
     // Gentle body sway.
     const bodySway =
