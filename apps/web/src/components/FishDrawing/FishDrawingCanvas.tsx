@@ -83,7 +83,7 @@ export function FishDrawingCanvas({
 
   const [paintImage, setPaintImage] = useState<string | null>(null);
 
-  type FishSpecies = 'basic' | 'angelfish' | 'guppy';
+  type FishSpecies = 'basic' | 'angelfish' | 'guppy' | 'finny';
 
   const [fishSpecies, setFishSpecies] = useState<FishSpecies>('basic');
 
@@ -353,6 +353,8 @@ export function FishDrawingCanvas({
       return;
     }
 
+    if (fishSpecies === 'finny') return;
+
     onDone({
       type: '3d',
       model: fishSpecies === 'basic' ? 'classic' : fishSpecies,
@@ -466,7 +468,7 @@ export function FishDrawingCanvas({
               <div className="fish-editor__section">
                 <h2>Species</h2>
                 <div className="fish-editor__segmented">
-                  {(['basic', 'angelfish', 'guppy'] as const).map((species) => (
+                  {(['basic', 'angelfish', 'guppy', 'finny'] as const).map((species) => (
                     <button
                       type="button"
                       key={species}
@@ -481,7 +483,9 @@ export function FishDrawingCanvas({
                         ? 'Classic'
                         : species === 'angelfish'
                           ? 'Angelfish'
-                          : 'Guppy'}
+                          : species === 'guppy'
+                            ? 'Guppy'
+                            : 'Finny'}
                     </button>
                   ))}
                 </div>
@@ -599,9 +603,13 @@ export function FishDrawingCanvas({
               type="button"
               className="fish-editor__save"
               onClick={mode === 'draw' ? finish : finish3D}
-              disabled={!hasCapacity}
+              disabled={!hasCapacity || (mode === 'color-3d' && fishSpecies === 'finny')}
             >
-              {hasCapacity ? 'Save Fish' : 'Aquarium Full'}
+              {!hasCapacity
+                ? 'Aquarium Full'
+                : mode === 'color-3d' && fishSpecies === 'finny'
+                  ? 'Finny Preview Only'
+                  : 'Save Fish'}
             </button>
           </div>
         </aside>

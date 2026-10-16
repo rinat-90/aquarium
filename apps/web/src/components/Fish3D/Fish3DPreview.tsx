@@ -8,8 +8,9 @@ import { createFish3DModel, type Fish3DModel } from './createFish3DModel';
 
 import { createAngelfish3DModel } from './createAngelfish3DModel';
 import { createGuppy3DModel } from './createGuppy3DModel';
+import { createFinny3DModel } from './createFinny3DModel';
 
-export type FishSpecies = 'classic' | 'angelfish' | 'guppy';
+export type FishSpecies = 'classic' | 'angelfish' | 'guppy' | 'finny';
 
 type Fish3DPreviewProps = {
   bodyColor: string;
@@ -69,6 +70,12 @@ export function Fish3DPreview({
   species = 'classic',
   onPaintChange,
 }: Fish3DPreviewProps) {
+  // Development preview: add ?previewFinny=1 to a page that renders Fish3DPreview.
+  const selectedSpecies: FishSpecies =
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('previewFinny')
+      ? 'finny'
+      : species;
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   const fitCameraRef = useRef<(() => void) | null>(null);
@@ -216,11 +223,13 @@ export function Fish3DPreview({
      * Fish
      */
     const fish: Fish3DModel =
-      species === 'angelfish'
-        ? createAngelfish3DModel()
-        : species === 'guppy'
-          ? createGuppy3DModel()
-          : createFish3DModel();
+      selectedSpecies === 'finny'
+        ? createFinny3DModel()
+        : selectedSpecies === 'angelfish'
+          ? createAngelfish3DModel()
+          : selectedSpecies === 'guppy'
+            ? createGuppy3DModel()
+            : createFish3DModel();
 
     fishRef.current = fish;
 
@@ -253,7 +262,7 @@ export function Fish3DPreview({
       // The Guppy has a long tail, so its bounding sphere needs less
       // visual padding than the other species. A sphere also provides
       // room for the silhouette as the user rotates it.
-      const padding = species === 'guppy' ? 1.14 : 1.35;
+      const padding = selectedSpecies === 'guppy' ? 1.14 : 1.35;
       const radius = Math.max(sphere.radius, 0.01) * padding;
       const halfHeight = Math.max(radius, radius / aspect);
       const halfWidth = halfHeight * aspect;
@@ -671,11 +680,14 @@ export function Fish3DPreview({
       const seconds = time * 0.001;
 
       fish.tail.rotation.y =
-        Math.sin(seconds * (species === 'guppy' ? 4.2 : 5)) * (species === 'guppy' ? 0.22 : 0.28);
+        Math.sin(seconds * (selectedSpecies === 'guppy' ? 4.2 : 5)) *
+        (selectedSpecies === 'guppy' ? 0.22 : 0.28);
 
-      fish.leftFin.rotation.z = -Math.PI / 2.5 + Math.sin(seconds * 3.5) * 0.08;
+      fish.leftFin.rotation.z =
+        (selectedSpecies === 'finny' ? -0.3 : -Math.PI / 2.5) + Math.sin(seconds * 3.5) * 0.08;
 
-      fish.rightFin.rotation.z = -Math.PI / 2.5 - Math.sin(seconds * 3.5) * 0.08;
+      fish.rightFin.rotation.z =
+        (selectedSpecies === 'finny' ? -0.3 : -Math.PI / 2.5) - Math.sin(seconds * 3.5) * 0.08;
 
       renderer.render(scene, camera);
 
@@ -709,7 +721,7 @@ export function Fish3DPreview({
 
       renderer.domElement.remove();
     };
-  }, [species]);
+  }, [selectedSpecies]);
 
   return (
     <div className="fish-3d-preview">
