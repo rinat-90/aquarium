@@ -1,6 +1,20 @@
 import * as THREE from 'three';
 import type { Fish3DModel } from './createFish3DModel';
 
+const finnyBlinkParts = new WeakMap<Fish3DModel, Array<{ mesh: THREE.Mesh; baseY: number }>>();
+
+/** Animate only Finny's eye meshes; no per-frame allocations or React updates. */
+export function animateFinny3DModel(fish: Fish3DModel, seconds: number): void {
+  const parts = finnyBlinkParts.get(fish);
+  if (!parts) return;
+  // One quick blink every ~4.7 seconds; first blink after 2.8 seconds.
+  const phase = (((seconds - 2.8) % 4.7) + 4.7) % 4.7;
+  const distance = Math.abs(phase - 0.12);
+  const closed = Math.max(0, 1 - distance / 0.12);
+  const scale = 1 - 0.94 * Math.sin((closed * Math.PI) / 2);
+  for (const { mesh, baseY } of parts) mesh.scale.y = baseY * scale;
+}
+
 /** Finny mascot v7. Forward is +X; the camera initially sees the +Z side. */
 export function createFinny3DModel(): Fish3DModel {
   const group = new THREE.Group();
@@ -230,15 +244,20 @@ export function createFinny3DModel(): Fish3DModel {
   const rightFin = makeFin(fanShape(0.38, 0.29), -0.06, -0.22, -0.77);
   rightFin.rotation.y = Math.PI;
 
+  const blinkParts: Array<{ mesh: THREE.Mesh; baseY: number }> = [];
+  const blinkEye = (mesh: THREE.Mesh) => {
+    blinkParts.push({ mesh, baseY: mesh.scale.y });
+  };
+
   // Bright, open expression. Lift the irises and pupils so Finny looks
   // toward the viewer rather than down; keep each layer close to the face.
   for (const side of [-1, 1]) {
     const z = side * 0.305;
-    ellipsoid(0.305, navy, 0.747, 0.265, z, 0.33, 1.1, 0.96);
-    ellipsoid(0.287, white, 0.766, 0.272, z, 0.33, 1.09, 0.93);
-    ellipsoid(0.195, iris, 0.8, 0.315, z + side * 0.012, 0.36, 1.05, 0.88);
-    ellipsoid(0.135, pupil, 0.826, 0.325, z + side * 0.013, 0.35, 1.03, 0.87);
-    ellipsoid(0.052, shine, 0.849, 0.405, z - side * 0.047, 0.32, 1, 0.72);
+    blinkEye(ellipsoid(0.305, navy, 0.747, 0.265, z, 0.33, 1.1, 0.96));
+    blinkEye(ellipsoid(0.287, white, 0.766, 0.272, z, 0.33, 1.09, 0.93));
+    blinkEye(ellipsoid(0.195, iris, 0.8, 0.315, z + side * 0.012, 0.36, 1.05, 0.88));
+    blinkEye(ellipsoid(0.135, pupil, 0.826, 0.325, z + side * 0.013, 0.35, 1.03, 0.87));
+    blinkEye(ellipsoid(0.052, shine, 0.849, 0.405, z - side * 0.047, 0.32, 1, 0.72));
 
     // Outer end lifted for a welcoming, playful eyebrow shape.
     const brow = ellipsoid(0.059, orangeDetail, 0.754, 0.655, z, 0.62, 0.36, 2.0);
@@ -291,7 +310,7 @@ export function createFinny3DModel(): Fish3DModel {
     };
     source.src = image;
   };
-  return {
+  const model: Fish3DModel = {
     group,
     body,
     paintCanvas,
@@ -313,6 +332,9 @@ export function createFinny3DModel(): Fish3DModel {
       geometries.forEach((item) => item.dispose());
       materials.forEach((item) => item.dispose());
       textures.forEach((item) => item.dispose());
+      finnyBlinkParts.delete(model);
     },
   };
+  finnyBlinkParts.set(model, blinkParts);
+  return model;
 }
