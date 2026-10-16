@@ -31,11 +31,15 @@ describe('onboarding status', () => {
   it('requires authentication for read and completion', async () => {
     mocks.user.mockResolvedValue(null);
     expect((await app.inject({ method: 'GET', url: '/api/onboarding' })).statusCode).toBe(401);
-    expect((await app.inject({ method: 'POST', url: '/api/onboarding/complete' })).statusCode).toBe(401);
+    expect((await app.inject({ method: 'POST', url: '/api/onboarding/complete' })).statusCode).toBe(
+      401,
+    );
   });
 
   it('defaults to incomplete and persists completion idempotently', async () => {
-    const account = await prisma.user.create({ data: { email: `onboarding-${randomUUID()}@example.test` } });
+    const account = await prisma.user.create({
+      data: { email: `onboarding-${randomUUID()}@example.test` },
+    });
     createdUserIds.push(account.id);
     mocks.user.mockResolvedValue({ id: account.id });
     const initial = await app.inject({ method: 'GET', url: '/api/onboarding' });
@@ -46,16 +50,24 @@ describe('onboarding status', () => {
       expect(result.statusCode).toBe(200);
       expect(result.json()).toEqual({ onboardingCompleted: true });
     }
-    expect((await app.inject({ method: 'GET', url: '/api/onboarding' })).json()).toEqual({ onboardingCompleted: true });
+    expect((await app.inject({ method: 'GET', url: '/api/onboarding' })).json()).toEqual({
+      onboardingCompleted: true,
+    });
   });
 
   it('does not expose another user’s status', async () => {
-    const first = await prisma.user.create({ data: { email: `first-${randomUUID()}@example.test` } });
-    const second = await prisma.user.create({ data: { email: `second-${randomUUID()}@example.test` } });
+    const first = await prisma.user.create({
+      data: { email: `first-${randomUUID()}@example.test` },
+    });
+    const second = await prisma.user.create({
+      data: { email: `second-${randomUUID()}@example.test` },
+    });
     createdUserIds.push(first.id, second.id);
     mocks.user.mockResolvedValue({ id: first.id });
     await app.inject({ method: 'POST', url: '/api/onboarding/complete' });
     mocks.user.mockResolvedValue({ id: second.id });
-    expect((await app.inject({ method: 'GET', url: '/api/onboarding' })).json()).toEqual({ onboardingCompleted: false });
+    expect((await app.inject({ method: 'GET', url: '/api/onboarding' })).json()).toEqual({
+      onboardingCompleted: false,
+    });
   });
 });
