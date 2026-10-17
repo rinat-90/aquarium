@@ -464,6 +464,19 @@ export function TvAquariumPage() {
 
     socket.connect();
 
+    // Mobile browsers may suspend sockets while the PWA is backgrounded.
+    // Resume the existing authenticated display socket when it becomes active.
+    const reconnectIfNeeded = () => {
+      if (active && navigator.onLine && !socket.connected && !socket.active) {
+        socket.connect();
+      }
+    };
+    const reconnectOnVisible = () => {
+      if (document.visibilityState === 'visible') reconnectIfNeeded();
+    };
+    window.addEventListener('online', reconnectIfNeeded);
+    document.addEventListener('visibilitychange', reconnectOnVisible);
+
     // The initial socket join authorizes loading. A paused session
     // receives tv:broadcast-status from the server.
 
@@ -515,6 +528,8 @@ export function TvAquariumPage() {
         clearTimeout(expirationTimer);
       }
 
+      window.removeEventListener('online', reconnectIfNeeded);
+      document.removeEventListener('visibilitychange', reconnectOnVisible);
       socket.off('aquarium:changed', changed);
       socket.off('aquarium:appearance-preview', previewAppearance);
       socket.disconnect();
