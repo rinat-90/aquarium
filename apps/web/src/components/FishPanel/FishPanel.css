@@ -478,3 +478,13 @@
     font-size: 12px;
   }
 }
+
+/* Cached species-specific list thumbnail. */
+.fish-panel__thumbnail-placeholder {
+  font-size: 25px;
+}
+.fish-panel__avatar:not(.fish-panel__avatar--large) .fish-panel__image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

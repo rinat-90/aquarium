@@ -3,8 +3,9 @@ import { createPortal } from 'react-dom';
 
 import type { CreatedFish } from '../../types/fish';
 import type { ApiAquarium } from '../../lib/aquarium-api';
-import { Fish3DPreview } from '../Fish3D/Fish3DPreview';
+import { Fish3DPreview, type FishSpecies } from '../Fish3D/Fish3DPreview';
 import { Select } from '../ui/Select';
+import { FishListThumbnail } from './FishListThumbnail';
 
 import './FishPanel.css';
 
@@ -30,7 +31,29 @@ function getFishColor(fish: CreatedFish): string {
 function getFishType(fish: CreatedFish): string {
   if (fish.type === 'drawn') return 'Hand-drawn Fish';
 
-  return fish.model === 'angelfish' ? 'Angelfish' : 'Classic Fish';
+  switch (fish.model) {
+    case 'angelfish':
+      return 'Angelfish';
+    case 'guppy':
+      return 'Guppy';
+    case 'finny':
+      return 'Finny';
+    default:
+      return 'Classic Fish';
+  }
+}
+
+function getPreviewSpecies(fish: CreatedFish): FishSpecies {
+  if (fish.type !== '3d') return 'classic';
+
+  switch (fish.model) {
+    case 'angelfish':
+    case 'guppy':
+    case 'finny':
+      return fish.model;
+    default:
+      return 'classic';
+  }
 }
 
 function FishPreview({ fish, large = false }: { fish: CreatedFish; large?: boolean }) {
@@ -46,7 +69,7 @@ function FishPreview({ fish, large = false }: { fish: CreatedFish; large?: boole
       ) : large ? (
         <Fish3DPreview
           key={`${fish.id}-${fish.model}`}
-          species={fish.model === 'angelfish' ? 'angelfish' : 'classic'}
+          species={getPreviewSpecies(fish)}
           bodyColor={fish.bodyColor}
           finColor={fish.finColor}
           paintImage={fish.paintImage}
@@ -55,7 +78,13 @@ function FishPreview({ fish, large = false }: { fish: CreatedFish; large?: boole
           editable={false}
         />
       ) : (
-        <span aria-hidden="true">🐟</span>
+        <FishListThumbnail
+          species={getPreviewSpecies(fish)}
+          bodyColor={fish.bodyColor}
+          finColor={fish.finColor}
+          paintImage={fish.paintImage}
+          size={fish.size}
+        />
       )}
     </div>
   );
