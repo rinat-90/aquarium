@@ -57,6 +57,11 @@ export function createThreeModelFish(
   let turnLean = 0;
   let smoothedSpeed = 0.5;
   let lastTime: number | null = null;
+  let facingLeft = false;
+  let visualYaw = 0;
+  let tailSweep = 0;
+  let smoothedLean = 0;
+  let visualHeadingInitialized = false;
 
   const update = (
     time: number,
@@ -81,9 +86,14 @@ export function createThreeModelFish(
       model.group.rotation.z = bankZ;
     }
 
-    // Small tail sweep to preserve the visible silhouette in the aquarium.
+    // Aquarium-only tail motion: ease the sweep in/out with swim activity.
+    // Keep the maximum angle at 0.18 so the tail never turns edge-on.
     const tailFrequency = species === 'finny' ? 3.2 : isAngelfish ? 1.8 : isGuppy ? 3.5 : 2.8;
-    model.tail.rotation.y = Math.sin(time * tailFrequency) * 0.18;
+    const tailAmplitude = THREE.MathUtils.lerp(0.1, 0.18, THREE.MathUtils.clamp(activity, 0, 1));
+    const targetSweep = Math.sin(time * tailFrequency) * tailAmplitude;
+    const tailBlend = 1 - Math.exp(-10 * deltaTime);
+    tailSweep += (targetSweep - tailSweep) * tailBlend;
+    model.tail.rotation.y = tailSweep;
 
     // Side fins paddle continuously on non-Finny species.
     const finFrequency = isAngelfish ? 1.7 : isGuppy ? 3.2 : 2.6;
@@ -126,10 +136,38 @@ export function createThreeModelFish(
       turnLean *= Math.exp(-3 * deltaTime);
     }
 
-    // Face left or right without rotating the tail edge-on to the camera.
-    const facingLeft = Math.cos(currentYaw) < 0;
-    model.group.rotation.y = facingLeft ? Math.PI : 0;
-    model.group.rotation.x = turnLean;
+    // Keep fish side-on for tail visibility, but animate direction changes
+    // slowly enough to read as a deliberate swimming turn.
+    // Hysteresis avoids repeated flips when moving mainly in depth.
+    const headingX = Math.cos(currentYaw);
+    if (headingX > 0.22) facingLeft = false;
+    else if (headingX < -0.22) facingLeft = true;
+
+    const targetVisualYaw = facingLeft ? Math.PI : 0;
+    if (!visualHeadingInitialized) {
+      // A newly created fish should start facing its travel direction,
+      // not perform an artificial half-turn on its first frame.
+      visualYaw = targetVisualYaw;
+      visualHeadingInitialized = true;
+    }
+
+    const visualDifference = Math.atan2(
+      Math.sin(targetVisualYaw - visualYaw),
+      Math.cos(targetVisualYaw - visualYaw),
+    );
+    // 1.7 radians/sec means a full reversal takes about 1.85 seconds.
+    // Ease near the end so the fish settles naturally instead of stopping hard.
+    const turnRate = isAngelfish ? 1.45 : isGuppy ? 1.85 : 1.7;
+    const maxStep = turnRate * deltaTime;
+    const easedStep = visualDifference * (1 - Math.exp(-2.6 * deltaTime));
+    const step = THREE.MathUtils.clamp(easedStep, -maxStep, maxStep);
+    visualYaw += step;
+    model.group.rotation.y = visualYaw;
+
+    // Ease banking instead of snapping when the simulated direction changes.
+    const bankBlend = 1 - Math.exp(-5 * deltaTime);
+    smoothedLean += (turnLean - smoothedLean) * bankBlend;
+    model.group.rotation.x = smoothedLean;
   };
 
   return {
