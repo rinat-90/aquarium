@@ -1,6 +1,7 @@
 # Finny Animation v1
 
 Applies on top of Finny v7. Only two files change:
+
 - `apps/web/src/components/Fish3D/Fish3DPreview.tsx`
 - `apps/web/src/components/Fish3D/createFinny3DModel.ts`
 
