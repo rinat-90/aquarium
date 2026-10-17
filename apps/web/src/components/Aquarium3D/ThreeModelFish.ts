@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 
 import { createFish3DModel } from '../Fish3D/createFish3DModel';
-
 import { createAngelfish3DModel } from '../Fish3D/createAngelfish3DModel';
 import { createGuppy3DModel } from '../Fish3D/createGuppy3DModel';
 import { createFinny3DModel } from '../Fish3D/createFinny3DModel';
@@ -11,7 +10,6 @@ type FishDirection = 'left' | 'right';
 
 export type ThreeModelFish = {
   group: THREE.Group;
-
   update: (
     time: number,
     speed: number,
@@ -19,7 +17,6 @@ export type ThreeModelFish = {
     depthVelocity: number,
     horizontalVelocity?: number,
   ) => void;
-
   destroy: () => void;
 };
 
@@ -69,31 +66,28 @@ export function createThreeModelFish(
     horizontalVelocity?: number,
   ) => {
     const deltaTime = lastTime === null ? 1 / 60 : THREE.MathUtils.clamp(time - lastTime, 0, 0.05);
-
     lastTime = time;
 
     const speedBlend = 1 - Math.exp(-4 * deltaTime);
-
     smoothedSpeed += (Math.max(0, speed) - smoothedSpeed) * speedBlend;
-
     const activity = THREE.MathUtils.clamp(smoothedSpeed, 0, 1.5);
 
-    // Reuse Finny's preview animation while simulation owns movement and heading.
-    finnyAnimation?.update(time);
+    // Keep Finny's eye and fin animations, but let the aquarium control movement.
+    if (finnyAnimation) {
+      const worldY = model.group.position.y;
+      const bankZ = model.group.rotation.z;
+      finnyAnimation.update(time);
+      model.group.position.y = worldY;
+      model.group.rotation.z = bankZ;
+    }
 
-    // Different swimming rhythms for each species.
-    const tailFrequency = isAngelfish ? 1.15 : isGuppy ? 2.5 : 1.9;
-    const tailAmplitude = isAngelfish ? 0.16 : isGuppy ? 0.24 : 0.32;
+    // Small tail sweep to preserve the visible silhouette in the aquarium.
+    const tailFrequency = species === 'finny' ? 3.2 : isAngelfish ? 1.8 : isGuppy ? 3.5 : 2.8;
+    model.tail.rotation.y = Math.sin(time * tailFrequency) * 0.18;
 
-    const swim = Math.sin(time * tailFrequency);
-
-    // Keep the tail moving gently even when idling.
-    if (!finnyAnimation) model.tail.rotation.y = swim * tailAmplitude * (0.3 + activity * 0.7);
-
-    // Side fins paddle continuously.
+    // Side fins paddle continuously on non-Finny species.
     const finFrequency = isAngelfish ? 1.7 : isGuppy ? 3.2 : 2.6;
     const finAmplitude = isAngelfish ? 0.11 : isGuppy ? 0.065 : 0.085;
-
     const finMovement = Math.sin(time * finFrequency) * finAmplitude * (0.45 + activity * 0.55);
 
     if (!finnyAnimation) {
@@ -101,57 +95,40 @@ export function createThreeModelFish(
       model.rightFin.rotation.z = baseRightFinRotation - finMovement;
     }
 
-    // Gentle body sway.
-    const bodySway =
-      Math.sin(time * tailFrequency) *
-      (isAngelfish ? 0.012 : isGuppy ? 0.018 : 0.025) *
-      (0.3 + activity * 0.7);
-
     const velocityX = horizontalVelocity ?? (direction === 'right' ? 1 : -1);
-
     const horizontalSpeed = Math.hypot(velocityX, depthVelocity);
 
     if (horizontalSpeed > 0.03) {
       const targetYaw = Math.atan2(-depthVelocity, velocityX);
-
       const yawDifference = Math.atan2(
         Math.sin(targetYaw - currentYaw),
         Math.cos(targetYaw - currentYaw),
       );
-
-      // Angelfish rotate more gracefully.
       const turnResponsiveness = isAngelfish ? 2.1 : isGuppy ? 3.5 : 4.2;
-
       const turnAmount = 1 - Math.exp(-turnResponsiveness * deltaTime);
-
       currentYaw += yawDifference * turnAmount;
 
-      // Subtle lean while changing direction.
       if (previousTargetYaw !== null) {
         const headingChange = Math.atan2(
           Math.sin(targetYaw - previousTargetYaw),
           Math.cos(targetYaw - previousTargetYaw),
         );
-
         const desiredLean = THREE.MathUtils.clamp(
           -headingChange * (isAngelfish ? 0.08 : 0.12),
           -0.09,
           0.09,
         );
-
         const leanBlend = 1 - Math.exp(-3 * deltaTime);
-
         turnLean += (desiredLean - turnLean) * leanBlend;
       }
-
       previousTargetYaw = targetYaw;
     } else {
       turnLean *= Math.exp(-3 * deltaTime);
     }
 
-    model.group.rotation.y = currentYaw + bodySway;
-
-    // Very small banking motion during turns.
+    // Face left or right without rotating the tail edge-on to the camera.
+    const facingLeft = Math.cos(currentYaw) < 0;
+    model.group.rotation.y = facingLeft ? Math.PI : 0;
     model.group.rotation.x = turnLean;
   };
 

@@ -38,7 +38,13 @@ export async function mapApiFish(item: ApiFish): Promise<CreatedFish> {
     id: item.id,
     type: '3d',
     model:
-      item.species === 'angelfish' ? 'angelfish' : item.species === 'guppy' ? 'guppy' : 'basic',
+      item.species === 'angelfish'
+        ? 'angelfish'
+        : item.species === 'guppy'
+          ? 'guppy'
+          : item.species === 'finny'
+            ? 'finny'
+            : 'basic',
     bodyColor: item.bodyColor,
     finColor: item.finColor,
     paintImage: texture,

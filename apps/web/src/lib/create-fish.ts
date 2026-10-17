@@ -30,7 +30,9 @@ export async function createFish(
             ? 'angelfish'
             : creation.model === 'guppy'
               ? 'guppy'
-              : 'classic',
+              : creation.model === 'finny'
+                ? 'finny'
+                : 'classic',
 
       bodyColor: creation.type === 'drawn' ? '#4F9CF9' : creation.bodyColor,
 

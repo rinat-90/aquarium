@@ -14,7 +14,7 @@ export type FishCreation =
     }
   | {
       type: '3d';
-      model: 'classic' | 'angelfish' | 'guppy';
+      model: 'classic' | 'angelfish' | 'guppy' | 'finny';
       bodyColor: string;
       finColor: string;
       paintImage?: string;
@@ -353,8 +353,6 @@ export function FishDrawingCanvas({
       return;
     }
 
-    if (fishSpecies === 'finny') return;
-
     onDone({
       type: '3d',
       model: fishSpecies === 'basic' ? 'classic' : fishSpecies,
@@ -603,13 +601,9 @@ export function FishDrawingCanvas({
               type="button"
               className="fish-editor__save"
               onClick={mode === 'draw' ? finish : finish3D}
-              disabled={!hasCapacity || (mode === 'color-3d' && fishSpecies === 'finny')}
+              disabled={!hasCapacity}
             >
-              {!hasCapacity
-                ? 'Aquarium Full'
-                : mode === 'color-3d' && fishSpecies === 'finny'
-                  ? 'Finny Preview Only'
-                  : 'Save Fish'}
+              {!hasCapacity ? 'Aquarium Full' : 'Save Fish'}
             </button>
           </div>
         </aside>

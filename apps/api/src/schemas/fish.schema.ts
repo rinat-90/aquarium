@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const colorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Must be a valid hex color');
 
-const speciesSchema = z.enum(['classic', 'angelfish', 'guppy', 'drawn']);
+const speciesSchema = z.enum(['classic', 'angelfish', 'guppy', 'finny', 'drawn']);
 
 const sizeSchema = z.number().min(0.1).max(5);
 

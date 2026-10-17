@@ -54,6 +54,7 @@ type ThreeAquariumViewProps = {
 
 type RenderedFish = {
   view: ThreeFish | ThreeModelFish;
+  kind: 'drawn' | '3d';
 };
 
 export function ThreeAquariumView({
@@ -175,7 +176,9 @@ export function ThreeAquariumView({
           ? 'angelfish'
           : created.model === 'guppy'
             ? 'guppy'
-            : 'basic'
+            : created.model === 'finny'
+              ? 'finny'
+              : 'basic'
         : 'basic';
 
     const fish = aquarium.createFish(created.id, created.size, species);
@@ -201,7 +204,9 @@ export function ThreeAquariumView({
             ? 'angelfish'
             : created.model === 'guppy'
               ? 'guppy'
-              : 'classic',
+              : created.model === 'finny'
+                ? 'finny'
+                : 'classic',
         );
       }
 
@@ -265,6 +270,7 @@ export function ThreeAquariumView({
 
       threeFishRef.current.set(created.id, {
         view,
+        kind: created.type,
       });
     } catch (error) {
       aquarium.removeFish(created.id);
@@ -923,7 +929,10 @@ export function ThreeAquariumView({
 
           fish.direction,
           fish.velocity.z,
-          aquarium.getNibbleProgress(fish.id),
+          // Drawn fish use this parameter for nibbling; 3D models use it
+          // for horizontal heading. Passing nibble progress to a 3D model
+          // makes its orientation incorrect, often hiding Finny's tail.
+          rendered.kind === '3d' ? fish.velocity.x : aquarium.getNibbleProgress(fish.id),
         );
       }
 

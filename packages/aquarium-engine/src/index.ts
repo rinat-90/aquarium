@@ -1,6 +1,6 @@
 import type { Fish, Food, Vector3 } from '@aquarium/types';
 
-export type FishSpecies = 'basic' | 'angelfish' | 'guppy';
+export type FishSpecies = 'basic' | 'angelfish' | 'guppy' | 'finny';
 
 export type AquariumOptions = {
   width: number;
