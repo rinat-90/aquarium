@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "Finny \u2014 Family Aquarium",
+  "short_name": "Finny",
+  "description": "Draw your own fish and watch them swim.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#063858",
+  "theme_color": "#075b94",
+  "icons": [
+    {
+      "src": "/icons/finny-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/finny-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
