@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 
 import { cropDrawing } from '@aquarium/drawing';
+import { FISH_TEMPLATES, getFishTemplateAssets, type FishTemplateId } from '../../lib/image-processing/fishTemplateRegistry';
 import './FishDrawingCanvas.css';
 
 import { Fish3DPreview } from '../Fish3D/Fish3DPreview';
@@ -66,6 +67,11 @@ export function FishDrawingCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const historyRef = useRef<ImageData[]>([]);
+  const maskRef = useRef<HTMLCanvasElement | null>(null);
+  const outlineRef = useRef<HTMLCanvasElement | null>(null);
+  const [templateId, setTemplateId] = useState<FishTemplateId | null>(null);
+  const [templateLoading, setTemplateLoading] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
 
   const [isDrawing, setIsDrawing] = useState(false);
 
@@ -122,6 +128,103 @@ export function FishDrawingCanvas({
     context.lineCap = 'round';
     context.lineJoin = 'round';
   }, []);
+
+  // Each template is fitted into the same 600 × 400 editor coordinates.
+  // Its grayscale mask is converted to alpha; its black printed lines become
+  // a separate transparent overlay, so paint never obscures the details.
+  useEffect(() => {
+    if (mode !== 'draw') return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    historyRef.current = [];
+    setCanUndo(false);
+    maskRef.current = null;
+    outlineRef.current = null;
+    setTemplateError(null);
+    if (!templateId) { setTemplateLoading(false); return; }
+
+    let cancelled = false;
+    setTemplateLoading(true);
+    const { mask, reference } = getFishTemplateAssets(templateId);
+    const load = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Unable to load fish template assets.'));
+      img.src = src;
+    });
+    void Promise.all([load(mask), load(reference)]).then(([shape, lines]) => {
+      if (cancelled) return;
+      const bounds = Math.min(canvas.width * 0.85 / shape.width, canvas.height * 0.88 / shape.height);
+      const w = shape.width * bounds;
+      const h = shape.height * bounds;
+      const x = (canvas.width - w) / 2;
+      const y = (canvas.height - h) / 2;
+      const makeCanvas = () => {
+        const off = document.createElement('canvas');
+        off.width = canvas.width;
+        off.height = canvas.height;
+        return off;
+      };
+      const maskCanvas = makeCanvas();
+      const maskCtx = maskCanvas.getContext('2d', { willReadFrequently: true })!;
+      maskCtx.drawImage(shape, x, y, w, h);
+      const maskPixels = maskCtx.getImageData(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < maskPixels.data.length; i += 4) {
+        const luminance = maskPixels.data[i];
+        maskPixels.data[i] = 255;
+        maskPixels.data[i + 1] = 255;
+        maskPixels.data[i + 2] = 255;
+        maskPixels.data[i + 3] = luminance;
+      }
+      maskCtx.putImageData(maskPixels, 0, 0);
+
+      const outlineCanvas = makeCanvas();
+      const outlineCtx = outlineCanvas.getContext('2d', { willReadFrequently: true })!;
+      outlineCtx.drawImage(lines, x, y, w, h);
+      const outlinePixels = outlineCtx.getImageData(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < outlinePixels.data.length; i += 4) {
+        const lightness = (outlinePixels.data[i] + outlinePixels.data[i + 1] + outlinePixels.data[i + 2]) / 3;
+        outlinePixels.data[i] = 25;
+        outlinePixels.data[i + 1] = 40;
+        outlinePixels.data[i + 2] = 52;
+        outlinePixels.data[i + 3] = Math.round(Math.max(0, (220 - lightness) / 170) * 255);
+      }
+      outlineCtx.putImageData(outlinePixels, 0, 0);
+      outlineCtx.globalCompositeOperation = 'destination-in';
+      outlineCtx.drawImage(maskCanvas, 0, 0);
+      outlineCtx.globalCompositeOperation = 'source-over';
+      maskRef.current = maskCanvas;
+      outlineRef.current = outlineCanvas;
+      setTemplateLoading(false);
+      // Paint layer is kept independent; the reference is displayed as a CSS
+      // overlay and only merged when exporting.
+      const preview = outlineCanvas.toDataURL('image/png');
+      setOutlinePreview(preview);
+    }).catch((error: unknown) => {
+      if (!cancelled) {
+        setTemplateError(error instanceof Error ? error.message : 'Template failed to load.');
+        setTemplateLoading(false);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [mode, templateId]);
+
+  const [outlinePreview, setOutlinePreview] = useState<string | null>(null);
+
+  const constrainPaint = () => {
+    const canvas = canvasRef.current;
+    const mask = maskRef.current;
+    if (!canvas || !mask || !templateId) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.drawImage(mask, 0, 0);
+    ctx.restore();
+  };
 
   const getPosition = (event: PointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current!;
@@ -209,6 +312,7 @@ export function FishDrawingCanvas({
     context.arc(position.x, position.y, brushSize / 2, 0, Math.PI * 2);
 
     context.fill();
+    constrainPaint();
 
     context.beginPath();
 
@@ -245,6 +349,7 @@ export function FishDrawingCanvas({
     context.lineTo(position.x, position.y);
 
     context.stroke();
+    constrainPaint();
   };
 
   const stopDrawing = (event?: PointerEvent<HTMLCanvasElement>) => {
@@ -254,6 +359,7 @@ export function FishDrawingCanvas({
       canvas.releasePointerCapture(event.pointerId);
     }
 
+    constrainPaint();
     setIsDrawing(false);
   };
 
@@ -332,7 +438,23 @@ export function FishDrawingCanvas({
       context.globalCompositeOperation = 'source-over';
     }
 
-    const image = cropDrawing(canvas, {
+    let exportCanvas = canvas;
+    if (templateId) {
+      const mask = maskRef.current;
+      const outline = outlineRef.current;
+      if (!mask || !outline || templateLoading) return;
+      const combined = document.createElement('canvas');
+      combined.width = canvas.width;
+      combined.height = canvas.height;
+      const combinedCtx = combined.getContext('2d');
+      if (!combinedCtx) return;
+      // White base for uncolored regions and eyes; transparent outside the fish.
+      combinedCtx.drawImage(mask, 0, 0);
+      combinedCtx.drawImage(canvas, 0, 0);
+      combinedCtx.drawImage(outline, 0, 0);
+      exportCanvas = combined;
+    }
+    const image = cropDrawing(exportCanvas, {
       padding: 16,
     });
 
@@ -344,7 +466,8 @@ export function FishDrawingCanvas({
       type: 'drawn',
       image,
       size: fishSize,
-      headDirection,
+      // All built-in fish templates have their heads on the left.
+      headDirection: templateId ? 'left' : headDirection,
     });
   };
 
@@ -399,7 +522,10 @@ export function FishDrawingCanvas({
         >
           {mode === 'draw' ? (
             <div className="fish-editor__canvas-wrap">
-              <div className="fish-editor__guide" aria-hidden="true">
+              {templateId && outlinePreview && !templateLoading && (
+                <img className="fish-editor__template-outline" src={outlinePreview} alt="" aria-hidden="true" />
+              )}
+              {!templateId && <div className="fish-editor__guide" aria-hidden="true">
                 <svg viewBox="0 0 600 320" width="100%" height="100%">
                   <path
                     d="M155 160 C110 130 72 96 38 72 C48 116 50 140 50 160 C50 180 48 204 38 248 C72 224 110 190 155 160 Z"
@@ -432,7 +558,7 @@ export function FishDrawingCanvas({
                     strokeLinecap="round"
                   />
                 </svg>
-              </div>
+              </div>}
               <canvas
                 ref={canvasRef}
                 width={600}
@@ -503,6 +629,26 @@ export function FishDrawingCanvas({
           ) : (
             <>
               <div className="fish-editor__section">
+                <h2>Draw Mode</h2>
+                <div className="fish-editor__segmented">
+                  <button type="button" className={!templateId ? 'is-active' : ''} onClick={() => { setTemplateId(null); setOutlinePreview(null); }}>Free Draw</button>
+                  <button type="button" className={templateId ? 'is-active' : ''} onClick={() => { setTemplateId('goldfish'); setOutlinePreview(null); }}>Fish Template</button>
+                </div>
+                {templateId && (
+                  <div className="fish-editor__template-grid" role="group" aria-label="Choose fish template">
+                    {FISH_TEMPLATES.map((fish) => (
+                      <button type="button" key={fish.id} className={templateId === fish.id ? 'is-active' : ''} aria-pressed={templateId === fish.id} onClick={() => { setTemplateId(fish.id); setOutlinePreview(null); }}>
+                        <img src={getFishTemplateAssets(fish.id).reference} alt="" />
+                        <span>{fish.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {templateLoading && <p className="fish-editor__hint">Loading template…</p>}
+                {templateError && <p role="alert" className="fish-editor__hint">{templateError}</p>}
+                {templateId && <p className="fish-editor__hint">Color inside the fish. Switching templates starts a fresh drawing.</p>}
+              </div>
+              <div className="fish-editor__section">
                 <h2>Colors</h2>
                 {palette(color, selectColor)}
               </div>
@@ -545,7 +691,7 @@ export function FishDrawingCanvas({
             </>
           )}
 
-          {mode === 'draw' && (
+          {mode === 'draw' && !templateId && (
             <div className="fish-editor__section">
               <h2>Which way is your fish looking?</h2>
               <div className="fish-editor__segmented" role="group" aria-label="Fish head direction">
@@ -601,7 +747,7 @@ export function FishDrawingCanvas({
               type="button"
               className="fish-editor__save"
               onClick={mode === 'draw' ? finish : finish3D}
-              disabled={!hasCapacity}
+              disabled={!hasCapacity || (mode === 'draw' && !!templateId && (templateLoading || !!templateError))}
             >
               {!hasCapacity ? 'Aquarium Full' : 'Save Fish'}
             </button>
