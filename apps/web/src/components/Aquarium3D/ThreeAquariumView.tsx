@@ -52,6 +52,54 @@ type ThreeAquariumViewProps = {
   onDecorationSelect?: (id: string | null) => void;
 };
 
+type FishWelcome = { startedAt: number };
+
+const WELCOME_DURATION_MS = 4600;
+const WELCOME_FRONT_Z = 4.1;
+// One short-lived Points draw call per arriving fish; no persistent particles on TV.
+const SPARKLE_DURATION_MS = 1350;
+const SPARKLE_COUNT = 14;
+type WelcomeSparkles = {
+  points: THREE.Points<THREE.BufferGeometry, THREE.PointsMaterial>;
+  startedAt: number;
+  offsets: Float32Array;
+};
+
+function makeWelcomeSparkles(startedAt: number): WelcomeSparkles {
+  const positions = new Float32Array(SPARKLE_COUNT * 3);
+  const offsets = new Float32Array(SPARKLE_COUNT * 3);
+  for (let i = 0; i < SPARKLE_COUNT; i++) {
+    const angle = (i / SPARKLE_COUNT) * Math.PI * 2;
+    const radius = 0.35 + (i % 4) * 0.11;
+    offsets[i * 3] = Math.cos(angle) * radius;
+    offsets[i * 3 + 1] = Math.sin(angle) * radius * 0.75;
+    offsets[i * 3 + 2] = 0.08 + (i % 3) * 0.04;
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const material = new THREE.PointsMaterial({
+    color: 0xffe6a0,
+    size: 0.11,
+    sizeAttenuation: true,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+  return { points: new THREE.Points(geometry, material), startedAt, offsets };
+}
+
+function disposeWelcomeSparkles(scene: THREE.Scene | null, effect: WelcomeSparkles) {
+  scene?.remove(effect.points);
+  effect.points.geometry.dispose();
+  effect.points.material.dispose();
+}
+
+
+function easeInOut(t: number): number {
+  return t * t * (3 - 2 * t);
+}
+
 type RenderedFish = {
   view: ThreeFish | ThreeModelFish;
   kind: 'drawn' | '3d';
@@ -112,6 +160,11 @@ export function ThreeAquariumView({
   const loadingFishRef = useRef(new Set<string>());
 
   const createdFishRef = useRef(createdFish);
+  // Fish already in the aquarium when this display opens should not replay an entrance.
+  const initialFishIdsRef = useRef(new Set(createdFish.map((fish) => fish.id)));
+  const welcomeRef = useRef(new Map<string, FishWelcome>());
+  const welcomedIdsRef = useRef(new Set<string>());
+  const sparklesRef = useRef(new Map<string, WelcomeSparkles>());
 
   // Stable bridge from the toolbar prop into the existing Three.js scene.
   const feedFromToolbarRef = useRef<(() => void) | null>(null);
@@ -135,6 +188,13 @@ export function ThreeAquariumView({
       threeFishRef.current.delete(id);
     }
 
+    welcomeRef.current.delete(id);
+    const sparkles = sparklesRef.current.get(id);
+    if (sparkles) {
+      disposeWelcomeSparkles(sceneRef.current, sparkles);
+      sparklesRef.current.delete(id);
+    }
+    welcomedIdsRef.current.delete(id);
     // Remove the fish from the swimming simulation too.
     aquariumRef.current?.removeFish(id);
   };
@@ -193,7 +253,7 @@ export function ThreeAquariumView({
       let view: ThreeFish | ThreeModelFish;
 
       if (created.type === 'drawn') {
-        view = await createThreeFish(created.image, 1.3 * created.size, created.headDirection);
+        view = await createThreeFish(created.image, 1.6 * created.size, created.headDirection);
       } else {
         view = createThreeModelFish(
           created.bodyColor,
@@ -272,6 +332,22 @@ export function ThreeAquariumView({
         view,
         kind: created.type,
       });
+
+      // Trigger only for a newly received drawing, never for persisted fish
+      // loaded on TV startup or after navigating back to this page.
+      if (
+        created.type === 'drawn' &&
+        !initialFishIdsRef.current.has(created.id) &&
+        !welcomedIdsRef.current.has(created.id)
+      ) {
+        welcomedIdsRef.current.add(created.id);
+        const startedAt = performance.now();
+        welcomeRef.current.set(created.id, { startedAt });
+        const sparkles = makeWelcomeSparkles(startedAt);
+        sparkles.points.position.copy(view.group.position);
+        scene.add(sparkles.points);
+        sparklesRef.current.set(created.id, sparkles);
+      }
     } catch (error) {
       aquarium.removeFish(created.id);
 
@@ -899,7 +975,47 @@ export function ThreeAquariumView({
 
         const { view } = rendered;
 
-        view.group.position.set(fish.position.x, fish.position.y, fish.position.z);
+        const welcome = welcomeRef.current.get(fish.id);
+        if (welcome) {
+          const progress = Math.min(1, (performance.now() - welcome.startedAt) / WELCOME_DURATION_MS);
+          // Hold close to the front glass while the child recognizes the drawing,
+          // then ease back to its live simulation position without a teleport.
+          const retreat = easeInOut(Math.max(0, (progress - 0.48) / 0.52));
+          const frontX = 0;
+          const frontY = 0.4;
+          view.group.position.set(
+            THREE.MathUtils.lerp(frontX, fish.position.x, retreat),
+            THREE.MathUtils.lerp(frontY, fish.position.y, retreat),
+            THREE.MathUtils.lerp(WELCOME_FRONT_Z, fish.position.z, retreat),
+          );
+          if (progress >= 1) welcomeRef.current.delete(fish.id);
+        } else {
+          view.group.position.set(fish.position.x, fish.position.y, fish.position.z);
+        }
+
+        const sparkles = sparklesRef.current.get(fish.id);
+        if (sparkles) {
+          const t = Math.min(1, (performance.now() - sparkles.startedAt) / SPARKLE_DURATION_MS);
+          if (t >= 1) {
+            disposeWelcomeSparkles(scene, sparkles);
+            sparklesRef.current.delete(fish.id);
+          } else {
+            // A brief, subtle ring of light drifting outward around the drawing.
+            const positions = sparkles.points.geometry.getAttribute('position') as THREE.BufferAttribute;
+            const spread = 0.5 + 0.8 * easeInOut(t);
+            for (let i = 0; i < SPARKLE_COUNT; i++) {
+              positions.setXYZ(
+                i,
+                sparkles.offsets[i * 3] * spread,
+                sparkles.offsets[i * 3 + 1] * spread + t * 0.16,
+                sparkles.offsets[i * 3 + 2],
+              );
+            }
+            positions.needsUpdate = true;
+            sparkles.points.position.copy(view.group.position);
+            sparkles.points.material.opacity = Math.sin(Math.PI * t) * 0.8;
+          }
+        }
 
         const velocityMagnitude = Math.sqrt(
           fish.velocity.x * fish.velocity.x +
@@ -989,6 +1105,11 @@ export function ThreeAquariumView({
       }
 
       threeFishRef.current.clear();
+      welcomeRef.current.clear();
+      for (const effect of sparklesRef.current.values()) {
+        disposeWelcomeSparkles(scene, effect);
+      }
+      sparklesRef.current.clear();
 
       loadingFishRef.current.clear();
 
