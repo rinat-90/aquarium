@@ -29,7 +29,7 @@ type FishDrawingCanvasProps = {
   remainingCapacity: number;
 };
 
-type Tool = 'brush' | 'eraser';
+type Tool = 'brush' | 'eraser' | 'bucket';
 
 const COLORS = [
   '#ff6b35',
@@ -72,6 +72,7 @@ export function FishDrawingCanvas({
   const [templateId, setTemplateId] = useState<FishTemplateId | null>(null);
   const [templateLoading, setTemplateLoading] = useState(false);
   const [templateError, setTemplateError] = useState<string | null>(null);
+  const [, setFillNotice] = useState<string | null>(null);
 
   const [isDrawing, setIsDrawing] = useState(false);
 
@@ -144,7 +145,8 @@ export function FishDrawingCanvas({
     maskRef.current = null;
     outlineRef.current = null;
     setTemplateError(null);
-    if (!templateId) { setTemplateLoading(false); return; }
+    setFillNotice(null);
+    if (!templateId) { setTemplateLoading(false); setTool((current) => current === 'bucket' ? 'brush' : current); return; }
 
     let cancelled = false;
     setTemplateLoading(true);
@@ -269,6 +271,172 @@ export function FishDrawingCanvas({
     setCanUndo(true);
   };
 
+  // Flood-fill the region enclosed by the printed template lines. The line
+  // overlay is not part of the paint layer, so it must act as a barrier here.
+  const fillRegion = (x: number, y: number): boolean => {
+    const canvas = canvasRef.current;
+    const mask = maskRef.current;
+    const outline = outlineRef.current;
+    if (!canvas || !mask || !outline || !templateId) return false;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const maskCtx = mask.getContext('2d', { willReadFrequently: true });
+    const lineCtx = outline.getContext('2d', { willReadFrequently: true });
+    if (!ctx || !maskCtx || !lineCtx) return false;
+    const w = canvas.width, h = canvas.height;
+    const sx = Math.floor(x), sy = Math.floor(y);
+    if (sx < 0 || sx >= w || sy < 0 || sy >= h) return false;
+    const paint = ctx.getImageData(0, 0, w, h);
+    const maskData = maskCtx.getImageData(0, 0, w, h).data;
+    const lines = lineCtx.getImageData(0, 0, w, h).data;
+    const total = w * h;
+    const blocked = new Uint8Array(total);
+    for (let i = 0; i < total; i++) {
+      // Allow antialiased edges but stop at dark printed lines.
+      blocked[i] = maskData[i * 4 + 3] < 128 || lines[i * 4 + 3] > 95 ? 1 : 0;
+    }
+    // Printed templates use DASHED lines, with gaps much wider than one pixel.
+    // Morphological closing joins nearby dashes without making every stroke
+    // permanently thick. Work on the outline alone (not the exterior mask).
+    const lineBarrier = new Uint8Array(total);
+    for (let i = 0; i < total; i++) {
+      lineBarrier[i] = lines[i * 4 + 3] > 65 ? 1 : 0;
+    }
+    const radius = 7; // 15px closing kernel at the 600x400 editor resolution
+    const dilated = new Uint8Array(total);
+    // Separable square dilation: horizontal then vertical.
+    const horizontal = new Uint8Array(total);
+    for (let yy = 0; yy < h; yy++) {
+      const base = yy * w;
+      for (let xx = 0; xx < w; xx++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const nx = xx + dx;
+          if (nx >= 0 && nx < w && lineBarrier[base + nx]) {
+            horizontal[base + xx] = 1;
+            break;
+          }
+        }
+      }
+    }
+    for (let yy = 0; yy < h; yy++) {
+      for (let xx = 0; xx < w; xx++) {
+        for (let dy = -radius; dy <= radius; dy++) {
+          const ny = yy + dy;
+          if (ny >= 0 && ny < h && horizontal[ny * w + xx]) {
+            dilated[yy * w + xx] = 1;
+            break;
+          }
+        }
+      }
+    }
+    // Erode back to a narrow line after connecting dashes. Ignore pixels
+    // outside the image to avoid introducing a false frame.
+    const erodedHorizontal = new Uint8Array(total);
+    for (let yy = 0; yy < h; yy++) {
+      const base = yy * w;
+      for (let xx = 0; xx < w; xx++) {
+        let solid = true;
+        for (let dx = -radius; dx <= radius; dx++) {
+          const nx = xx + dx;
+          if (nx >= 0 && nx < w && !dilated[base + nx]) {
+            solid = false;
+            break;
+          }
+        }
+        erodedHorizontal[base + xx] = solid ? 1 : 0;
+      }
+    }
+    for (let yy = 0; yy < h; yy++) {
+      for (let xx = 0; xx < w; xx++) {
+        let solid = true;
+        for (let dy = -radius; dy <= radius; dy++) {
+          const ny = yy + dy;
+          if (ny >= 0 && ny < h && !erodedHorizontal[ny * w + xx]) {
+            solid = false;
+            break;
+          }
+        }
+        if (solid) blocked[yy * w + xx] = 1;
+      }
+    }
+    const expanded = blocked;
+    // Taps often land directly on an antialiased outline. Find a nearby
+    // paintable pixel instead of silently ignoring the tap.
+    let start = sy * w + sx;
+    if (expanded[start]) {
+      let found = -1;
+      for (let r = 1; r <= 12 && found < 0; r++) {
+        for (let dy = -r; dy <= r && found < 0; dy++) {
+          for (let dx = -r; dx <= r; dx++) {
+            const nx = sx + dx, ny = sy + dy;
+            if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+            const candidate = ny * w + nx;
+            if (!expanded[candidate]) { found = candidate; break; }
+          }
+        }
+      }
+      if (found < 0) {
+        setFillNotice('Tap inside a fish section, away from its outline.');
+        return false;
+      }
+      start = found;
+    }
+    const rgb = [1, 3, 5].map((offset) => parseInt(color.slice(offset, offset + 2), 16));
+    const source = start * 4;
+    const target = paint.data.slice(source, source + 4);
+    const same = (i: number) => {
+      const j = i * 4;
+      return Math.abs(paint.data[j] - target[0]) <= 12 &&
+        Math.abs(paint.data[j + 1] - target[1]) <= 12 &&
+        Math.abs(paint.data[j + 2] - target[2]) <= 12 &&
+        Math.abs(paint.data[j + 3] - target[3]) <= 12;
+    };
+    const visited = new Uint8Array(total);
+    const queue = new Int32Array(total);
+    let head = 0, tail = 1;
+    queue[0] = start;
+    visited[start] = 1;
+    const region: number[] = [];
+    while (head < tail) {
+      const i = queue[head++];
+      if (expanded[i] || !same(i)) continue;
+      region.push(i);
+      const px = i % w;
+      const neighbors = [px > 0 ? i - 1 : -1, px < w - 1 ? i + 1 : -1,
+        i >= w ? i - w : -1, i < total - w ? i + w : -1];
+      for (const next of neighbors) {
+        if (next >= 0 && !visited[next] && !expanded[next]) {
+          visited[next] = 1;
+          queue[tail++] = next;
+        }
+      }
+    }
+    if (!region.length) return false;
+    // Never paint almost the entire silhouette when an open/dashed boundary
+    // leaks. Better to do nothing than destroy the child's existing colors.
+    let fishPixels = 0;
+    for (let i = 0; i < total; i++) {
+      if (maskData[i * 4 + 3] >= 128) fishPixels++;
+    }
+    if (region.length > fishPixels * 0.48) {
+      setFillNotice('This template section is not closed. Try another section or use Brush.');
+      return false;
+    }
+    setFillNotice(null);
+    // No history entry for no-op fills.
+    if (target[3] === 255 && rgb.every((v, i) => Math.abs(v - target[i]) <= 12)) return false;
+    saveHistory();
+    for (const i of region) {
+      const j = i * 4;
+      paint.data[j] = rgb[0];
+      paint.data[j + 1] = rgb[1];
+      paint.data[j + 2] = rgb[2];
+      paint.data[j + 3] = 255;
+    }
+    ctx.putImageData(paint, 0, 0);
+    constrainPaint();
+    return true;
+  };
+
   const startDrawing = (event: PointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
 
@@ -282,10 +450,13 @@ export function FishDrawingCanvas({
       return;
     }
 
-    saveHistory();
-
     const position = getPosition(event);
+    if (tool === 'bucket') {
+      fillRegion(position.x, position.y);
+      return;
+    }
 
+    saveHistory();
     canvas.setPointerCapture(event.pointerId);
 
     context.beginPath();
@@ -370,7 +541,8 @@ export function FishDrawingCanvas({
      * Choosing a color automatically
      * switches back to the brush.
      */
-    setTool('brush');
+    // Selecting a new color must not unexpectedly deactivate Paint Bucket.
+    setTool((current) => current === 'bucket' ? 'bucket' : 'brush');
   };
 
   const undo = () => {
@@ -466,8 +638,7 @@ export function FishDrawingCanvas({
       type: 'drawn',
       image,
       size: fishSize,
-      // All built-in fish templates have their heads on the left.
-      headDirection: templateId ? 'left' : headDirection,
+      headDirection,
     });
   };
 
@@ -568,7 +739,7 @@ export function FishDrawingCanvas({
                 onPointerUp={stopDrawing}
                 onPointerCancel={stopDrawing}
                 className="fish-editor__canvas"
-                style={{ cursor: tool === 'eraser' ? 'cell' : 'crosshair' }}
+                style={{ cursor: tool === 'bucket' ? 'pointer' : tool === 'eraser' ? 'cell' : 'crosshair' }}
               />
             </div>
           ) : (
@@ -646,7 +817,7 @@ export function FishDrawingCanvas({
                 )}
                 {templateLoading && <p className="fish-editor__hint">Loading template…</p>}
                 {templateError && <p role="alert" className="fish-editor__hint">{templateError}</p>}
-                {templateId && <p className="fish-editor__hint">Color inside the fish. Switching templates starts a fresh drawing.</p>}
+                {templateId && <p className="fish-editor__hint">Choose Fill, then tap a body or fin section to color it instantly. Switching templates starts a fresh drawing.</p>}
               </div>
               <div className="fish-editor__section">
                 <h2>Colors</h2>
@@ -675,6 +846,15 @@ export function FishDrawingCanvas({
                 <div className="fish-editor__tool-grid">
                   <button
                     type="button"
+                    className={tool === 'bucket' ? 'is-active' : ''}
+                    onClick={() => setTool('bucket')}
+                    disabled={!templateId || templateLoading || !!templateError}
+                    title={templateId ? 'Tap an enclosed section to fill it' : 'Choose a fish template to use Fill'}
+                  >
+                    🪣 Fill
+                  </button>
+                  <button
+                    type="button"
                     className={tool === 'eraser' ? 'is-active' : ''}
                     onClick={() => setTool('eraser')}
                   >
@@ -691,7 +871,7 @@ export function FishDrawingCanvas({
             </>
           )}
 
-          {mode === 'draw' && !templateId && (
+          {mode === 'draw' && (
             <div className="fish-editor__section">
               <h2>Which way is your fish looking?</h2>
               <div className="fish-editor__segmented" role="group" aria-label="Fish head direction">
