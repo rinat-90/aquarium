@@ -21,7 +21,7 @@ import { FishPanel } from '../../components/FishPanel/FishPanel';
 import './AquariumPage.css';
 import '../../components/AquariumAppearanceEditor/AquariumAppearanceEditor.css';
 import { AquariumSettingsPanel } from '../../components/FishPanel/AquariumSettingsPanel';
-import { createFish } from '../../lib/create-fish';
+import { AQUARIUM_CAPACITY, createFish } from '../../lib/create-fish';
 import { mapApiFish } from '../../lib/mapApiFish';
 import { useLiveAquariumFish } from '../../hooks/useLiveAquariumFish';
 import { tvPairingApi } from '../../lib/tv-pairing-api';
@@ -33,7 +33,6 @@ import { AquariumRemote } from '../../components/AquariumRemote/AquariumRemote';
 
 import { MobileAquariumViewer } from '../../components/AquariumRemote/MobileAquariumViewer';
 
-const AQUARIUM_CAPACITY = 8;
 
 // async function imageToBlob(image: string): Promise<Blob> {
 //   const response = await fetch(image);
