@@ -33,7 +33,6 @@ import { AquariumRemote } from '../../components/AquariumRemote/AquariumRemote';
 
 import { MobileAquariumViewer } from '../../components/AquariumRemote/MobileAquariumViewer';
 
-
 // async function imageToBlob(image: string): Promise<Blob> {
 //   const response = await fetch(image);
 //   return response.blob();

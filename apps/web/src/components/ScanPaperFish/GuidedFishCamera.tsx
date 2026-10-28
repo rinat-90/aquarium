@@ -8,7 +8,12 @@ type GuidedFishCameraProps = {
   selectedTemplate?: FishTemplateId | null;
 };
 
-export function GuidedFishCamera({ onCapture, onClose, mode = 'freehand', selectedTemplate }: GuidedFishCameraProps) {
+export function GuidedFishCamera({
+  onCapture,
+  onClose,
+  mode = 'freehand',
+  selectedTemplate,
+}: GuidedFishCameraProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -202,8 +207,12 @@ export function GuidedFishCamera({ onCapture, onClose, mode = 'freehand', select
           <div
             aria-hidden="true"
             style={{
-              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center',
-              justifyContent: 'center', pointerEvents: 'none',
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'none',
               background: 'rgba(2, 6, 23, 0.12)',
             }}
           >
@@ -212,17 +221,26 @@ export function GuidedFishCamera({ onCapture, onClose, mode = 'freehand', select
               alt=""
               draggable={false}
               style={{
-                display: 'block', width: `${guideSize}%`, height: `${guideSize}%`,
-                objectFit: 'contain', filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.85))',
+                display: 'block',
+                width: `${guideSize}%`,
+                height: `${guideSize}%`,
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.85))',
               }}
             />
           </div>
         ) : (
           <div
             style={{
-              position: 'absolute', left: '5%', right: '5%', top: '30%', height: '40%',
-              border: '2px dashed #38bdf8', borderRadius: 16,
-              boxShadow: '0 0 0 100vmax rgba(0,0,0,0.35)', pointerEvents: 'none',
+              position: 'absolute',
+              left: '5%',
+              right: '5%',
+              top: '30%',
+              height: '40%',
+              border: '2px dashed #38bdf8',
+              borderRadius: 16,
+              boxShadow: '0 0 0 100vmax rgba(0,0,0,0.35)',
+              pointerEvents: 'none',
             }}
           />
         )}
@@ -249,14 +267,27 @@ export function GuidedFishCamera({ onCapture, onClose, mode = 'freehand', select
           margin: '16px 0',
         }}
       >
-        {mode === 'template' ? 'Match your colored fish to the glowing outline' : 'Keep your entire fish inside the blue frame'}
+        {mode === 'template'
+          ? 'Match your colored fish to the glowing outline'
+          : 'Keep your entire fish inside the blue frame'}
       </p>
 
       {mode === 'template' && selectedTemplate && (
-        <label style={{ color: '#e0f2fe', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <label
+          style={{
+            color: '#e0f2fe',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            marginBottom: 16,
+          }}
+        >
           <span style={{ whiteSpace: 'nowrap' }}>Guide size</span>
           <input
-            type="range" min={55} max={100} step={5}
+            type="range"
+            min={55}
+            max={100}
+            step={5}
             value={guideSize}
             onChange={(event) => setGuideSize(Number(event.target.value))}
             style={{ flex: 1, minWidth: 0 }}

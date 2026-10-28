@@ -61,12 +61,21 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
   }, [imageUrl]);
 
   useEffect(() => {
-    if (!processedImage) { setPreviewImage(null); return; }
+    if (!processedImage) {
+      setPreviewImage(null);
+      return;
+    }
     let cancelled = false;
     enhanceScannedFish(processedImage, colorBoost)
-      .then((image) => { if (!cancelled) setPreviewImage(image); })
-      .catch(() => { if (!cancelled) setPreviewImage(processedImage); });
-    return () => { cancelled = true; };
+      .then((image) => {
+        if (!cancelled) setPreviewImage(image);
+      })
+      .catch(() => {
+        if (!cancelled) setPreviewImage(processedImage);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [processedImage, colorBoost]);
 
   // Both camera methods use the same processing pipeline.
@@ -221,30 +230,53 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
           type="button"
           aria-pressed={scanMode === 'freehand'}
           disabled={isProcessing || saving}
-          onClick={() => { setScanMode('freehand'); setProcessedImage(null); setError(null); }}
+          onClick={() => {
+            setScanMode('freehand');
+            setProcessedImage(null);
+            setError(null);
+          }}
         >
-          <span aria-hidden="true">✏️</span><span>Freehand Drawing</span>
+          <span aria-hidden="true">✏️</span>
+          <span>Freehand Drawing</span>
         </button>
         <button
           className={`scan-mode-tab${scanMode === 'template' ? ' is-active' : ''}`}
           type="button"
           aria-pressed={scanMode === 'template'}
           disabled={isProcessing || saving}
-          onClick={() => { setScanMode('template'); setProcessedImage(null); setError(null); }}
+          onClick={() => {
+            setScanMode('template');
+            setProcessedImage(null);
+            setError(null);
+          }}
         >
-          <span aria-hidden="true">🐠</span><span>Fish Template</span>
+          <span aria-hidden="true">🐠</span>
+          <span>Fish Template</span>
         </button>
       </div>
       {scanMode === 'template' && (
         <>
-          <FishTemplateSelector selected={selectedTemplate} onSelect={(id) => {
-            setSelectedTemplate(id); setProcessedImage(null); setError(null);
-          }} />
-          <p>Print and color a template, then scan it with the guide or upload a photo. Keep the entire sheet visible and check the preview before saving.</p>
+          <FishTemplateSelector
+            selected={selectedTemplate}
+            onSelect={(id) => {
+              setSelectedTemplate(id);
+              setProcessedImage(null);
+              setError(null);
+            }}
+          />
+          <p>
+            Print and color a template, then scan it with the guide or upload a photo. Keep the
+            entire sheet visible and check the preview before saving.
+          </p>
         </>
       )}
       {cameraOpen && (
-        <GuidedFishCamera onCapture={handleGuidedCapture} onClose={() => setCameraOpen(false)} mode={scanMode} selectedTemplate={selectedTemplate} />
+        <GuidedFishCamera
+          onCapture={handleGuidedCapture}
+          onClose={() => setCameraOpen(false)}
+          mode={scanMode}
+          selectedTemplate={selectedTemplate}
+        />
       )}
 
       {variant === 'studio' ? (
@@ -299,7 +331,13 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
             <div className="scan-studio__upload-icon" aria-hidden="true">
               📷
             </div>
-            <h3>{scanMode === 'template' ? 'Upload your colored template' : imageUrl ? 'Try another drawing?' : 'Upload your fish drawing'}</h3>
+            <h3>
+              {scanMode === 'template'
+                ? 'Upload your colored template'
+                : imageUrl
+                  ? 'Try another drawing?'
+                  : 'Upload your fish drawing'}
+            </h3>
             <p className="scan-studio__upload-description">
               Choose a photo from your device, or take one with your camera.
             </p>
@@ -456,14 +494,32 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
             </div>
 
             <div className="scan-fish-tuning">
-              <label htmlFor="scan-fish-size">🐠 Fish size <strong>{Math.round(fishSize * 100)}%</strong></label>
-              <input id="scan-fish-size" type="range" min="0.8" max="1.4" step="0.1"
-                value={fishSize} onChange={(event) => setFishSize(Number(event.target.value))}
-                disabled={saving} />
-              <label htmlFor="scan-fish-color">🎨 Color boost <strong>{Math.round(colorBoost * 100)}%</strong></label>
-              <input id="scan-fish-color" type="range" min="1" max="2" step="0.1"
-                value={colorBoost} onChange={(event) => setColorBoost(Number(event.target.value))}
-                disabled={saving} />
+              <label htmlFor="scan-fish-size">
+                🐠 Fish size <strong>{Math.round(fishSize * 100)}%</strong>
+              </label>
+              <input
+                id="scan-fish-size"
+                type="range"
+                min="0.8"
+                max="1.4"
+                step="0.1"
+                value={fishSize}
+                onChange={(event) => setFishSize(Number(event.target.value))}
+                disabled={saving}
+              />
+              <label htmlFor="scan-fish-color">
+                🎨 Color boost <strong>{Math.round(colorBoost * 100)}%</strong>
+              </label>
+              <input
+                id="scan-fish-color"
+                type="range"
+                min="1"
+                max="2"
+                step="0.1"
+                value={colorBoost}
+                onChange={(event) => setColorBoost(Number(event.target.value))}
+                disabled={saving}
+              />
               <small>See your changes above before adding your fish.</small>
             </div>
 

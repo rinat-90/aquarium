@@ -247,8 +247,41 @@
 }
 
 /* On-screen fish coloring templates */
-.fish-editor__template-outline { position:absolute; inset:0; width:100%; height:100%; object-fit:fill; pointer-events:none; z-index:2; }
-.fish-editor__template-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; }
-.fish-editor__template-grid button { background:#09263b; color:#d5edfa; border:1px solid #35617b; border-radius:10px; padding:5px 3px 7px; cursor:pointer; font:inherit; font-size:11px; }
-.fish-editor__template-grid button.is-active { border-color:#70cfff; background:#174b68; box-shadow:0 0 0 1px #70cfff; }
-.fish-editor__template-grid img { display:block; width:100%; aspect-ratio:1; object-fit:contain; border-radius:6px; background:#fff; margin-bottom:4px; }
+.fish-editor__template-outline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  z-index: 2;
+}
+.fish-editor__template-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+.fish-editor__template-grid button {
+  background: #09263b;
+  color: #d5edfa;
+  border: 1px solid #35617b;
+  border-radius: 10px;
+  padding: 5px 3px 7px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+}
+.fish-editor__template-grid button.is-active {
+  border-color: #70cfff;
+  background: #174b68;
+  box-shadow: 0 0 0 1px #70cfff;
+}
+.fish-editor__template-grid img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+  margin-bottom: 4px;
+}

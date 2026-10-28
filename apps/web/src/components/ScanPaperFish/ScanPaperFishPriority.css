@@ -72,12 +72,29 @@
   }
 }
 
-.scan-fish-tuning { display: grid; gap: 8px; margin-top: 18px; padding: 14px; border-radius: 12px; background: rgba(255,255,255,.8); color: #12354c; }
-.scan-fish-tuning label { display: flex; justify-content: space-between; gap: 12px; font-weight: 600; }
-.scan-fish-tuning input[type="range"] { width: 100%; accent-color: #087db7; min-height: 28px; }
-.scan-fish-tuning small { color: #486578; }
-
-
+.scan-fish-tuning {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #12354c;
+}
+.scan-fish-tuning label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 600;
+}
+.scan-fish-tuning input[type='range'] {
+  width: 100%;
+  accent-color: #087db7;
+  min-height: 28px;
+}
+.scan-fish-tuning small {
+  color: #486578;
+}
 
 /* Scanner mode selector */
 
@@ -109,7 +126,9 @@
   line-height: 1.3;
   text-align: center;
   cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
 }
 
 .scan-mode-tab.is-active {
@@ -176,7 +195,7 @@
   outline-offset: 2px;
 }
 .scan-paper-fish .scan-mode-tabs .scan-mode-tab:disabled {
-  opacity: .6;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 @media (max-width: 380px) {

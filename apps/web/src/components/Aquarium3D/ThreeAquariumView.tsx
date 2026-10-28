@@ -95,7 +95,6 @@ function disposeWelcomeSparkles(scene: THREE.Scene | null, effect: WelcomeSparkl
   effect.points.material.dispose();
 }
 
-
 function easeInOut(t: number): number {
   return t * t * (3 - 2 * t);
 }
@@ -977,7 +976,10 @@ export function ThreeAquariumView({
 
         const welcome = welcomeRef.current.get(fish.id);
         if (welcome) {
-          const progress = Math.min(1, (performance.now() - welcome.startedAt) / WELCOME_DURATION_MS);
+          const progress = Math.min(
+            1,
+            (performance.now() - welcome.startedAt) / WELCOME_DURATION_MS,
+          );
           // Hold close to the front glass while the child recognizes the drawing,
           // then ease back to its live simulation position without a teleport.
           const retreat = easeInOut(Math.max(0, (progress - 0.48) / 0.52));
@@ -1001,7 +1003,9 @@ export function ThreeAquariumView({
             sparklesRef.current.delete(fish.id);
           } else {
             // A brief, subtle ring of light drifting outward around the drawing.
-            const positions = sparkles.points.geometry.getAttribute('position') as THREE.BufferAttribute;
+            const positions = sparkles.points.geometry.getAttribute(
+              'position',
+            ) as THREE.BufferAttribute;
             const spread = 0.5 + 0.8 * easeInOut(t);
             for (let i = 0; i < SPARKLE_COUNT; i++) {
               positions.setXYZ(
