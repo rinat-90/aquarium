@@ -15,7 +15,11 @@ import {
 import { flipFishImage } from '../../lib/image-processing/flipFishImage';
 
 import { GuidedFishCamera } from './GuidedFishCamera';
+import { FishTemplateSelector } from './FishTemplateSelector';
+import type { FishTemplateId } from '../../lib/image-processing/fishTemplateRegistry';
+import { processFishTemplate } from '../../lib/image-processing/processFishTemplate';
 import './ScanPaperFishPriority.css';
+import { enhanceScannedFish } from '../../lib/image-processing/enhanceScannedFish';
 
 type ScanPaperFishProps = {
   aquariumId: string;
@@ -30,10 +34,15 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
   const savingRef = useRef(false);
 
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [scanMode, setScanMode] = useState<'freehand' | 'template'>('freehand');
+  const [selectedTemplate, setSelectedTemplate] = useState<FishTemplateId | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
+  const [fishSize, setFishSize] = useState(1);
+  const [colorBoost, setColorBoost] = useState(1.35);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [orientation, setOrientation] = useState<FishOrientation>('right');
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -51,6 +60,15 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
     };
   }, [imageUrl]);
 
+  useEffect(() => {
+    if (!processedImage) { setPreviewImage(null); return; }
+    let cancelled = false;
+    enhanceScannedFish(processedImage, colorBoost)
+      .then((image) => { if (!cancelled) setPreviewImage(image); })
+      .catch(() => { if (!cancelled) setPreviewImage(processedImage); });
+    return () => { cancelled = true; };
+  }, [processedImage, colorBoost]);
+
   // Both camera methods use the same processing pipeline.
   const processPhoto = async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -58,6 +76,10 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
       return;
     }
 
+    if (scanMode === 'template' && !selectedTemplate) {
+      setError('Choose a fish template first.');
+      return;
+    }
     setError(null);
     setSaveError(null);
     setProcessedImage(null);
@@ -67,6 +89,12 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
     setImageUrl(url);
 
     try {
+      if (scanMode === 'template' && selectedTemplate) {
+        const templateResult = await processFishTemplate(file, selectedTemplate);
+        setOrientation('left');
+        setProcessedImage(templateResult);
+        return;
+      }
       const result = await removePaperBackground(file);
 
       // Get the cropped drawing and its coordinates.
@@ -129,7 +157,7 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
 
       const usedCapacity = aquariumFish.reduce((total, item) => total + item.size * item.size, 0);
 
-      const size = 1;
+      const size = fishSize;
 
       if (usedCapacity + size * size > AQUARIUM_CAPACITY + 0.0001) {
         throw new Error('Not enough space in this aquarium.');
@@ -139,7 +167,7 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
         aquariumId,
         {
           type: 'drawn',
-          image: processedImage,
+          image: previewImage ?? processedImage,
           size,
           headDirection: orientation,
         },
@@ -187,8 +215,36 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
       }
       style={{ padding: variant === 'studio' ? 0 : 20 }}
     >
+      <div className="scan-mode-tabs" role="group" aria-label="Choose scanning mode">
+        <button
+          className={`scan-mode-tab${scanMode === 'freehand' ? ' is-active' : ''}`}
+          type="button"
+          aria-pressed={scanMode === 'freehand'}
+          disabled={isProcessing || saving}
+          onClick={() => { setScanMode('freehand'); setProcessedImage(null); setError(null); }}
+        >
+          <span aria-hidden="true">✏️</span><span>Freehand Drawing</span>
+        </button>
+        <button
+          className={`scan-mode-tab${scanMode === 'template' ? ' is-active' : ''}`}
+          type="button"
+          aria-pressed={scanMode === 'template'}
+          disabled={isProcessing || saving}
+          onClick={() => { setScanMode('template'); setProcessedImage(null); setError(null); }}
+        >
+          <span aria-hidden="true">🐠</span><span>Fish Template</span>
+        </button>
+      </div>
+      {scanMode === 'template' && (
+        <>
+          <FishTemplateSelector selected={selectedTemplate} onSelect={(id) => {
+            setSelectedTemplate(id); setProcessedImage(null); setError(null);
+          }} />
+          <p>Print and color a template, then scan it with the guide or upload a photo. Keep the entire sheet visible and check the preview before saving.</p>
+        </>
+      )}
       {cameraOpen && (
-        <GuidedFishCamera onCapture={handleGuidedCapture} onClose={() => setCameraOpen(false)} />
+        <GuidedFishCamera onCapture={handleGuidedCapture} onClose={() => setCameraOpen(false)} mode={scanMode} selectedTemplate={selectedTemplate} />
       )}
 
       {variant === 'studio' ? (
@@ -221,12 +277,12 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
               📷
             </div>
             <h3>Scan your drawing with the camera</h3>
-            <p>Point your camera at your paper fish and follow the guide.</p>
+            <p>Point your camera at your drawing and follow the guide.</p>
             <button
               className="scan-studio__primary"
               type="button"
               onClick={() => setCameraOpen(true)}
-              disabled={isProcessing || saving}
+              disabled={(scanMode === 'template' && !selectedTemplate) || isProcessing || saving}
             >
               {imageUrl ? 'Scan Another Drawing' : 'Scan with Guide'} →
             </button>
@@ -243,7 +299,7 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
             <div className="scan-studio__upload-icon" aria-hidden="true">
               📷
             </div>
-            <h3>{imageUrl ? 'Try another drawing?' : 'Upload your fish drawing'}</h3>
+            <h3>{scanMode === 'template' ? 'Upload your colored template' : imageUrl ? 'Try another drawing?' : 'Upload your fish drawing'}</h3>
             <p className="scan-studio__upload-description">
               Choose a photo from your device, or take one with your camera.
             </p>
@@ -262,7 +318,7 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
             <button
               type="button"
               onClick={() => setCameraOpen(true)}
-              disabled={isProcessing || saving}
+              disabled={(scanMode === 'template' && !selectedTemplate) || isProcessing || saving}
             >
               📷 Scan with Guide
             </button>
@@ -286,7 +342,7 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
             <button
               type="button"
               onClick={() => setCameraOpen(true)}
-              disabled={isProcessing || saving}
+              disabled={(scanMode === 'template' && !selectedTemplate) || isProcessing || saving}
             >
               📷 {imageUrl ? 'Retake with Guide' : 'Scan with Guide'}
             </button>
@@ -361,7 +417,7 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
             }}
           >
             <img
-              src={processedImage}
+              src={previewImage ?? processedImage}
               alt="Fish drawing with transparent background"
               style={{
                 display: 'block',
@@ -397,6 +453,18 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
               >
                 {isFlipping ? 'Flipping...' : '↔ Flip Fish'}
               </button>
+            </div>
+
+            <div className="scan-fish-tuning">
+              <label htmlFor="scan-fish-size">🐠 Fish size <strong>{Math.round(fishSize * 100)}%</strong></label>
+              <input id="scan-fish-size" type="range" min="0.8" max="1.4" step="0.1"
+                value={fishSize} onChange={(event) => setFishSize(Number(event.target.value))}
+                disabled={saving} />
+              <label htmlFor="scan-fish-color">🎨 Color boost <strong>{Math.round(colorBoost * 100)}%</strong></label>
+              <input id="scan-fish-color" type="range" min="1" max="2" step="0.1"
+                value={colorBoost} onChange={(event) => setColorBoost(Number(event.target.value))}
+                disabled={saving} />
+              <small>See your changes above before adding your fish.</small>
             </div>
 
             {saveError && (

@@ -405,12 +405,12 @@ export async function createFishSilhouette(
       const darkness = Math.max(0, Math.min(1, (205 - brightness) / 110));
 
       // Preserve colored-pencil saturation.
-      const saturationBoost = 2.2;
+      const saturationBoost = 2.8;
 
       const clamp = (value: number) => Math.max(0, Math.min(255, Math.round(value)));
 
       // White base, with restored color and dark pencil strokes.
-      const base = 255 - darkness * 145;
+      const base = 252 - darkness * 155;
 
       result.data[offset] = clamp(base + chromaR * saturationBoost);
 

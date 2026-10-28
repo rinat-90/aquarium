@@ -1,7 +1,7 @@
 import { fishApi } from './aquarium-api';
 import type { FishCreation } from '../components/FishDrawing/FishDrawingCanvas';
 
-export const AQUARIUM_CAPACITY = 8;
+export const AQUARIUM_CAPACITY = 30;
 
 async function imageToBlob(image: string): Promise<Blob> {
   const response = await fetch(image);

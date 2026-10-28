@@ -1,7 +1,8 @@
 import { defineConfig, type ProxyOptions } from 'vite';
 import react from '@vitejs/plugin-react';
 
-const API_TARGET = process.env.API_PROXY_TARGET ?? 'http://localhost:3001';
+const API_TARGET =
+  process.env.API_PROXY_TARGET ?? 'http://localhost:3001';
 
 export const createProxy = (): Record<string, string | ProxyOptions> => ({
   '/api': {
@@ -28,9 +29,19 @@ export const createProxy = (): Record<string, string | ProxyOptions> => ({
     },
   },
 
-  '/fish': {
+  // Match /fish and /fish/... but NOT /fish-templates/...
+  '^/fish(?:/|$)': {
     target: API_TARGET,
     changeOrigin: true,
+
+    // Let React Router handle browser page navigation.
+    bypass(req) {
+      const accept = req.headers.accept ?? '';
+
+      if (accept.includes('text/html')) {
+        return '/index.html';
+      }
+    },
   },
 
   '/socket.io': {
@@ -46,14 +57,17 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
 
-    // Allow the current Cloudflare HTTPS tunnel.
+    // Allow Cloudflare HTTPS tunnels.
     allowedHosts: ['.trycloudflare.com'],
 
     proxy: createProxy(),
   },
 
   preview: {
-    allowedHosts: ['aquariumweb-production.up.railway.app', '.trycloudflare.com'],
+    allowedHosts: [
+      'aquariumweb-production.up.railway.app',
+      '.trycloudflare.com',
+    ],
 
     proxy: createProxy(),
   },

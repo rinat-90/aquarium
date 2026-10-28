@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
+import type { FishTemplateId } from '../../lib/image-processing/fishTemplateRegistry';
 
 type GuidedFishCameraProps = {
   onCapture: (file: File) => void;
   onClose: () => void;
+  mode?: 'freehand' | 'template';
+  selectedTemplate?: FishTemplateId | null;
 };
 
-export function GuidedFishCamera({ onCapture, onClose }: GuidedFishCameraProps) {
+export function GuidedFishCamera({ onCapture, onClose, mode = 'freehand', selectedTemplate }: GuidedFishCameraProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [guideSize, setGuideSize] = useState(82);
 
   useEffect(() => {
     let cancelled = false;
@@ -95,10 +99,11 @@ export function GuidedFishCamera({ onCapture, onClose }: GuidedFishCameraProps) 
     const offsetY = (displayedHeight - bounds.height) / 2;
 
     // Convert the guide's screen coordinates to camera pixels.
-    const sourceX = (guideLeft + offsetX) / scale;
-    const sourceY = (guideTop + offsetY) / scale;
-    const sourceWidth = guideWidth / scale;
-    const sourceHeight = guideHeight / scale;
+    // Template processing needs the entire image; freehand uses the narrow guide crop.
+    const sourceX = mode === 'template' ? 0 : (guideLeft + offsetX) / scale;
+    const sourceY = mode === 'template' ? 0 : (guideTop + offsetY) / scale;
+    const sourceWidth = mode === 'template' ? videoWidth : guideWidth / scale;
+    const sourceHeight = mode === 'template' ? videoHeight : guideHeight / scale;
 
     const canvas = document.createElement('canvas');
 
@@ -192,20 +197,35 @@ export function GuidedFishCamera({ onCapture, onClose }: GuidedFishCameraProps) 
           }}
         />
 
-        {/* Drawing guide */}
-        <div
-          style={{
-            position: 'absolute',
-            left: '5%',
-            right: '5%',
-            top: '30%',
-            height: '40%',
-            border: '2px dashed #38bdf8',
-            borderRadius: 16,
-            boxShadow: '0 0 0 100vmax rgba(0,0,0,0.35)',
-            pointerEvents: 'none',
-          }}
-        />
+        {/* The outline is a positioning aid, not a claimed auto-detection result. */}
+        {mode === 'template' && selectedTemplate ? (
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center',
+              justifyContent: 'center', pointerEvents: 'none',
+              background: 'rgba(2, 6, 23, 0.12)',
+            }}
+          >
+            <img
+              src={`/fish-templates/guides/${selectedTemplate}.png`}
+              alt=""
+              draggable={false}
+              style={{
+                display: 'block', width: `${guideSize}%`, height: `${guideSize}%`,
+                objectFit: 'contain', filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.85))',
+              }}
+            />
+          </div>
+        ) : (
+          <div
+            style={{
+              position: 'absolute', left: '5%', right: '5%', top: '30%', height: '40%',
+              border: '2px dashed #38bdf8', borderRadius: 16,
+              boxShadow: '0 0 0 100vmax rgba(0,0,0,0.35)', pointerEvents: 'none',
+            }}
+          />
+        )}
 
         {!ready && !error && (
           <p
@@ -229,8 +249,22 @@ export function GuidedFishCamera({ onCapture, onClose }: GuidedFishCameraProps) 
           margin: '16px 0',
         }}
       >
-        Keep your entire fish inside the blue frame
+        {mode === 'template' ? 'Match your colored fish to the glowing outline' : 'Keep your entire fish inside the blue frame'}
       </p>
+
+      {mode === 'template' && selectedTemplate && (
+        <label style={{ color: '#e0f2fe', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <span style={{ whiteSpace: 'nowrap' }}>Guide size</span>
+          <input
+            type="range" min={55} max={100} step={5}
+            value={guideSize}
+            onChange={(event) => setGuideSize(Number(event.target.value))}
+            style={{ flex: 1, minWidth: 0 }}
+            aria-label="Adjust fish guide size"
+          />
+          <span>{guideSize}%</span>
+        </label>
+      )}
 
       {error && (
         <p role="alert" style={{ color: '#f87171' }}>
