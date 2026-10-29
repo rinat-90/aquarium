@@ -7,6 +7,6 @@ describe('Vite development proxy', () => {
     expect(proxy).toBeDefined();
     expect(proxy).toHaveProperty('/api');
     expect(proxy).toHaveProperty('/socket.io');
-    expect(proxy).toHaveProperty('/fish');
+    expect(proxy).toHaveProperty('^/fish(?:/|$)');
   });
 });
