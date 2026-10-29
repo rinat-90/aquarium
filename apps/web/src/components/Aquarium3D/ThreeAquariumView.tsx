@@ -99,6 +99,27 @@ function easeInOut(t: number): number {
   return t * t * (3 - 2 * t);
 }
 
+// Stable, inexpensive distribution for fish restored with an aquarium.
+// New additions retain the engine's center spawn and welcome animation.
+function restoredFishPosition(id: string, index: number) {
+  let hash = 2166136261;
+  for (let i = 0; i < id.length; i += 1) {
+    hash = Math.imul(hash ^ id.charCodeAt(i), 16777619);
+  }
+  const fraction = (value: number) => (value >>> 0) / 4294967296;
+  const angle = index * 2.399963229728653 + fraction(hash) * 0.6;
+  const radius = Math.sqrt((index + 0.5) / (index + 1.5));
+  return {
+    x: Math.cos(angle) * radius * 5.8,
+    y: 1.5 + fraction(Math.imul(hash, 1597334677)) * 6.5,
+    z: Math.sin(angle) * radius * 3.4,
+  };
+}
+
+// Preserve swimming positions while navigating to the fish creator and back.
+// A full browser refresh starts with the deterministic distributed layout instead.
+const previousSwimmingPositions = new Map<string, { x: number; y: number; z: number }>();
+
 type RenderedFish = {
   view: ThreeFish | ThreeModelFish;
   kind: 'drawn' | '3d';
@@ -161,6 +182,9 @@ export function ThreeAquariumView({
   const createdFishRef = useRef(createdFish);
   // Fish already in the aquarium when this display opens should not replay an entrance.
   const initialFishIdsRef = useRef(new Set(createdFish.map((fish) => fish.id)));
+  // Saved fish can arrive after the first render (API hydration). Treat the
+  // first populated snapshot as restored rather than newly added.
+  const initialFishSnapshotCapturedRef = useRef(createdFish.length > 0);
   const welcomeRef = useRef(new Map<string, FishWelcome>());
   const welcomedIdsRef = useRef(new Set<string>());
   const sparklesRef = useRef(new Map<string, WelcomeSparkles>());
@@ -241,6 +265,30 @@ export function ThreeAquariumView({
         : 'basic';
 
     const fish = aquarium.createFish(created.id, created.size, species);
+
+    // Restore existing fish across the tank instead of stacking them at center.
+    // Only genuinely new additions use the default center spawn.
+    const previousPosition = previousSwimmingPositions.get(created.id);
+    if (previousPosition) {
+      // Returning from the fish creator: resume each existing fish where it was.
+      fish.position.x = previousPosition.x;
+      fish.position.y = previousPosition.y;
+      fish.position.z = previousPosition.z;
+    } else if (initialFishIdsRef.current.has(created.id) && previousSwimmingPositions.size === 0) {
+      // Fresh page load: spread the saved fish across the aquarium.
+      const index = createdFishRef.current.findIndex((item) => item.id === created.id);
+      const position = restoredFishPosition(created.id, Math.max(0, index));
+      fish.position.x = position.x;
+      fish.position.y = position.y;
+      fish.position.z = position.z;
+    } else if (initialFishIdsRef.current.has(created.id)) {
+      // Saved fish from a different aquarium have no cached positions.
+      const index = createdFishRef.current.findIndex((item) => item.id === created.id);
+      const position = restoredFishPosition(created.id, Math.max(0, index));
+      fish.position.x = position.x;
+      fish.position.y = position.y;
+      fish.position.z = position.z;
+    }
 
     try {
       /*
@@ -336,7 +384,8 @@ export function ThreeAquariumView({
       // loaded on TV startup or after navigating back to this page.
       if (
         created.type === 'drawn' &&
-        !initialFishIdsRef.current.has(created.id) &&
+        (!initialFishIdsRef.current.has(created.id) ||
+          (previousSwimmingPositions.size > 0 && !previousSwimmingPositions.has(created.id))) &&
         !welcomedIdsRef.current.has(created.id)
       ) {
         welcomedIdsRef.current.add(created.id);
@@ -367,6 +416,11 @@ export function ThreeAquariumView({
 
   useEffect(() => {
     createdFishRef.current = createdFish;
+
+    if (!initialFishSnapshotCapturedRef.current && createdFish.length > 0) {
+      for (const fish of createdFish) initialFishIdsRef.current.add(fish.id);
+      initialFishSnapshotCapturedRef.current = true;
+    }
 
     const aquarium = aquariumRef.current;
     if (!sceneRef.current || !aquarium) return;
@@ -835,6 +889,10 @@ export function ThreeAquariumView({
      */
     loadingFishRef.current.clear();
 
+    if (!initialFishSnapshotCapturedRef.current && createdFishRef.current.length > 0) {
+      for (const fish of createdFishRef.current) initialFishIdsRef.current.add(fish.id);
+      initialFishSnapshotCapturedRef.current = true;
+    }
     for (const created of createdFishRef.current) {
       void addCreatedFish(created);
     }
@@ -1099,6 +1157,18 @@ export function ThreeAquariumView({
       container.removeEventListener('pointermove', handleDecorationPointerMove, true);
       container.removeEventListener('pointerup', handleDecorationPointerUp, true);
       container.removeEventListener('pointercancel', handleDecorationPointerCancel, true);
+
+      // Capture live positions before tearing down the scene on navigation.
+      // Only fish that actually existed in this scene get restored later.
+      for (const fish of aquarium.getFish()) {
+        if (threeFishRef.current.has(fish.id)) {
+          previousSwimmingPositions.set(fish.id, {
+            x: fish.position.x,
+            y: fish.position.y,
+            z: fish.position.z,
+          });
+        }
+      }
 
       sceneRef.current = null;
 
