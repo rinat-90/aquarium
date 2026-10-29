@@ -33,6 +33,17 @@ type FishDrawingCanvasProps = {
   remainingCapacity: number;
 };
 
+// Explicit template orientation avoids mistaking large decorative tails for heads.
+// Users can override this using the existing Left/Right selector.
+const TEMPLATE_HEAD_DIRECTION: Record<FishTemplateId, 'left' | 'right'> = {
+  clownfish: 'left',
+  angelfish: 'left',
+  goldfish: 'left',
+  'blue-tang': 'left',
+  betta: 'left',
+  guppy: 'left',
+};
+
 type Tool = 'brush' | 'eraser' | 'bucket';
 
 const COLORS = [
@@ -856,6 +867,7 @@ export function FishDrawingCanvas({
                     className={templateId ? 'is-active' : ''}
                     onClick={() => {
                       setTemplateId('goldfish');
+                      setHeadDirection(TEMPLATE_HEAD_DIRECTION.goldfish);
                       setOutlinePreview(null);
                     }}
                   >
@@ -876,6 +888,7 @@ export function FishDrawingCanvas({
                         aria-pressed={templateId === fish.id}
                         onClick={() => {
                           setTemplateId(fish.id);
+                          setHeadDirection(TEMPLATE_HEAD_DIRECTION[fish.id]);
                           setOutlinePreview(null);
                         }}
                       >

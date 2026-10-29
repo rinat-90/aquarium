@@ -77,6 +77,7 @@ export async function createThreeFish(
   const bobOffset = Math.random() * Math.PI * 2;
   const swayOffset = Math.random() * Math.PI * 2;
   let smoothedEffort = 0.65;
+  let smoothedDepthTurn = 0;
 
   const update: ThreeFish['update'] = (
     elapsed,
@@ -109,7 +110,8 @@ export async function createThreeFish(
 
     // Keep the flat drawing readable while moving through depth.
     const depthTurn = THREE.MathUtils.clamp(depthVelocity * 0.16, -0.16, 0.16);
-    body.rotation.y = THREE.MathUtils.lerp(body.rotation.y, depthTurn, 0.08);
+    smoothedDepthTurn += (depthTurn - smoothedDepthTurn) * (1 - Math.exp(-4 * delta));
+    body.rotation.y = smoothedDepthTurn;
 
     const nibbleEnvelope = Math.sin(Math.PI * THREE.MathUtils.clamp(nibbleProgress, 0, 1));
     const nibble = Math.sin(elapsed * 12) * nibbleEnvelope * 0.09;
@@ -122,16 +124,18 @@ export async function createThreeFish(
 
     for (let i = 0; i < vertexCount; i += 1) {
       const offset = i * 3;
-      const wave = Math.sin(swimPhase - tailDistances[i] * 4.2);
+      const wave = Math.sin(swimPhase - tailDistances[i] * 3.5);
       const bend = tailWeights[i] * effectiveIntensity;
+      const lateral = wave * bend;
       positions.setXYZ(
         i,
         originalPositions[offset],
-        originalPositions[offset + 1] + wave * bend * 0.025,
-        originalPositions[offset + 2] + wave * bend * 0.09,
+        originalPositions[offset + 1] + lateral * 0.035,
+        originalPositions[offset + 2] + lateral * 0.16,
       );
     }
     positions.needsUpdate = true;
+    geometry.computeBoundingSphere();
   };
 
   const destroy = () => {
