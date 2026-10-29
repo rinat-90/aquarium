@@ -100,7 +100,19 @@ export function ScanPaperFish({ aquariumId, onSaved, variant = 'default' }: Scan
     try {
       if (scanMode === 'template' && selectedTemplate) {
         const templateResult = await processFishTemplate(file, selectedTemplate);
-        setOrientation('left');
+        // Flowing tails on these templates can look thicker than the head,
+        // making silhouette-based detection reverse their swimming direction.
+        // Keep detection for other scanned templates and freehand scans.
+        const scannedTemplateDirection = {
+          goldfish: 'left',
+          betta: 'left',
+          guppy: 'left',
+        } as const;
+        setOrientation(
+          selectedTemplate in scannedTemplateDirection
+            ? scannedTemplateDirection[selectedTemplate as keyof typeof scannedTemplateDirection]
+            : await detectFishOrientation(templateResult),
+        );
         setProcessedImage(templateResult);
         return;
       }
